@@ -23,7 +23,7 @@ import {
   DeleteButton,
 } from '../shared/styles';
 
-const ReviewManagement = ({ searchKeyword: propSearchKeyword = '' }) => {
+const ReviewManagement = ({ searchKeyword = '' }) => {
   const [reviews, setReviews] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -31,6 +31,7 @@ const ReviewManagement = ({ searchKeyword: propSearchKeyword = '' }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // 리뷰 목록 조회 함수
   const fetchReviews = async (page = 1, keyword = '') => {
     setLoading(true);
     try {
@@ -50,20 +51,19 @@ const ReviewManagement = ({ searchKeyword: propSearchKeyword = '' }) => {
     }
   };
 
+  // 컴포넌트 마운트 시 초기 데이터 로드
   useEffect(() => {
-    fetchReviews(1, propSearchKeyword);
+    fetchReviews(1, searchKeyword);
   }, []);
 
+  // 검색어가 변경되면 첫 페이지부터 다시 검색
   useEffect(() => {
-    if (propSearchKeyword !== undefined && propSearchKeyword !== '') {
-      fetchReviews(1, propSearchKeyword);
-    } else if (propSearchKeyword === '') {
-      fetchReviews(1, '');
-    }
-  }, [propSearchKeyword]);
+    fetchReviews(1, searchKeyword);
+  }, [searchKeyword]);
 
+  // 페이지 변경 시 현재 검색어 유지하며 해당 페이지 조회
   const handlePageChange = (page) => {
-    fetchReviews(page, propSearchKeyword);
+    fetchReviews(page, searchKeyword);
   };
 
   const handleViewDetail = async (reviewNo) => {
@@ -86,7 +86,7 @@ const ReviewManagement = ({ searchKeyword: propSearchKeyword = '' }) => {
       if (response.success) {
         setIsModalOpen(false);
         setSelectedReview(null);
-        fetchReviews(currentPage, propSearchKeyword);
+        fetchReviews(currentPage, searchKeyword);
         alert('리뷰가 삭제되었습니다.');
       }
     } catch (error) {

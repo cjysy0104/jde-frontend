@@ -28,13 +28,12 @@ import {
   ProcessButton,
 } from './styles';
 
-const ReportManagement = ({ searchKeyword: propSearchKeyword = '' }) => {
+const ReportManagement = ({ searchKeyword = '' }) => {
   const [activeTab, setActiveTab] = useState('comment'); // 'comment' or 'review'
   const [commentReports, setCommentReports] = useState([]);
   const [reviewReports, setReviewReports] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [searchKeyword, setSearchKeyword] = useState(propSearchKeyword);
   const [selectedReport, setSelectedReport] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -79,6 +78,7 @@ const ReportManagement = ({ searchKeyword: propSearchKeyword = '' }) => {
     }
   };
 
+  // 탭 변경 시 해당 탭의 데이터 로드
   useEffect(() => {
     if (activeTab === 'comment') {
       fetchCommentReports(1, searchKeyword);
@@ -87,17 +87,14 @@ const ReportManagement = ({ searchKeyword: propSearchKeyword = '' }) => {
     }
   }, [activeTab]);
 
-  // propSearchKeyword가 변경되면 검색 실행
+  // 검색어 변경 시 현재 탭의 데이터 다시 검색
   useEffect(() => {
-    if (propSearchKeyword !== undefined && propSearchKeyword !== searchKeyword) {
-      setSearchKeyword(propSearchKeyword);
-      if (activeTab === 'comment') {
-        fetchCommentReports(1, propSearchKeyword);
-      } else {
-        fetchReviewReports(1, propSearchKeyword);
-      }
+    if (activeTab === 'comment') {
+      fetchCommentReports(1, searchKeyword);
+    } else {
+      fetchReviewReports(1, searchKeyword);
     }
-  }, [propSearchKeyword, activeTab]);
+  }, [searchKeyword]);
 
   const handlePageChange = (page) => {
     if (activeTab === 'comment') {

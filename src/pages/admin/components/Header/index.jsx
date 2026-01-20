@@ -10,9 +10,15 @@ import {
   Avatar,
 } from './styles';
 
-const Header = ({ searchPlaceholder, onSearch }) => {
-  const [searchValue, setSearchValue] = useState('');
+const Header = ({ searchPlaceholder, onSearch, searchKeyword = '' }) => {
+  const [searchValue, setSearchValue] = useState(searchKeyword);
 
+  // 부모의 searchKeyword가 변경되면 (페이지 변경 등) input도 초기화
+  React.useEffect(() => {
+    setSearchValue(searchKeyword);
+  }, [searchKeyword]);
+
+  // Enter 키 또는 검색 아이콘 클릭 시 검색 실행
   const handleSearch = (e) => {
     if (e.key === 'Enter' || e.type === 'click') {
       if (onSearch) {
@@ -21,12 +27,9 @@ const Header = ({ searchPlaceholder, onSearch }) => {
     }
   };
 
+  // 입력값 변경
   const handleChange = (e) => {
     setSearchValue(e.target.value);
-    // 실시간 검색이 필요한 경우 주석 해제
-    // if (onSearch) {
-    //   onSearch(e.target.value);
-    // }
   };
 
   return (

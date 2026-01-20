@@ -25,7 +25,7 @@ import {
   DeleteButton,
 } from '../shared/styles';
 
-const MemberManagement = ({ searchKeyword: propSearchKeyword = '' }) => {
+const MemberManagement = ({ searchKeyword = '' }) => {
   const [members, setMembers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -52,20 +52,19 @@ const MemberManagement = ({ searchKeyword: propSearchKeyword = '' }) => {
     }
   };
 
+  // 컴포넌트 마운트 시 초기 데이터 로드
   useEffect(() => {
-    fetchMembers(1, propSearchKeyword);
+    fetchMembers(1, searchKeyword);
   }, []);
 
+  // 검색어가 변경되면 첫 페이지부터 다시 검색
   useEffect(() => {
-    if (propSearchKeyword !== undefined && propSearchKeyword !== '') {
-      fetchMembers(1, propSearchKeyword);
-    } else if (propSearchKeyword === '') {
-      fetchMembers(1, '');
-    }
-  }, [propSearchKeyword]);
+    fetchMembers(1, searchKeyword);
+  }, [searchKeyword]);
 
+  // 페이지 변경 시 현재 검색어 유지하며 해당 페이지 조회
   const handlePageChange = (page) => {
-    fetchMembers(page, propSearchKeyword);
+    fetchMembers(page, searchKeyword);
   };
 
   const handleViewDetail = async (memberNo) => {
@@ -88,7 +87,7 @@ const MemberManagement = ({ searchKeyword: propSearchKeyword = '' }) => {
       if (response.success) {
         setIsModalOpen(false);
         setSelectedMember(null);
-        fetchMembers(currentPage, propSearchKeyword);
+        fetchMembers(currentPage, searchKeyword);
         alert('회원 권한이 변경되었습니다.');
       }
     } catch (error) {
@@ -105,7 +104,7 @@ const MemberManagement = ({ searchKeyword: propSearchKeyword = '' }) => {
       if (response.success) {
         setIsModalOpen(false);
         setSelectedMember(null);
-        fetchMembers(currentPage, propSearchKeyword);
+        fetchMembers(currentPage, searchKeyword);
         alert('회원이 삭제되었습니다.');
       }
     } catch (error) {

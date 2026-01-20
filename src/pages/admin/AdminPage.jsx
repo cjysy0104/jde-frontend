@@ -12,11 +12,13 @@ const AdminPage = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [searchKeyword, setSearchKeyword] = useState('');
 
+  // 메뉴 클릭 시: 페이지 변경 + 검색어 초기화
   const handleMenuClick = (page) => {
     setCurrentPage(page);
     setSearchKeyword(''); // 페이지 변경 시 검색어 초기화
   };
 
+  // 검색 실행 시: 검색어만 업데이트
   const handleSearch = (keyword) => {
     setSearchKeyword(keyword);
   };
@@ -60,6 +62,7 @@ const AdminPage = () => {
         <Header
           searchPlaceholder={getSearchPlaceholder()}
           onSearch={handleSearch}
+          searchKeyword={searchKeyword}
         />
         {renderPage()}
       </MainContent>

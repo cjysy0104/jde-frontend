@@ -1,15 +1,40 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
-import AdminPage from './pages/admin/AdminPage';
-import UserPage from './pages/user/UserPage';
-import './App.css';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+import AdminPage from "./pages/admin/AdminPage";
+
+import UserPage from "./pages/user/UserPage";
+import UserHome from "./pages/user/UserHome";
+
+import MyLayout from "./pages/user/my/MyLayout";
+
+import MyProfileViewPage from "./pages/user/my/MyProfileViewPage";
+
+import MyProfilePage from "./pages/user/my/MyProfilePage";
+
+import MyListPage from "./pages/user/my/MyListPage";
+import MyBookmarksPage from "./pages/user/my/MyBookmarksPage";
+
+import "./App.css";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/admin" replace />} />
+        <Route path="/" element={<Navigate to="/user" replace />} />
         <Route path="/admin" element={<AdminPage />} />
-        <Route path="/user" element={<UserPage />} />
+
+        <Route path="/user" element={<UserPage />}>
+          <Route index element={<UserHome />} />
+
+          <Route path="my" element={<MyLayout />}>
+            <Route index element={<MyProfileViewPage />} />
+            <Route path="profile" element={<MyProfilePage />} />
+            <Route path="list" element={<MyListPage />} />
+            <Route path="bookmarks" element={<MyBookmarksPage />} />
+          </Route>
+        </Route>
+
+        <Route path="*" element={<Navigate to="/user" replace />} />
       </Routes>
     </BrowserRouter>
   );

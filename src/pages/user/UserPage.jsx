@@ -1,16 +1,14 @@
-import React from 'react';
-import Header from './components/Header';
-import SearchSection from './components/SearchSection';
-import TodaysReview from './components/TodaysReview';
-import Footer from './components/Footer';
-import { UserPageContainer } from './styles';
+import React from "react";
+import { Outlet } from "react-router-dom";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import { UserPageContainer } from "./styles";
 
 const UserPage = () => {
   return (
     <UserPageContainer>
       <Header />
-      <SearchSection />
-      <TodaysReview />
+      <Outlet />
       <Footer />
     </UserPageContainer>
   );

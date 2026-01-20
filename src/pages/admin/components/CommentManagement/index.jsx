@@ -39,9 +39,9 @@ const CommentManagement = ({ searchKeyword: propSearchKeyword = '' }) => {
         : await adminApi.getComments(page);
       
       if (response.success && response.data) {
-        setComments(response.data.content || []);
-        setTotalPages(response.data.totalPages || 1);
-        setCurrentPage(response.data.currentPage || 1);
+        setComments(response.data.list || []);
+        setTotalPages(response.data.pageInfo?.maxPage || 1);
+        setCurrentPage(response.data.pageInfo?.currentPage || 1);
       }
     } catch (error) {
       console.error('댓글 목록 조회 실패:', error);

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router';
 import { FaUtensils } from 'react-icons/fa';
 import logo from '../../../../assets/logo.png';
 import {
@@ -16,6 +17,8 @@ import {
 } from './styles';
 
 const Header = () => {
+  const navigate = useNavigate();
+
   return (
     <HeaderContainer>
       <HeaderContent>
@@ -43,7 +46,7 @@ const Header = () => {
         </NavList>
         
         <AuthButtons>
-          <AuthButton>로그인</AuthButton>
+          <AuthButton onClick={() => navigate('/login')}>로그인</AuthButton>
           <AuthButton>회원가입</AuthButton>
         </AuthButtons>
       </HeaderContent>

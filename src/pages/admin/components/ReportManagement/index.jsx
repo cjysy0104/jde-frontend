@@ -48,9 +48,9 @@ const ReportManagement = ({ searchKeyword: propSearchKeyword = '' }) => {
         : await adminApi.getCommentReports(page);
       
       if (response.success && response.data) {
-        setCommentReports(response.data.content || []);
-        setTotalPages(response.data.totalPages || 1);
-        setCurrentPage(response.data.currentPage || 1);
+        setCommentReports(response.data.list || []);
+        setTotalPages(response.data.pageInfo?.maxPage || 1);
+        setCurrentPage(response.data.pageInfo?.currentPage || 1);
       }
     } catch (error) {
       console.error('댓글 신고 목록 조회 실패:', error);
@@ -68,9 +68,9 @@ const ReportManagement = ({ searchKeyword: propSearchKeyword = '' }) => {
         : await adminApi.getReviewReports(page);
       
       if (response.success && response.data) {
-        setReviewReports(response.data.content || []);
-        setTotalPages(response.data.totalPages || 1);
-        setCurrentPage(response.data.currentPage || 1);
+        setReviewReports(response.data.list || []);
+        setTotalPages(response.data.pageInfo?.maxPage || 1);
+        setCurrentPage(response.data.pageInfo?.currentPage || 1);
       }
     } catch (error) {
       console.error('리뷰 신고 목록 조회 실패:', error);

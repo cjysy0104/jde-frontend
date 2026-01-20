@@ -1,4 +1,4 @@
-const API_BASE_URL = window.ENV?.API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = window.ENV?.API_BASE_URL;
 
 // 공통 응답 처리 함수
 const handleResponse = async (response) => {

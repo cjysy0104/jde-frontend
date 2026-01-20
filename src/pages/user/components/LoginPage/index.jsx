@@ -40,6 +40,8 @@ import {
   ErrorMessage,
 } from './styles';
 import { useNavigate } from 'react-router';
+import axios from 'axios';
+import { authStorage } from '../../../../utils/api';
 
 const API_BASE_URL = window.ENV?.API_BASE_URL || 'http://127.0.0.1:8080';
 
@@ -58,51 +60,60 @@ const LoginPage = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
+        email,
+        password,
       });
 
-      if (!response.ok) {
-        let errorMessage = `로그인 실패 (${response.status})`;
-        try {
-          const errorData = await response.json();
-          if (errorData.message) {
-            errorMessage = errorData.message;
-          } else if (errorData.error) {
-            errorMessage = errorData.error;
-          }
-        } catch {
-          const errorText = await response.text();
-          if (errorText) {
-            errorMessage = errorText;
-          }
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
-      console.log('Login success:', data);
+      const responseData = response.data;
+      console.log('Login success:', responseData);
       
-      // 성공 메시지 표시
-      if (data.data) {
+      // 성공 메시지 표시 및 토큰 저장
+      if (responseData.data) {
+        const loginData = responseData.data;
+        
+        // 액세스 토큰 저장
+        if (loginData.accessToken) {
+          authStorage.setToken(loginData.accessToken);
+        }
+        
+        // 리프레시 토큰 저장
+        if (loginData.refreshToken) {
+          authStorage.setRefreshToken(loginData.refreshToken);
+        }
+        
+        // 회원 정보 저장 (data 자체에 모든 회원 정보가 포함되어 있음)
+        const memberInfo = {
+          email: loginData.email,
+          memberName: loginData.memberName,
+          memberNo: loginData.memberNo,
+          nickname: loginData.nickname,
+          phone: loginData.phone,
+          role: loginData.role,
+          status: loginData.status,
+          fileUrl: loginData.fileUrl,
+          enrollDate: loginData.enrollDate,
+        };
+        authStorage.setMemberInfo(memberInfo);
+        
         alert('로그인에 성공했습니다!');
-        // TODO: 토큰 저장 및 리다이렉트 처리
-        // navigate('/user');
+        
+        // admin 페이지로 리다이렉트
+        navigate('/admin');
       }
     } catch (error) {
       console.error('Login error:', error);
       
-      // 네트워크 에러 처리
-      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      // axios 에러 처리
+      if (error.response) {
+        // 서버가 응답했지만 에러 상태 코드
+        const errorMessage = error.response.data?.message || error.response.data?.error || error.message;
+        setError(errorMessage || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
+      } else if (error.request) {
+        // 요청은 보냈지만 응답을 받지 못함
         setError('서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
       } else {
+        // 요청 설정 중 에러 발생
         setError(error.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
       }
     } finally {

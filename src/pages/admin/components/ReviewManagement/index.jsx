@@ -39,9 +39,9 @@ const ReviewManagement = ({ searchKeyword: propSearchKeyword = '' }) => {
         : await adminApi.getReviews(page);
       
       if (response.success && response.data) {
-        setReviews(response.data.content || []);
-        setTotalPages(response.data.totalPages || 1);
-        setCurrentPage(response.data.currentPage || 1);
+        setReviews(response.data.list || []);
+        setTotalPages(response.data.pageInfo?.maxPage || 1);
+        setCurrentPage(response.data.pageInfo?.currentPage || 1);
       }
     } catch (error) {
       console.error('리뷰 목록 조회 실패:', error);

@@ -41,9 +41,9 @@ const MemberManagement = ({ searchKeyword: propSearchKeyword = '' }) => {
         : await adminApi.getMembers(page);
       
       if (response.success && response.data) {
-        setMembers(response.data.content || []);
-        setTotalPages(response.data.totalPages || 1);
-        setCurrentPage(response.data.currentPage || 1);
+        setMembers(response.data.list || []);
+        setTotalPages(response.data.pageInfo?.maxPage || 1);
+        setCurrentPage(response.data.pageInfo?.currentPage || 1);
       }
     } catch (error) {
       console.error('회원 목록 조회 실패:', error);
@@ -115,8 +115,8 @@ const MemberManagement = ({ searchKeyword: propSearchKeyword = '' }) => {
   };
 
   const getRoleBadge = (role) => {
-    if (role === 'ADMIN') return { text: '관리자', color: '#ef4444' };
-    if (role === 'USER') return { text: '일반회원', color: '#3b82f6' };
+    if (role === 'ROLE_ADMIN' || role === 'ADMIN') return { text: '관리자', color: '#ef4444' };
+    if (role === 'ROLE_USER' || role === 'USER') return { text: '일반회원', color: '#3b82f6' };
     return { text: role, color: '#6b7280' };
   };
 
@@ -222,8 +222,8 @@ const MemberManagement = ({ searchKeyword: propSearchKeyword = '' }) => {
                   value={selectedMember.role}
                   onChange={(e) => handleRoleChange(selectedMember.memberNo, e.target.value)}
                 >
-                  <option value="USER">일반회원</option>
-                  <option value="ADMIN">관리자</option>
+                  <option value="ROLE_USER">일반회원</option>
+                  <option value="ROLE_ADMIN">관리자</option>
                 </RoleSelect>
               </DetailSection>
               <DetailSection>

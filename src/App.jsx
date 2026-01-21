@@ -1,18 +1,16 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-import AdminPage from "./pages/admin/AdminPage";
+import AdminPage from "./admin/pages/AdminPage";
+import UserPage from "./user/pages/UserPage";
+import LoginPage from "./user/components/LoginPage";
 
-import UserPage from "./pages/user/UserPage";
-import UserHome from "./pages/user/UserHome";
+import UserHome from "./user/UserHome";
 
-import MyLayout from "./pages/user/myPage/MyLayout";
-
-import MyProfileViewPage from "./pages/user/myPage/profiles/MyProfileView";
-
-import MyProfilePage from "./pages/user/myPage/profiles/MyProfile";
-
-import MyListPage from "./pages/user/myPage/lists/MyList";
-import MyBookmarksPage from "./pages/user/myPage/bookmarks/MyBookmarks";
+import MyLayout from "./user/components/myPage/MyLayout.jsx";
+import MyProfileViewPage from "./user/components/myPage/profiles/MyProfileViewPage.jsx";
+import MyProfilePage from "./user/components/myPage/profiles/MyProfilePage.jsx";
+import MyListPage from "./user/components/myPage/lists/MyListPage.jsx";
+import MyBookmarksPage from "./user/components/myPage/bookmarks/MyBookmarksPage.jsx";
 
 import "./App.css";
 
@@ -34,6 +32,7 @@ function App() {
           </Route>
         </Route>
 
+        <Route path="/login" element={<LoginPage />} />
         <Route path="*" element={<Navigate to="/user" replace />} />
       </Routes>
     </BrowserRouter>

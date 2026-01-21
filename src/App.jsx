@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import AdminPage from "./admin/pages/AdminPage";
 import UserPage from "./user/pages/UserPage";
-import LoginPage from "./user/components/LoginPage";
+import LoginPage from "./user/components/Login/LoginPage.jsx";
 
 import UserHome from "./user/UserHome";
 
@@ -22,7 +22,6 @@ function App() {
         <Route path="/" element={<UserPage />} />
         <Route path="/admin" element={<AdminPage />} />
 
-        <Route path="/user" element={<UserPage />}>
           <Route index element={<UserHome />} />
 
           <Route path="my" element={<MyLayout />}>

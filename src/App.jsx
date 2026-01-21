@@ -1,8 +1,9 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AdminPage from './admin/pages/AdminPage';
 import UserPage from './user/pages/UserPage';
 
 import './App.css';
+import LoginPage from './user/pages/LoginPage';
 
 function App() {
   return (
@@ -11,6 +12,8 @@ function App() {
         <Route path="/" element={<UserPage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/user" element={<UserPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        
 
         
       </Routes>

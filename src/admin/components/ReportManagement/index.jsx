@@ -164,13 +164,13 @@ const ReportManagement = ({ searchKeyword = '' }) => {
 
       <TabContainer>
         <TabButton
-          active={activeTab === 'comment'}
+          $active={activeTab === 'comment'}
           onClick={() => setActiveTab('comment')}
         >
           댓글 신고
         </TabButton>
         <TabButton
-          active={activeTab === 'review'}
+          $active={activeTab === 'review'}
           onClick={() => setActiveTab('review')}
         >
           리뷰 신고
@@ -250,7 +250,7 @@ const ReportManagement = ({ searchKeyword = '' }) => {
         {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
           <PageButton
             key={page}
-            active={page === currentPage}
+            $active={page === currentPage}
             onClick={() => handlePageChange(page)}
           >
             {page}

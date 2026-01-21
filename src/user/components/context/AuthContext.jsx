@@ -1,5 +1,5 @@
 import { createContext, useEffect, useState } from "react";
-import { authStorage } from "../../../utils/api";
+import { authStorage, authApi } from "../../../utils/api";
 
 export const AuthContext = createContext();
 
@@ -51,14 +51,26 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const memberInfo = authStorage.getMemberInfo();
+    const refreshToken = authStorage.getRefreshToken();
+
+    if (memberInfo?.email && refreshToken) {
+      await authApi.logout({
+        email: memberInfo.email,
+        refreshToken,
+      });
+    }
+
     authStorage.clear();
+
     setAuth({
       memberNo: null,
       memberName: null,
       role: null,
       isAuthenticated: false,
     });
+
     window.location.href = "/";
   };
 

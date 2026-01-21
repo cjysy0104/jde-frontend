@@ -182,7 +182,7 @@ const MemberManagement = ({ searchKeyword = '' }) => {
         {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
           <PageButton
             key={page}
-            active={page === currentPage}
+            $active={page === currentPage}
             onClick={() => handlePageChange(page)}
           >
             {page}

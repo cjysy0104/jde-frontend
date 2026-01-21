@@ -1,7 +1,7 @@
 import React from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { FaUtensils } from 'react-icons/fa';
-import logo from '../../../../assets/logo.png';
+import Logo1 from '../../../../assets/logo.png';
 
 import {
   HeaderContainer,
@@ -20,11 +20,10 @@ const Header = () => {
     <HeaderContainer>
       <HeaderContent>
         <LogoSection>
-          <LogoImage src={logo} alt="JUST DO EAT" />
+          <LogoImage src={Logo1} alt="JUST DO EAT" />
           <LogoText>JUST DO EAT</LogoText>
         </LogoSection>
 
-        
 
         <AuthButtons>
           <AuthButton onClick={() => navigate('/login')}>

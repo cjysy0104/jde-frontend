@@ -291,4 +291,15 @@ export const adminApi = {
       throw error;
     }
   },
+
+
+};
+
+export const authApi = {
+  login: async (email, password) => {
+    return await apiClient.post("/api/auth/login", {
+      email,
+      password,
+    });
+  },
 };

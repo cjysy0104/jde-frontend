@@ -292,7 +292,6 @@ export const adminApi = {
     }
   },
 
-
 };
 
 export const authApi = {
@@ -302,4 +301,5 @@ export const authApi = {
       password,
     });
   },
+
 };

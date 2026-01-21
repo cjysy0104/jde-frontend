@@ -27,16 +27,23 @@ import {
   ErrorMessage,
 } from "./styles";
 
-/* ===== 정규식 (백엔드와 동일 기준) ===== */
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PASSWORD_REGEX =
+/* 유효성 검사 정책 */
+const emailRegex =
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const passwordRegex =
   /^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,16}$/;
 
 const Login = () => {
+  /* 상태관리 */
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [keepLoggedIn, setKeepLoggedIn] = useState(false);
+
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -46,49 +53,62 @@ const Login = () => {
 
   const from = location.state?.from || "/";
 
-  /* ===== 프론트 유효성 검사 ===== */
-  const validate = () => {
-    if (!email.trim()) {
-      return "이메일은 필수 입력사항입니다.";
-    }
+  /* 핸들러 */
 
-    if (!EMAIL_REGEX.test(email)) {
-      return "이메일 형식이 올바르지 않습니다.";
-    }
+  const handleEmailChange = (e) => {
+    const value = e.target.value;
+    setEmail(value);
 
-    if (!password.trim()) {
-      return "비밀번호는 필수 입력사항입니다.";
+    if (!value) {
+      setEmailError("이메일은 필수 입력사항입니다.");
+    } else if (!emailRegex.test(value)) {
+      setEmailError("이메일 형식이 올바르지 않습니다.");
+    } else {
+      setEmailError("");
     }
+  };
 
-    if (password.length < 8 || password.length > 16) {
-      return "비밀번호 값은 8글자 이상 16글자 이하만 사용할 수 있습니다.";
+  const handlePasswordChange = (e) => {
+    const value = e.target.value;
+    setPassword(value);
+
+    if (!value) {
+      setPasswordError("비밀번호는 필수 입력사항입니다.");
+    } else if (value.length < 8 || value.length > 16) {
+      setPasswordError("비밀번호는 8자 이상 16자 이하만 가능합니다.");
+    } else if (!passwordRegex.test(value)) {
+      setPasswordError(
+        "영문, 숫자, 특수문자를 각각 최소 1개 이상 포함해야 합니다."
+      );
+    } else {
+      setPasswordError("");
     }
-
-    if (!PASSWORD_REGEX.test(password)) {
-      return "비밀번호는 영어, 숫자, 특수문자가 최소 1개 이상씩 필요합니다.";
-    }
-
-    return null;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
 
-    const validationError = validate();
-    if (validationError) {
-      setError(validationError);
+    // 서밋 하기전에 최종 방어
+    if (
+      emailError ||
+      passwordError ||
+      !email ||
+      !password
+    ) {
       return;
     }
 
     setIsLoading(true);
+    setError("");
 
     try {
       const response = await authApi.login(email, password);
 
       if (response.success) {
         login(response.data);
-        navigate(from, { replace: true });
+        navigate(-1);
+      } else {
+        navigate("/");
       }
     } catch (err) {
       setError(err.message || "로그인에 실패했습니다.");
@@ -97,13 +117,15 @@ const Login = () => {
     }
   };
 
+  /* 랜더 */
+
   return (
     <LoginPageContainer>
       <LoginFormContainer>
         <LoginTitle>로그인</LoginTitle>
         <LoginSubtitle>계정에 로그인하여 계속하세요</LoginSubtitle>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           {error && <ErrorMessage>{error}</ErrorMessage>}
 
           <FormGroup>
@@ -112,9 +134,12 @@ const Login = () => {
               type="email"
               placeholder="example@email.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
               disabled={isLoading}
             />
+            {emailError && (
+              <ErrorMessage>{emailError}</ErrorMessage>
+            )}
           </FormGroup>
 
           <FormGroup>
@@ -124,16 +149,21 @@ const Login = () => {
                 type={showPassword ? "text" : "password"}
                 placeholder="비밀번호를 입력하세요"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
                 disabled={isLoading}
               />
               <PasswordToggle
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={() =>
+                  setShowPassword(!showPassword)
+                }
               >
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </PasswordToggle>
             </PasswordInputWrapper>
+            {passwordError && (
+              <ErrorMessage>{passwordError}</ErrorMessage>
+            )}
           </FormGroup>
 
           <FormOptions>
@@ -141,9 +171,13 @@ const Login = () => {
               <Checkbox
                 type="checkbox"
                 checked={keepLoggedIn}
-                onChange={(e) => setKeepLoggedIn(e.target.checked)}
+                onChange={(e) =>
+                  setKeepLoggedIn(e.target.checked)
+                }
               />
-              <CheckboxLabel>로그인 상태 유지</CheckboxLabel>
+              <CheckboxLabel>
+                로그인 상태 유지
+              </CheckboxLabel>
             </CheckboxWrapper>
 
             <ForgotPasswordLink href="#">
@@ -151,7 +185,15 @@ const Login = () => {
             </ForgotPasswordLink>
           </FormOptions>
 
-          <LoginButton type="submit" disabled={isLoading}>
+          <LoginButton
+            disabled={
+              isLoading ||
+              !!emailError ||
+              !!passwordError ||
+              !email ||
+              !password
+            }
+          >
             {isLoading ? "로그인 중..." : "로그인"}
           </LoginButton>
         </form>
@@ -162,7 +204,9 @@ const Login = () => {
 
         <SignUpPrompt>
           계정이 없으신가요?{" "}
-          <SignUpLink href="/signup">회원가입</SignUpLink>
+          <SignUpLink href="/signup">
+            회원가입
+          </SignUpLink>
         </SignUpPrompt>
       </LoginFormContainer>
     </LoginPageContainer>

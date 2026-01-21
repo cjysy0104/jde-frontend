@@ -6,3 +6,4 @@ export const UserPageContainer = styled.div`
   display: flex;
   flex-direction: column;
 `;
+

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { adminApi } from '../../../../utils/api';
+import { adminApi } from '../../../utils/api';
 import {
   ManagementContainer,
   ManagementHeader,
@@ -23,28 +23,29 @@ import {
   DeleteButton,
 } from '../shared/styles';
 
-const CommentManagement = ({ searchKeyword = '' }) => {
-  const [comments, setComments] = useState([]);
+const ReviewManagement = ({ searchKeyword = '' }) => {
+  const [reviews, setReviews] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [selectedComment, setSelectedComment] = useState(null);
+  const [selectedReview, setSelectedReview] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const fetchComments = async (page = 1, keyword = '') => {
+  // 리뷰 목록 조회 함수
+  const fetchReviews = async (page = 1, keyword = '') => {
     setLoading(true);
     try {
       const response = keyword
-        ? await adminApi.searchComments(keyword, page)
-        : await adminApi.getComments(page);
+        ? await adminApi.searchReviews(keyword, page)
+        : await adminApi.getReviews(page);
       
       if (response.success && response.data) {
-        setComments(response.data.list || []);
+        setReviews(response.data.list || []);
         setTotalPages(response.data.pageInfo?.maxPage || 1);
         setCurrentPage(response.data.pageInfo?.currentPage || 1);
       }
     } catch (error) {
-      console.error('댓글 목록 조회 실패:', error);
+      console.error('리뷰 목록 조회 실패:', error);
     } finally {
       setLoading(false);
     }
@@ -52,62 +53,63 @@ const CommentManagement = ({ searchKeyword = '' }) => {
 
   // 컴포넌트 마운트 시 초기 데이터 로드
   useEffect(() => {
-    fetchComments(1, searchKeyword);
+    fetchReviews(1, searchKeyword);
   }, []);
 
   // 검색어가 변경되면 첫 페이지부터 다시 검색
   useEffect(() => {
-    fetchComments(1, searchKeyword);
+    fetchReviews(1, searchKeyword);
   }, [searchKeyword]);
 
   // 페이지 변경 시 현재 검색어 유지하며 해당 페이지 조회
   const handlePageChange = (page) => {
-    fetchComments(page, searchKeyword);
+    fetchReviews(page, searchKeyword);
   };
 
-  const handleViewDetail = async (commentNo) => {
+  const handleViewDetail = async (reviewNo) => {
     try {
-      const response = await adminApi.getCommentDetail(commentNo);
+      const response = await adminApi.getReviewDetail(reviewNo);
       if (response.success && response.data) {
-        setSelectedComment(response.data);
+        setSelectedReview(response.data);
         setIsModalOpen(true);
       }
     } catch (error) {
-      console.error('댓글 상세 조회 실패:', error);
+      console.error('리뷰 상세 조회 실패:', error);
     }
   };
 
-  const handleDelete = async (commentNo) => {
-    if (!window.confirm('정말 이 댓글을 삭제하시겠습니까?')) return;
+  const handleDelete = async (reviewNo) => {
+    if (!window.confirm('정말 이 리뷰를 삭제하시겠습니까?')) return;
 
     try {
-      const response = await adminApi.deleteComment(commentNo);
+      const response = await adminApi.deleteReview(reviewNo);
       if (response.success) {
         setIsModalOpen(false);
-        setSelectedComment(null);
-        fetchComments(currentPage, searchKeyword);
-        alert('댓글이 삭제되었습니다.');
+        setSelectedReview(null);
+        fetchReviews(currentPage, searchKeyword);
+        alert('리뷰가 삭제되었습니다.');
       }
     } catch (error) {
-      console.error('댓글 삭제 실패:', error);
-      alert('댓글 삭제에 실패했습니다.');
+      console.error('리뷰 삭제 실패:', error);
+      alert('리뷰 삭제에 실패했습니다.');
     }
   };
 
   return (
     <ManagementContainer>
       <ManagementHeader>
-        <ManagementTitle>댓글 관리</ManagementTitle>
+        <ManagementTitle>리뷰 관리</ManagementTitle>
       </ManagementHeader>
 
       <TableContainer>
         <Table>
           <thead>
             <TableRow>
-              <TableHeader>댓글번호</TableHeader>
-              <TableHeader>작성자</TableHeader>
-              <TableHeader>댓글 내용</TableHeader>
               <TableHeader>리뷰번호</TableHeader>
+              <TableHeader>회원번호</TableHeader>
+              <TableHeader>식당명</TableHeader>
+              <TableHeader>리뷰 내용</TableHeader>
+              <TableHeader>주소</TableHeader>
               <TableHeader>작성일</TableHeader>
               <TableHeader>상태</TableHeader>
               <TableHeader>작업</TableHeader>
@@ -116,29 +118,32 @@ const CommentManagement = ({ searchKeyword = '' }) => {
           <tbody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} style={{ textAlign: 'center', padding: '40px' }}>
+                <TableCell colSpan={8} style={{ textAlign: 'center', padding: '40px' }}>
                   로딩 중...
                 </TableCell>
               </TableRow>
-            ) : comments.length === 0 ? (
+            ) : reviews.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} style={{ textAlign: 'center', padding: '40px' }}>
-                  댓글이 없습니다.
+                <TableCell colSpan={8} style={{ textAlign: 'center', padding: '40px' }}>
+                  리뷰가 없습니다.
                 </TableCell>
               </TableRow>
             ) : (
-              comments.map((comment) => (
-                <TableRow key={comment.commentNo}>
-                  <TableCell>{comment.commentNo}</TableCell>
-                  <TableCell>{comment.author}</TableCell>
+              reviews.map((review) => (
+                <TableRow key={review.reviewNo}>
+                  <TableCell>{review.reviewNo}</TableCell>
+                  <TableCell>{review.memberNo}</TableCell>
+                  <TableCell>{review.normalName || '-'}</TableCell>
                   <TableCell style={{ maxWidth: '400px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {comment.commentContent}
+                    {review.reviewContent}
                   </TableCell>
-                  <TableCell>{comment.reviewNo}</TableCell>
-                  <TableCell>{new Date(comment.commentDate).toLocaleDateString('ko-KR')}</TableCell>
-                  <TableCell>{comment.status === 'Y' ? '활성' : '삭제됨'}</TableCell>
+                  <TableCell style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {review.address || '-'}
+                  </TableCell>
+                  <TableCell>{new Date(review.createdAt).toLocaleDateString('ko-KR')}</TableCell>
+                  <TableCell>{review.status === 'Y' ? '활성' : '삭제됨'}</TableCell>
                   <TableCell>
-                    <ActionButton onClick={() => handleViewDetail(comment.commentNo)}>
+                    <ActionButton onClick={() => handleViewDetail(review.reviewNo)}>
                       상세보기
                     </ActionButton>
                   </TableCell>
@@ -161,41 +166,49 @@ const CommentManagement = ({ searchKeyword = '' }) => {
         ))}
       </PaginationContainer>
 
-      {isModalOpen && selectedComment && (
+      {isModalOpen && selectedReview && (
         <Modal onClick={() => setIsModalOpen(false)}>
           <ModalContent onClick={(e) => e.stopPropagation()}>
-            <ModalHeader>댓글 상세 정보</ModalHeader>
+            <ModalHeader>리뷰 상세 정보</ModalHeader>
             <ModalBody>
               <DetailSection>
-                <DetailLabel>댓글번호:</DetailLabel>
-                <DetailValue>{selectedComment.commentNo}</DetailValue>
-              </DetailSection>
-              <DetailSection>
-                <DetailLabel>작성자:</DetailLabel>
-                <DetailValue>{selectedComment.author}</DetailValue>
-              </DetailSection>
-              <DetailSection>
                 <DetailLabel>리뷰번호:</DetailLabel>
-                <DetailValue>{selectedComment.reviewNo}</DetailValue>
+                <DetailValue>{selectedReview.reviewNo}</DetailValue>
               </DetailSection>
               <DetailSection>
-                <DetailLabel>댓글 내용:</DetailLabel>
+                <DetailLabel>회원번호:</DetailLabel>
+                <DetailValue>{selectedReview.memberNo}</DetailValue>
+              </DetailSection>
+              <DetailSection>
+                <DetailLabel>식당번호:</DetailLabel>
+                <DetailValue>{selectedReview.restaurantNo || '-'}</DetailValue>
+              </DetailSection>
+              <DetailSection>
+                <DetailLabel>식당명:</DetailLabel>
+                <DetailValue>{selectedReview.normalName || '-'}</DetailValue>
+              </DetailSection>
+              <DetailSection>
+                <DetailLabel>주소:</DetailLabel>
+                <DetailValue>{selectedReview.address || '-'}</DetailValue>
+              </DetailSection>
+              <DetailSection>
+                <DetailLabel>리뷰 내용:</DetailLabel>
                 <DetailValue style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                  {selectedComment.commentContent}
+                  {selectedReview.reviewContent}
                 </DetailValue>
               </DetailSection>
               <DetailSection>
                 <DetailLabel>작성일:</DetailLabel>
-                <DetailValue>{new Date(selectedComment.commentDate).toLocaleString('ko-KR')}</DetailValue>
+                <DetailValue>{new Date(selectedReview.createdAt).toLocaleString('ko-KR')}</DetailValue>
               </DetailSection>
               <DetailSection>
                 <DetailLabel>상태:</DetailLabel>
-                <DetailValue>{selectedComment.status === 'Y' ? '활성' : '삭제됨'}</DetailValue>
+                <DetailValue>{selectedReview.status === 'Y' ? '활성' : '삭제됨'}</DetailValue>
               </DetailSection>
             </ModalBody>
             <ModalFooter>
-              <DeleteButton onClick={() => handleDelete(selectedComment.commentNo)}>
-                댓글 삭제
+              <DeleteButton onClick={() => handleDelete(selectedReview.reviewNo)}>
+                리뷰 삭제
               </DeleteButton>
               <ActionButton onClick={() => setIsModalOpen(false)}>
                 닫기
@@ -208,4 +221,4 @@ const CommentManagement = ({ searchKeyword = '' }) => {
   );
 };
 
-export default CommentManagement;
+export default ReviewManagement;

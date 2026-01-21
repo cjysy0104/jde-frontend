@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router';
 import { FaUtensils } from 'react-icons/fa';
-import logo from '../../../../assets/logo.png';
+import logo from '../../../assets/logo.png';
 import {
   HeaderContainer,
   HeaderContent,

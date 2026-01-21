@@ -14,7 +14,7 @@ const Footer = () => {
   return (
     <FooterContainer>
       <FooterContent>
-        <Copyright>© 2024 Just Do Eat. All rights reserved.</Copyright>
+        <Copyright>© 2026 Just Do Eat. All rights reserved.</Copyright>
         <FooterLinks>
           <FooterLink href="#">서비스 약관</FooterLink>
           <FooterLink href="#">개인정보처리방침</FooterLink>

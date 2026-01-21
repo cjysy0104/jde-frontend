@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { FaInstagram, FaFacebook, FaTwitter } from 'react-icons/fa';
-import logo from '../../../../assets/logo.png';
+import logo from '../../../assets/logo.png';
 import {
   LoginPageContainer,
   LoginContent,
@@ -41,7 +41,7 @@ import {
 } from './styles';
 import { useNavigate } from 'react-router';
 import axios from 'axios';
-import { authStorage } from '../../../../utils/api';
+import { authStorage } from '../../../utils/api';
 
 const API_BASE_URL = window.ENV?.API_BASE_URL || 'http://127.0.0.1:8080';
 

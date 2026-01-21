@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { adminApi } from '../../../../utils/api';
+import { adminApi } from '../../../utils/api';
 import {
   ManagementContainer,
   ManagementHeader,
@@ -124,8 +124,8 @@ const ReportManagement = ({ searchKeyword = '' }) => {
 
     try {
       const response = activeTab === 'comment'
-        ? await adminApi.processCommentReport(selectedReport.reportNo || selectedReport.commentReportNo, reportProcess)
-        : await adminApi.processReviewReport(selectedReport.reportNo || selectedReport.reviewReportNo, reportProcess);
+        ? await adminApi.processCommentReport(selectedReport.commentReportNo, reportProcess)
+        : await adminApi.processReviewReport(selectedReport.reviewReportNo, reportProcess);
       
       if (response.success) {
         setIsModalOpen(false);
@@ -306,22 +306,24 @@ const ReportManagement = ({ searchKeyword = '' }) => {
               </DetailSection>
             </ModalBody>
             <ModalFooter>
-              {selectedReport.status === 'Y' && !selectedReport.reportProcess && (
-                <>
-                  <ProcessButton
-                    onClick={() => handleProcessReport('RESOLVED')}
-                    style={{ backgroundColor: '#10b981' }}
-                  >
-                    승인
-                  </ProcessButton>
-                  <ProcessButton
-                    onClick={() => handleProcessReport('REJECTED')}
-                    style={{ backgroundColor: '#ef4444' }}
-                  >
-                    거부
-                  </ProcessButton>
-                </>
-              )}
+              {selectedReport.status === 'Y' &&
+                selectedReport.reportProcess !== 'RESOLVED' &&
+                selectedReport.reportProcess !== 'REJECTED' && (
+                  <>
+                    <ProcessButton
+                      onClick={() => handleProcessReport('RESOLVED')}
+                      style={{ backgroundColor: '#10b981' }}
+                    >
+                      승인
+                    </ProcessButton>
+                    <ProcessButton
+                      onClick={() => handleProcessReport('REJECTED')}
+                      style={{ backgroundColor: '#ef4444' }}
+                    >
+                      거부
+                    </ProcessButton>
+                  </>
+                )}
               <ProcessButton onClick={() => setIsModalOpen(false)}>
                 닫기
               </ProcessButton>

@@ -36,41 +36,6 @@ export const LogoText = styled.h1`
   margin: 0;
 `;
 
-export const NavList = styled.nav`
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  flex: 1;
-`;
-
-export const NavItem = styled.div`
-  position: relative;
-`;
-
-export const NavLink = styled.a`
-  font-size: 16px;
-  font-weight: 600;
-  color: ${props => props.active ? '#f97316' : '#111827'};
-  text-decoration: none;
-  cursor: pointer;
-  position: relative;
-  padding-bottom: 4px;
-  transition: color 0.2s;
-  
-  &:hover {
-    color: #f97316;
-  }
-`;
-
-export const ActiveIndicator = styled.div`
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background-color: #f97316;
-`;
-
 export const AuthButtons = styled.div`
   display: flex;
   align-items: center;
@@ -87,7 +52,7 @@ export const AuthButton = styled.button`
   color: #111827;
   cursor: pointer;
   transition: all 0.2s;
-  
+
   &:hover {
     background-color: #f9fafb;
     border-color: #9ca3af;

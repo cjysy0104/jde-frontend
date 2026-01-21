@@ -14,11 +14,12 @@ import MyBookmarksPage from "./user/components/myPage/bookmarks/MyBookmarksPage.
 
 import "./App.css";
 
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/user" replace />} />
+        <Route path="/" element={<UserPage />} />
         <Route path="/admin" element={<AdminPage />} />
 
         <Route path="/user" element={<UserPage />}>
@@ -34,6 +35,7 @@ function App() {
 
         <Route path="/login" element={<LoginPage />} />
         <Route path="*" element={<Navigate to="/user" replace />} />
+
       </Routes>
     </BrowserRouter>
   );

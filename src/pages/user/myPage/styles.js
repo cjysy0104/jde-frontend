@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { NavLink } from "react-router-dom";
 
 export const Layout = styled.div`
   width: 100%;
@@ -26,9 +27,10 @@ export const Title = styled.div`
   font-weight: 800;
   margin-bottom: 14px;
   color: #111827;
+  cursor: pointer;
 `;
 
-export const TabLink = styled.div`
+export const TabLink = styled(NavLink)`
   display: block;
   text-decoration: none;
   padding: 12px 12px;
@@ -38,7 +40,6 @@ export const TabLink = styled.div`
   background: #f9fafb;
   border: 1px solid transparent;
   margin-bottom: 10px;
-  cursor: pointer;
 
   &.active {
     background: rgba(249, 115, 22, 0.12);

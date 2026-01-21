@@ -383,10 +383,11 @@ export const bookmarkApi = {
 
 // 내 리뷰 목록: GET /api/reviews/me?size=10&cursor=...
 export const myActivityApi = {
-  getMyReviews: async ({ size = 10, cursor = null } = {}) => {
+  // 내 리뷰 목록: GET /api/reviews/me?page=1&size=10
+  getMyReviews: async ({ page = 1, size = 10 } = {}) => {
     const qs = new URLSearchParams();
+    qs.append("page", String(page)); // ✅ PageInfo는 1부터 쓰는 게 정석
     qs.append("size", String(size));
-    if (cursor !== null && cursor !== undefined) qs.append("cursor", String(cursor));
 
     const response = await fetch(`${API_BASE_URL}/api/reviews/me?${qs.toString()}`, {
       headers: { ...authHeaders() },
@@ -394,11 +395,11 @@ export const myActivityApi = {
     return await handleResponse(response);
   },
 
-  // 내 댓글 목록: GET /api/comments/me?size=10&cursor=...
-  getMyComments: async ({ size = 10, cursor = null } = {}) => {
+  // 내 댓글 목록: GET /api/comments/me?page=1&size=10
+  getMyComments: async ({ page = 1, size = 10 } = {}) => {
     const qs = new URLSearchParams();
+    qs.append("page", String(page));
     qs.append("size", String(size));
-    if (cursor !== null && cursor !== undefined) qs.append("cursor", String(cursor));
 
     const response = await fetch(`${API_BASE_URL}/api/comments/me?${qs.toString()}`, {
       headers: { ...authHeaders() },

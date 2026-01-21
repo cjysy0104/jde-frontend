@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { memberApi } from "../../../utils/api";
-import { getUser, updateAuthUser } from "../../../utils/auth";
-import Modal from "../components/modal/Modal"; 
-import { Row, Label, Value, Btn, AvatarWrap, AvatarImg, SectionTitle } from "./profileStyles";
+import { memberApi } from "../../../../utils/api";
+import { getUser, updateAuthUser } from "../../../../utils/auth";
+import Modal from "../../components/modal/Modal"; 
+import { Row, Label, Value, Btn, AvatarWrap, AvatarImg, SectionTitle } from "./myprofileStyles";
 
 export default function MyProfilePage() {
   const [me, setMe] = useState(getUser());

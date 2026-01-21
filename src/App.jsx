@@ -5,14 +5,14 @@ import AdminPage from "./pages/admin/AdminPage";
 import UserPage from "./pages/user/UserPage";
 import UserHome from "./pages/user/UserHome";
 
-import MyLayout from "./pages/user/my/MyLayout";
+import MyLayout from "./pages/user/myPage/MyLayout";
 
-import MyProfileViewPage from "./pages/user/my/MyProfileViewPage";
+import MyProfileViewPage from "./pages/user/myPage/profiles/MyProfileView";
 
-import MyProfilePage from "./pages/user/my/MyProfilePage";
+import MyProfilePage from "./pages/user/myPage/profiles/MyProfile";
 
-import MyListPage from "./pages/user/my/MyListPage";
-import MyBookmarksPage from "./pages/user/my/MyBookmarksPage";
+import MyListPage from "./pages/user/myPage/lists/MyList";
+import MyBookmarksPage from "./pages/user/myPage/bookmarks/MyBookmarks";
 
 import "./App.css";
 

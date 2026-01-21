@@ -1,6 +1,6 @@
 import React from 'react';
 import { FaHome, FaFileAlt, FaUsers, FaComments, FaFlag, FaQuestionCircle, FaSignOutAlt, FaChevronDown } from 'react-icons/fa';
-import logo from '../../../../assets/logo.png';
+import logo from '../../../assets/logo.png';
 import {
   SidebarContainer,
   LogoSection,

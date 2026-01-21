@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import Dashboard from './components/Dashboard';
-import ReportManagement from './components/ReportManagement';
-import MemberManagement from './components/MemberManagement';
-import CommentManagement from './components/CommentManagement';
-import ReviewManagement from './components/ReviewManagement';
+import Sidebar from '../components/Sidebar';
+import Header from '../components/Header';
+import Dashboard from '../components/Dashboard';
+import ReportManagement from '../components/ReportManagement';
+import MemberManagement from '../components/MemberManagement';
+import CommentManagement from '../components/CommentManagement';
+import ReviewManagement from '../components/ReviewManagement';
 import { AdminPageContainer, MainContent } from './styles';
 
 const AdminPage = () => {

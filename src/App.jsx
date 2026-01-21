@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
-import AdminPage from './pages/admin/AdminPage';
-import UserPage from './pages/user/UserPage';
-import LoginPage from './pages/user/components/LoginPage';
+import AdminPage from './admin/pages/AdminPage';
+import UserPage from './user/pages/UserPage';
+import LoginPage from './user/components/LoginPage';
 import './App.css';
 
 function App() {

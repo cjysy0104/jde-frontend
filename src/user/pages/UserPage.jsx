@@ -1,8 +1,8 @@
 import React from 'react';
-import Header from './components/Header';
-import SearchSection from './components/SearchSection';
-import TodaysReview from './components/TodaysReview';
-import Footer from './components/Footer';
+import Header from '../components/Header';
+import SearchSection from '../components/SearchSection';
+import TodaysReview from '../components/TodaysReview';
+import Footer from '../components/Footer';
 import { UserPageContainer } from './styles';
 
 const UserPage = () => {

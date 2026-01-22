@@ -1,21 +1,17 @@
-import React from 'react';
-import Header from '../components/common/Header';
-import SearchSection from '../components/SearchSection';
-import TodaysReview from '../components/TodaysReview';
-import Footer from '../components/common/Footer';
-import Nav from '../components/common/Nav';
-import { UserPageContainer } from './styles';
+import React from "react";
+import { Outlet } from "react-router-dom";
+import Header from "../components/common/Header";
+import Footer from "../components/common/Footer";
+import Nav from "../components/common/Nav";
+import { UserPageContainer } from "./styles";
 
-const UserPage = () => {
+export default function UserPage() {
   return (
     <UserPageContainer>
       <Header />
       <Nav />
-      <SearchSection />
-      <TodaysReview />
+      <Outlet />
       <Footer />
     </UserPageContainer>
   );
-};
-
-export default UserPage;
+}

@@ -142,7 +142,7 @@ export default function MyProfilePage() {
     };
   }, []);
 
-  // 업로드 미리보기 URL 관리
+  // 업로드 미리보기 URL 관리 (blob URL)
   useEffect(() => {
     if (!selectedFile) {
       setUploadPreviewUrl("");
@@ -193,13 +193,13 @@ export default function MyProfilePage() {
         : me.phone || "";
     setNewValue(preset);
 
-    setPwModalOpen(true); // 비번 모달
+    setPwModalOpen(true);
   };
 
   const afterPwConfirm = () => {
     if (!currentPassword?.trim()) return alert("비밀번호를 입력하세요.");
     setPwModalOpen(false);
-    setEditModalOpen(true); // 값 모달
+    setEditModalOpen(true);
   };
 
   const saveInfo = async () => {
@@ -280,14 +280,19 @@ export default function MyProfilePage() {
   const cacheBust = (url) =>
     url ? `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}` : "";
 
+  /**
+   * 백엔드 응답이 SuccessResponse 형태이고, URL이 res.data에 들어오는 구조를 지원
+   * (너 로그: { status, success, message, data: "https://...jpg" })
+   */
   const pickUrl = (res) =>
-  res?.result?.profileUrl ||
-  res?.result?.fileUrl ||
-  res?.result?.url ||
-  res?.profileUrl ||
-  res?.fileUrl ||
-  res?.url ||
-  "";
+    res?.data ||
+    res?.result?.profileUrl ||
+    res?.result?.fileUrl ||
+    res?.result?.url ||
+    res?.profileUrl ||
+    res?.fileUrl ||
+    res?.url ||
+    "";
 
   const applyUpload = async () => {
     try {
@@ -295,32 +300,26 @@ export default function MyProfilePage() {
       if (!photoPassword?.trim()) return alert("비밀번호를 입력하세요.");
       if (!selectedFile) return alert("업로드할 파일을 선택하세요.");
 
-      // 1) 업로드 (업로드 응답에 url이 올 수도 있으니 받아둠)
-      const uploadRes = await memberApi.uploadProfileImage(photoPassword, selectedFile);
-      const uploadUrl = pickUrl(uploadRes); // 서버가 url 내려주면 여기서 잡힘
+      // 1) 업로드 응답에서 바로 URL 받기
+      const uploadRes = await memberApi.uploadProfileImage(
+        photoPassword,
+        selectedFile
+      );
 
-      // 2) 서버 최신값 재조회 (가장 정확)
-      let latestUrl = "";
-      try {
-        const meRes = await memberApi.getMe();
-        latestUrl = pickUrl(meRes);
-      } catch (e) {
-        console.warn("getMe failed:", e?.message);
-      }
-
-      // 3) 최종 URL 결정: getMe 우선, 없으면 upload 응답 url
-      const finalUrl = latestUrl || uploadUrl;
-
-      if (!finalUrl) {
-        alert("업로드는 됐는데 프로필 URL을 받지 못했습니다. (업로드 응답/ getMe 확인)");
+      const uploadUrl = pickUrl(uploadRes);
+      if (!uploadUrl) {
+        alert(
+          "업로드는 됐는데 프로필 URL을 받지 못했습니다. (uploadRes.data 확인)"
+        );
         return;
       }
 
       // localStorage에는 blob 말고 서버 URL만 저장!
+      const finalUrl = cacheBust(uploadUrl);
       const updated = {
         ...me,
-        profileUrl: cacheBust(finalUrl),
-        fileUrl: cacheBust(finalUrl),
+        profileUrl: finalUrl,
+        fileUrl: finalUrl,
       };
 
       authStorage.setMemberInfo(updated);
@@ -341,38 +340,20 @@ export default function MyProfilePage() {
       if (!photoPassword?.trim()) return alert("비밀번호를 입력하세요.");
       if (!selectedDefault?.fileNo) return alert("기본 이미지를 선택하세요.");
 
-      await memberApi.changeProfileToDefault(photoPassword, selectedDefault.fileNo);
+      // 기본 이미지 변경 응답에서도 data에 URL이 옴(서비스가 url 반환하니까)
+      const res = await memberApi.changeProfileToDefault(
+        photoPassword,
+        selectedDefault.fileNo
+      );
+      console.log("default response =", res);
 
-      // 우선 즉시 반영
-      const optimistic = selectedDefault.fileUrl;
-      const optimisticUpdated = { ...me, profileUrl: optimistic, fileUrl: optimistic };
-      authStorage.setMemberInfo(optimisticUpdated);
-      setMe(optimisticUpdated);
+      const urlFromServer = pickUrl(res) || selectedDefault.fileUrl;
+      const finalUrl = cacheBust(urlFromServer);
+
+      const updated = { ...me, profileUrl: finalUrl, fileUrl: finalUrl };
+      authStorage.setMemberInfo(updated);
+      setMe(updated);
       window.dispatchEvent(new Event("authChanged"));
-
-      // 서버 최신값 재조회
-      try {
-        const meRes = await memberApi.getMe();
-        const latestUrl =
-          meRes?.result?.profileUrl ||
-          meRes?.result?.fileUrl ||
-          meRes?.profileUrl ||
-          meRes?.fileUrl ||
-          "";
-
-        if (latestUrl) {
-          const updated = {
-            ...optimisticUpdated,
-            profileUrl: cacheBust(latestUrl),
-            fileUrl: cacheBust(latestUrl),
-          };
-          authStorage.setMemberInfo(updated);
-          setMe(updated);
-          window.dispatchEvent(new Event("authChanged"));
-        }
-      } catch (e) {
-        console.warn("getMe failed:", e?.message);
-      }
 
       setPhotoModalOpen(false);
       alert("기본 이미지로 변경되었습니다!");
@@ -382,7 +363,6 @@ export default function MyProfilePage() {
     }
   };
 
-  // 프로필 모달에서 Enter 누르면 자동 적용
   const primaryPhotoAction = () => {
     if (selectedFile) return applyUpload();
     if (selectedDefault) return applyDefault();
@@ -516,9 +496,7 @@ export default function MyProfilePage() {
           onPrimary={primaryPhotoAction}
           maxWidth={860}
         >
-          <ModalDesc>
-            업로드/기본 중 하나 선택
-          </ModalDesc>
+          <ModalDesc>업로드/기본 중 하나 선택</ModalDesc>
 
           <Split>
             <Card>
@@ -552,16 +530,6 @@ export default function MyProfilePage() {
                   <PreviewPlaceholder>업로드 미리보기</PreviewPlaceholder>
                 )}
               </PreviewBox>
-
-              <CardActions>
-                <MiniPrimary
-                  type="button"
-                  onClick={applyUpload}
-                  disabled={!selectedFile}
-                >
-                  업로드 저장
-                </MiniPrimary>
-              </CardActions>
             </Card>
 
             {/* 기본 이미지 */}

@@ -41,8 +41,9 @@ export const Value = styled.div`
 `;
 
 export const Btn = styled.button`
-  border: 1px solid #e5e7eb;
-  background: white;
+  border: 1px solid #ebe7e5;
+  background: #111827;
+  color: white;
   padding: 9px 12px;
   border-radius: 12px;
   font-weight: 900;
@@ -178,7 +179,7 @@ export const CardRow = styled.div`
 export const HiddenFileInput = styled.input``;
 
 export const GhostButton = styled.button`
-  border: 1px solid #e5e7eb;
+  border: 1px solid #ebe8e5;
   background: white;
   padding: 9px 10px;
   border-radius: 12px;
@@ -256,7 +257,7 @@ export const Grid = styled.div`
 `;
 
 export const Thumb = styled.button`
-  border: 1px solid ${({ $active }) => ($active ? "#111827" : "#e5e7eb")};
+  border: 1px solid ${({ $active }) => ($active ? "#111827" : "#ebe8e5")};
   background: ${({ $active }) => ($active ? "#111827" : "white")};
   color: ${({ $active }) => ($active ? "white" : "#111827")};
   border-radius: 14px;

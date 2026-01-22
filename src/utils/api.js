@@ -5,7 +5,7 @@ const API_BASE_URL = window.ENV?.API_BASE_URL;
 // 토큰 관리 함수 테스트용 이긴 해용 
 export const authStorage = {
   getToken: () => {
-    return localStorage.getItem("authToken") || localStorage.getItem("accessToken");
+    return localStorage.getItem('authToken');
   },
   setToken: (token) => {
     localStorage.setItem('authToken', token);
@@ -53,10 +53,6 @@ apiClient.interceptors.request.use(
     const token = authStorage.getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-    }
-    // FormData(파일 업로드)면 기본 JSON Content-Type 제거 → boundary 자동 세팅
-    if (config.data instanceof FormData) {
-      delete config.headers["Content-Type"];
     }
     return config;
   },
@@ -296,7 +292,6 @@ export const adminApi = {
     }
   },
 
-
 };
 
 export const authApi = {
@@ -306,6 +301,17 @@ export const authApi = {
       password,
     });
   },
+
+logout: async ({ email, refreshToken }) => {
+  try {
+    await apiClient.post("/api/auth/logout", {
+      email,
+      refreshToken,
+    });
+  } catch (e) {
+    console.warn("Logout API failed:", e);
+  }
+},
 };
 
 /* =======================

@@ -391,6 +391,12 @@ export default function MyProfilePage() {
         </PrimaryButton>
       </ActionRow>
 
+      <ActionRow>
+        <PrimaryButton type="button" onClick={openPhotoModal}>
+          비밀번호 변경
+        </PrimaryButton>
+      </ActionRow>
+
       <Row>
         <Label>이메일</Label>
         <Value>{me.email}</Value>

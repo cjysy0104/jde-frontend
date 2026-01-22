@@ -25,7 +25,7 @@ const Sidebar = ({ currentPage, onMenuClick }) => {
       
       <MenuList>
         <MenuItem 
-          active={currentPage === 'dashboard'}
+          $active={currentPage === 'dashboard'}
           onClick={() => onMenuClick('dashboard')}
         >
           <MenuIcon><FaHome /></MenuIcon>
@@ -51,7 +51,7 @@ const Sidebar = ({ currentPage, onMenuClick }) => {
         </MenuItem>
         
         <MenuItem 
-          active={currentPage === 'reports'}
+          $active={currentPage === 'reports'}
           onClick={() => onMenuClick('reports')}
         >
           <MenuIcon><FaFlag /></MenuIcon>

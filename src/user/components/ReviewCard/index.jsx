@@ -14,14 +14,18 @@ import {
 const ReviewCard = ({ review }) => {
   return (
     <CardContainer>
-      <CardImage src={review.image} alt={review.restaurantName} />
+      <CardImage src={review.thumbnailUrl} alt={review.restaurantName} />
       <CardContent>
         <RestaurantName>{review.restaurantName}</RestaurantName>
         <RatingSection>
           <StarIcon><FaStar /></StarIcon>
           <RatingValue>{review.rating}</RatingValue>
         </RatingSection>
-        <Category>{review.category}</Category>
+        <Category>
+            {review.keywords.map((k) => (
+              <span key={k.keywordNo}>#{k.keywordName} </span>
+            ))}
+        </Category>
       </CardContent>
     </CardContainer>
   );

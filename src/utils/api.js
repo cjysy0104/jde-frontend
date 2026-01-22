@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = window.ENV?.API_BASE_URL;
+const API_BASE_URL = window.ENV?.API_BASE_URL || "http://localhost:8080";
 
 // 토큰 관리 함수 테스트용 이긴 해용 
 export const authStorage = {
@@ -69,7 +69,10 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response) {
       // 서버가 응답했지만 에러 상태 코드
-      const errorMessage = error.response.data?.message || error.response.data?.error || error.message;
+      const errorMessage =
+        error.response.data?.message ||
+        error.response.data?.error ||
+        error.message;
       throw new Error(errorMessage);
     } else if (error.request) {
       // 요청은 보냈지만 응답을 받지 못함
@@ -82,7 +85,7 @@ apiClient.interceptors.response.use(
 );
 
 export const adminApi = {
-  // 댓글 신고 목록 조회
+  // ... (생략 없이 기존 코드 그대로 유지)
   getCommentReports: async (page = 1) => {
     try {
       return await apiClient.get(`/api/admin/reports/comment?page=${page}`);
@@ -91,8 +94,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 리뷰 신고 목록 조회
   getReviewReports: async (page = 1) => {
     try {
       return await apiClient.get(`/api/admin/reports/review?page=${page}`);
@@ -101,8 +102,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 댓글 신고 키워드 검색
   searchCommentReports: async (keyword, page = 1) => {
     try {
       return await apiClient.get(`/api/admin/reports/comment/keyword?keyword=${encodeURIComponent(keyword)}&page=${page}`);
@@ -111,8 +110,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 리뷰 신고 키워드 검색
   searchReviewReports: async (keyword, page = 1) => {
     try {
       return await apiClient.get(`/api/admin/reports/review/keyword?keyword=${encodeURIComponent(keyword)}&page=${page}`);
@@ -121,8 +118,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 댓글 신고 상세 조회
   getCommentReportDetail: async (reportNo) => {
     try {
       return await apiClient.get(`/api/admin/reports/comment/${reportNo}`);
@@ -131,8 +126,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 리뷰 신고 상세 조회
   getReviewReportDetail: async (reportNo) => {
     try {
       return await apiClient.get(`/api/admin/reports/review/${reportNo}`);
@@ -141,8 +134,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 댓글 신고 처리
   processCommentReport: async (reportNo, reportProcess) => {
     try {
       return await apiClient.put(`/api/admin/reports/comment/${reportNo}`, { reportProcess });
@@ -151,8 +142,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 리뷰 신고 처리
   processReviewReport: async (reportNo, reportProcess) => {
     try {
       return await apiClient.put(`/api/admin/reports/review/${reportNo}`, { reportProcess });
@@ -161,8 +150,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 회원 목록 조회
   getMembers: async (page = 1) => {
     try {
       return await apiClient.get(`/api/admin/members?page=${page}`);
@@ -171,8 +158,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 회원 키워드 검색
   searchMembers: async (keyword, page = 1) => {
     try {
       return await apiClient.get(`/api/admin/members/keyword?keyword=${encodeURIComponent(keyword)}&page=${page}`);
@@ -181,8 +166,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 회원 상세 조회
   getMemberDetail: async (memberNo) => {
     try {
       return await apiClient.get(`/api/admin/members/${memberNo}`);
@@ -191,8 +174,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 회원 권한 변경
   updateMemberRole: async (memberNo, role) => {
     try {
       return await apiClient.put(`/api/admin/members/${memberNo}/role`, { role });
@@ -201,8 +182,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 회원 삭제
   deleteMember: async (memberNo) => {
     try {
       return await apiClient.delete(`/api/admin/members/${memberNo}`);
@@ -211,8 +190,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 댓글 목록 조회
   getComments: async (page = 1) => {
     try {
       return await apiClient.get(`/api/admin/comments?page=${page}`);
@@ -221,8 +198,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 댓글 키워드 검색
   searchComments: async (keyword, page = 1) => {
     try {
       return await apiClient.get(`/api/admin/comments/keyword?keyword=${encodeURIComponent(keyword)}&page=${page}`);
@@ -231,8 +206,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 댓글 상세 조회
   getCommentDetail: async (commentNo) => {
     try {
       return await apiClient.get(`/api/admin/comments/${commentNo}`);
@@ -241,8 +214,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 댓글 삭제
   deleteComment: async (commentNo) => {
     try {
       return await apiClient.delete(`/api/admin/comments/${commentNo}`);
@@ -251,8 +222,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 리뷰 목록 조회
   getReviews: async (page = 1) => {
     try {
       return await apiClient.get(`/api/admin/reviews?page=${page}`);
@@ -261,8 +230,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 리뷰 키워드 검색
   searchReviews: async (keyword, page = 1) => {
     try {
       return await apiClient.get(`/api/admin/reviews/keyword?keyword=${encodeURIComponent(keyword)}&page=${page}`);
@@ -271,8 +238,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 리뷰 상세 조회
   getReviewDetail: async (reviewNo) => {
     try {
       return await apiClient.get(`/api/admin/reviews/${reviewNo}`);
@@ -281,8 +246,6 @@ export const adminApi = {
       throw error;
     }
   },
-
-  // 리뷰 삭제
   deleteReview: async (reviewNo) => {
     try {
       return await apiClient.delete(`/api/admin/reviews/${reviewNo}`);
@@ -291,7 +254,6 @@ export const adminApi = {
       throw error;
     }
   },
-
 };
 
 export const authApi = {
@@ -302,16 +264,60 @@ export const authApi = {
     });
   },
 
-logout: async ({ email, refreshToken }) => {
-  try {
-    await apiClient.post("/api/auth/logout", {
-      email,
-      refreshToken,
-    });
-  } catch (e) {
-    console.warn("Logout API failed:", e);
-  }
-},
-
-
+  logout: async ({ email, refreshToken }) => {
+    try {
+      await apiClient.post("/api/auth/logout", {
+        email,
+        refreshToken,
+      });
+    } catch (e) {
+      console.warn("Logout API failed:", e);
+    }
+  },
 };
+
+/* =========================================================
+ * 회원가입 관련 API 추가 (중복확인/회원가입)
+ * - 성공 시 apiClient 인터셉터가 response.data를 반환함
+ * - 실패 시 인터셉터가 throw new Error(serverMessage) 해줌
+ * ========================================================= */
+export const memberApi = {
+  // GET /api/members/email?email=...
+  checkEmail: async (email) => {
+    return await apiClient.get(`/api/members/email?email=${encodeURIComponent(email)}`);
+  },
+
+  // GET /api/members/nickname?nickname=...
+  checkNickname: async (nickname) => {
+    return await apiClient.get(`/api/members/nickname?nickname=${encodeURIComponent(nickname)}`);
+  },
+
+  // POST /api/members
+  signup: async ({ email, password, memberName, nickname, phone }) => {
+    return await apiClient.post("/api/members", {
+      email,
+      password,
+      memberName,
+      nickname,
+      phone,
+    });
+  },
+};
+
+// review API
+export const reviewApi = {
+  // 베스트 리뷰 조회
+  getBestReviewList: async ({ cursor, cursorLikeCount}) => {
+    try {
+      return await apiClient.get(`/api/reviews/best`, {
+        params:{
+          cursor,
+          cursorLikeCount
+        },
+      });
+    } catch (error) {
+      console.error('getBestReviewList error:', error);
+      throw error;
+    }
+  }
+}

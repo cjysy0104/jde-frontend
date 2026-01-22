@@ -21,12 +21,20 @@ export const LogoSection = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
+
+  cursor: pointer;          
+  user-select: none;
+
 `;
+
 
 export const LogoImage = styled.img`
   width: 60px;
   height: 60px;
   object-fit: contain;
+
+  transform: scale(4.0);   /* 시각적으로만 확대 */
+  transform-origin: left center;
 `;
 
 export const LogoText = styled.h1`

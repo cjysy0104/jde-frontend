@@ -393,3 +393,21 @@ export const myActivityApi = {
     return await apiClient.delete(`/api/comments/${commentNo}`);
   },
 };
+
+// review API
+export const reviewApi = {
+  // 베스트 리뷰 조회
+  getBestReviewList: async ({ cursor, cursorLikeCount}) => {
+    try {
+      return await apiClient.get(`/api/reviews/best`, {
+        params:{
+          cursor,
+          cursorLikeCount
+        },
+      });
+    } catch (error) {
+      console.error('getBestReviewList error:', error);
+      throw error;
+    }
+  }
+}

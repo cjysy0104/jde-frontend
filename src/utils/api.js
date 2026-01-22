@@ -2,7 +2,7 @@ import axios from "axios";
 
 const API_BASE_URL = window.ENV?.API_BASE_URL || "http://localhost:8080";
 
-// 토큰 관리 함수 테스트용 이긴 해용
+// 스토리지
 export const authStorage = {
   getToken: () => localStorage.getItem("authToken"),
   setToken: (token) => localStorage.setItem("authToken", token),
@@ -36,6 +36,48 @@ const apiClient = axios.create({
   },
 });
 
+// refresh 전용 (중요: apiClient 사용 금지 → 무한루프 방지)
+const refreshClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: { "Content-Type": "application/json" },
+});
+
+// 동시 401 발생 시 refresh 중복 호출 방지
+let refreshPromise = null;
+
+// refresh 응답: accessToken만 내려오는 스펙 반영
+const applyAccessToken = (refreshResponseData) => {
+  const newAccessToken = refreshResponseData?.data?.accessToken;
+
+  if (!newAccessToken) {
+    throw new Error("토큰 갱신 응답에 accessToken이 없습니다.");
+  }
+
+  authStorage.setToken(newAccessToken);
+  return newAccessToken;
+};
+
+const notifyForceLogout = (reason = "REFRESH_FAILED") => {
+  window.dispatchEvent(
+    new CustomEvent("auth:forceLogout", { detail: { reason } })
+  );
+};
+
+const requestRefresh = async () => {
+  const refreshToken = authStorage.getRefreshToken();
+  if (!refreshToken)
+    throw new Error("refreshToken이 없습니다. 다시 로그인 해주세요.");
+
+  const res = await refreshClient.post("/api/auth/refresh", { refreshToken });
+
+  if (!res?.data?.success) {
+    const msg = res?.data?.message || "토큰 갱신에 실패했습니다.";
+    throw new Error(msg);
+  }
+
+  return applyAccessToken(res.data);
+};
+
 // 요청 인터셉터: 토큰 자동 추가
 apiClient.interceptors.request.use(
   (config) => {
@@ -46,23 +88,55 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// 응답 인터셉터: 에러 처리
+// 응답 인터셉터: 401이면 refresh 후 재시도
 apiClient.interceptors.response.use(
-  (response) => response.data, // data만 반환
-  (error) => {
-    if (error.response) {
-      const errorMessage =
-        error.response.data?.message ||
-        error.response.data?.error ||
-        error.message;
-      throw new Error(errorMessage);
-    }
-    if (error.request) {
-      throw new Error(
-        "서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요."
+  (response) => response.data,
+  async (error) => {
+    if (!error?.response) {
+      if (error?.request) {
+        return Promise.reject(
+          new Error("서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.")
+        );
+      }
+      return Promise.reject(
+        new Error(error?.message || "요청 중 오류가 발생했습니다.")
       );
     }
-    throw new Error(error.message || "요청 중 오류가 발생했습니다.");
+
+    const { status, data } = error.response;
+    const originalRequest = error.config;
+
+    const isAuthExpired = status === 401;
+    const isRefreshRequest = originalRequest?.url?.includes("/api/auth/refresh");
+
+    if (
+      isAuthExpired &&
+      !isRefreshRequest &&
+      originalRequest &&
+      !originalRequest._retry
+    ) {
+      originalRequest._retry = true;
+
+      try {
+        if (!refreshPromise) {
+          refreshPromise = requestRefresh().finally(() => {
+            refreshPromise = null;
+          });
+        }
+
+        const newAccessToken = await refreshPromise;
+
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return apiClient(originalRequest);
+      } catch (refreshErr) {
+        authStorage.clear();
+        notifyForceLogout("REFRESH_TOKEN_EXPIRED");
+        return Promise.reject(refreshErr);
+      }
+    }
+
+    const errorMessage = data?.message || data?.error || error.message;
+    return Promise.reject(new Error(errorMessage));
   }
 );
 
@@ -277,25 +351,20 @@ export const authApi = {
   },
 };
 
-/* =======================
-   Member APIs (회원가입 + 내정보수정/프로필)
-======================= */
+/* Member APIs */
 export const memberApi = {
-  // (회원가입) 이메일 중복확인
   checkEmail: async (email) => {
     return await apiClient.get(
       `/api/members/email?email=${encodeURIComponent(email)}`
     );
   },
 
-  // (회원가입) 닉네임 중복확인
   checkNickname: async (nickname) => {
     return await apiClient.get(
       `/api/members/nickname?nickname=${encodeURIComponent(nickname)}`
     );
   },
 
-  // (회원가입)
   signup: async ({ email, password, memberName, nickname, phone }) => {
     return await apiClient.post("/api/members", {
       email,
@@ -327,7 +396,6 @@ export const memberApi = {
     });
   },
 
-  // 닉네임 변경
   changeNickname: async (currentPassword, nickname) => {
     return await apiClient.patch(`/api/members/nickname`, {
       currentPassword,
@@ -335,7 +403,6 @@ export const memberApi = {
     });
   },
 
-  // 전화번호 변경
   changePhone: async (currentPassword, phone) => {
     return await apiClient.patch(`/api/members/phone`, {
       currentPassword,
@@ -343,19 +410,16 @@ export const memberApi = {
     });
   },
 
-  // 프로필 이미지 업로드 (multipart)
   uploadProfileImage: async (password, file) => {
     const form = new FormData();
     form.append("password", password);
     form.append("file", file);
 
-    // 기본 JSON Content-Type 덮어쓰지 않게 → 브라우저가 boundary 자동 설정
     return await apiClient.patch(`/api/members/profile-image`, form, {
       headers: { "Content-Type": undefined },
     });
   },
 
-  // 기본 이미지로 변경
   changeProfileToDefault: async (password, fileNo) => {
     return await apiClient.patch(`/api/members/profile-image/default`, {
       password,
@@ -363,15 +427,11 @@ export const memberApi = {
     });
   },
 
-  // 내 정보 조회
   getMe: async () => {
     return await apiClient.get("/api/members/me");
   },
 };
 
-/* =======================
-   Bookmark APIs
-======================= */
 export const bookmarkApi = {
   toggle: async (reviewNo) => {
     return await apiClient.post(`/api/bookmarks/${reviewNo}/toggle`);
@@ -386,9 +446,6 @@ export const bookmarkApi = {
   },
 };
 
-/* =======================
-   My Activity APIs
-======================= */
 export const myActivityApi = {
   getMyReviews: async ({ page = 1, size = 10 } = {}) => {
     return await apiClient.get(`/api/reviews/me?page=${page}&size=${size}`);
@@ -407,20 +464,15 @@ export const myActivityApi = {
   },
 };
 
-// review API
 export const reviewApi = {
-  // 베스트 리뷰 조회
-  getBestReviewList: async ({ cursor, cursorLikeCount}) => {
+  getBestReviewList: async ({ cursor, cursorLikeCount }) => {
     try {
       return await apiClient.get(`/api/reviews/best`, {
-        params:{
-          cursor,
-          cursorLikeCount
-        },
+        params: { cursor, cursorLikeCount },
       });
     } catch (error) {
-      console.error('getBestReviewList error:', error);
+      console.error("getBestReviewList error:", error);
       throw error;
     }
-  }
-}
+  },
+};

@@ -33,8 +33,15 @@ export const LoginSubtitle = styled.p`
 export const FormGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 6px;
+  gap: 4px;
+  margin-bottom: 16px;
+`;
+
+export const LabelRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
 `;
 
 export const Label = styled.label`
@@ -173,4 +180,10 @@ export const ErrorMessage = styled.div`
   padding: 10px;
   border-radius: 6px;
   font-size: 13px;
+`;
+
+export const InlineErrorMessage = styled.span`
+  color: #dc2626;
+  font-size: 12px;
+  white-space: nowrap;
 `;

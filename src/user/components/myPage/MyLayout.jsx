@@ -8,7 +8,17 @@ export default function MyLayout() {
   return (
     <Layout>
       <Side>
-        <Title onClick={() => navigate("/my")}>My 페이지</Title>
+        <Title>My 페이지</Title>
+      
+        <NavLink
+          to="/my"
+          className={({ isActive }) => (isActive ? "active" : "")}
+          style={{ textDecoration: "none" }}
+        >
+          <TabLink as="div" className={({ isActive }) => (isActive ? "active" : "")}>
+            내 정보
+          </TabLink>
+        </NavLink>
 
         <NavLink
           to="/my/list"

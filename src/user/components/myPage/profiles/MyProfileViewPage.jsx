@@ -94,7 +94,7 @@ export default function MyProfileViewPage() {
   return (
     <Page>
       <TopBar>
-        <Title>My 페이지</Title>
+        <Title>내 정보</Title>
         <EditButton type="button" onClick={() => navigate("/my/profile")}>
           정보 수정하기
         </EditButton>

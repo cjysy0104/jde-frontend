@@ -27,7 +27,8 @@ export const Title = styled.div`
   font-weight: 800;
   margin-bottom: 14px;
   color: #111827;
-  cursor: pointer;
+  cursor: default;
+  pointer-events: none;
 `;
 
 export const TabLink = styled(NavLink)`
@@ -40,6 +41,7 @@ export const TabLink = styled(NavLink)`
   background: #f9fafb;
   border: 1px solid transparent;
   margin-bottom: 10px;
+  cursor: pointer;
 
   &.active {
     background: rgba(249, 115, 22, 0.12);

@@ -25,7 +25,7 @@ const Header = () => {
       <HeaderContent>
         <LogoSection onClick={() => navigate('/')}>
           <LogoImage src={Logo1} alt="JUST DO EAT" />
-          <LogoText>JUST DO EAT</LogoText>
+          
         </LogoSection>
 
         <AuthButtons>

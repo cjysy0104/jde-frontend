@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AdminPage from "./admin/pages/AdminPage";
 import UserPage from "./user/pages/UserPage";
 import LoginPage from "./user/pages/LoginPage";
+import SignUpPage from "./user/pages/SignUpPage";
 
 import UserHome from "./user/UserHome";
 
@@ -19,13 +20,13 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/admin" element={<AdminPage />} />
-        <Route path="/login" element={<LoginPage />} />
 
-        {/* ✅ 헤더/푸터 있는 유저 레이아웃 */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+
         <Route path="/" element={<UserPage />}>
           <Route index element={<UserHome />} />
 
-          {/* ✅ my 는 /user 붙이지 말고 /my 로 통일 */}
           <Route path="my" element={<MyLayout />}>
             <Route index element={<MyProfileViewPage />} />
             <Route path="profile" element={<MyProfilePage />} />
@@ -34,10 +35,8 @@ export default function App() {
           </Route>
         </Route>
 
-        {/* ✅ 혹시 /user로 들어오면 / 로 리다이렉트 */}
         <Route path="/user/*" element={<Navigate to="/" replace />} />
 
-        {/* 기타 */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

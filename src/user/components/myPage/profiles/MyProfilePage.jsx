@@ -114,6 +114,8 @@ export default function MyProfilePage() {
   const [newPassword1, setNewPassword1] = useState("");
   const [newPassword2, setNewPassword2] = useState("");
 
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  
   const fieldLabel = useMemo(() => {
     if (pendingField === "name") return "이름";
     if (pendingField === "nickname") return "닉네임";
@@ -161,6 +163,7 @@ export default function MyProfilePage() {
   }
 
   const closeAllModals = () => {
+    setViewModalOpen(false);
     setPwModalOpen(false);
     setEditModalOpen(false);
     setPhotoPwModalOpen(false);
@@ -412,8 +415,9 @@ export default function MyProfilePage() {
           src={me.profileUrl || me.fileUrl || fallbackImg}
           alt="profile"
           onError={(e) => (e.currentTarget.src = fallbackImg)}
-          onClick={openPhotoModal}
-          title="클릭해서 프로필 사진 변경"
+          onClick={() => setViewModalOpen(true)}
+          title="클릭해서 크게 보기"
+          style={{ cursor: 'zoom-in' }}
         />
       </BigAvatarWrap>
 
@@ -606,7 +610,7 @@ export default function MyProfilePage() {
                 </FileName>
               </CardRow>
 
-              <PreviewBox>
+              <PreviewBox style={{ height: 200 }}>
                 {uploadPreviewUrl ? (
                   <PreviewImg src={uploadPreviewUrl} alt="upload preview" />
                 ) : (
@@ -643,7 +647,7 @@ export default function MyProfilePage() {
                 })}
               </Grid>
 
-              <PreviewBox style={{ marginTop: 10, height: 280 }}>
+              <PreviewBox style={{ marginTop: 10, height: 200 }}>
                 {selectedDefault ? (
                   <PreviewImg
                     src={selectedDefault.fileUrl}
@@ -665,6 +669,26 @@ export default function MyProfilePage() {
               : "선택 필요"}{" "}
             · ESC: 닫기
           </Hint>
+        </Modal>
+      )}
+
+      {viewModalOpen && (
+        <Modal
+          title="프로필 원본 보기"
+          onClose={() => setViewModalOpen(false)}
+          onPrimary={() => setViewModalOpen(false)}
+          primaryText="확인"
+          cancelText={null}
+          maxWidth={700}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <img 
+              src={me.profileUrl || me.fileUrl || fallbackImg} 
+              alt="원본" 
+              style={{ width: '100%', borderRadius: '8px', objectFit: 'contain', maxHeight: '70vh' }}
+              onClick={() => setViewModalOpen(false)}
+            />
+          </div>
         </Modal>
       )}
     </Page>

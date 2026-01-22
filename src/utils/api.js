@@ -390,12 +390,24 @@ export const bookmarkApi = {
    My Activity APIs
 ======================= */
 export const myActivityApi = {
-  getMyReviews: async ({ page = 1, size = 10 } = {}) => {
-    return await apiClient.get(`/api/reviews/me?page=${page}&size=${size}`);
+  getMyReviews: async ({ cursor = 1, size = 10, sort } = {}) => {
+    const params = new URLSearchParams();
+
+    if (cursor != null) params.set("cursor", String(cursor));
+    params.set("scroll.size", String(size));
+
+    if (sort) params.set("sort", sort);
+    
+    return await apiClient.get(`/api/reviews/me?${params.toString()}`);
   },
 
-  getMyComments: async ({ page = 1, size = 10 } = {}) => {
-    return await apiClient.get(`/api/comments/me?page=${page}&size=${size}`);
+  getMyComments: async ({ cursor = 1, size = 10 } = {}) => {
+    const params = new URLSearchParams();
+
+    if (cursor != null) params.set("cursor", String(cursor));
+    params.set("scroll.size", String(size));
+
+    return await apiClient.get(`/api/comments/me?${params.toString()}`);
   },
 
   deleteReview: async (reviewNo) => {

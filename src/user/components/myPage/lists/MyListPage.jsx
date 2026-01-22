@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { myActivityApi } from "../../../../utils/api";
 import { styles } from "./myListStyles";
@@ -14,70 +14,109 @@ export default function MyListPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // 페이지네이션 상태 (cursor 기반을 페이지처럼)
-  const [page, setPage] = useState(0); // 0부터
+  // ✅ page는 0-based(UI용)
+  const [page, setPage] = useState(0);
   const [hasNext, setHasNext] = useState(true);
 
-  // pageCursor[p] = p페이지를 불러올 때 사용했던 cursor(= 이전 페이지 마지막 cursor)
-  // - 0페이지는 cursor=null
-  const [pageCursor, setPageCursor] = useState([null]);
+  // ✅ 백엔드 cursor는 "페이지 번호(1부터)"로 사용
+  // pageCursor[p] = 백엔드에 보낼 cursor 값 (1-based)
+  // 0페이지 -> cursor=1
+  const [pageCursor, setPageCursor] = useState([1]);
 
-  useEffect(() => {
-    // 탭(type) 바뀌면 전부 초기화
-    setItems([]);
-    setLoading(false);
-    setPage(0);
-    setHasNext(true);
-    setPageCursor([null]);
-    fetchPage(0, null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type]);
+  const inFlightRef = useRef(false);
+  const reqSeqRef = useRef(0);
 
-  const fetchPage = async (targetPage, cursorForPage) => {
-    if (loading) return;
+  const normalizeList = (maybeAxiosResponse) => {
+  const payload = maybeAxiosResponse?.data ?? maybeAxiosResponse; // ✅ 핵심
 
-    setLoading(true);
-    try {
-      const data = isReviews
-        ? await myActivityApi.getMyReviews({ size, cursor: cursorForPage })
-        : await myActivityApi.getMyComments({ size, cursor: cursorForPage });
+  // SuccessResponse 형태: { status, success, message, result, timeStamp }
+  const r = payload?.result;
 
-      const list = data?.result ?? [];
+  // result가 리스트거나, 내부에 list/content/items로 들어올 수도 있게 방어
+  const list =
+    r?.list ??
+    r?.content ??
+    r?.items ??
+    r ??
+    payload?.list ??
+    payload?.items ??
+    [];
 
-      // size+1 방식
-      const next = list.length > size;
-      const sliced = next ? list.slice(0, size) : list;
+  return Array.isArray(list) ? list : [];
+};
 
-      setItems(sliced);
-      setHasNext(next);
-      setPage(targetPage);
+  const fetchPage = useCallback(
+    async (targetPage) => {
+      if (inFlightRef.current) return;
 
-      // 다음 페이지 cursor 저장: "현재 페이지의 마지막 item id"
-      if (next && sliced.length > 0) {
-        const last = sliced[sliced.length - 1];
-        const nextCursor = isReviews ? last.reviewNo : last.commentNo;
+      inFlightRef.current = true;
+      setLoading(true);
 
+      const myReq = ++reqSeqRef.current;
+
+      try {
+        // ✅ targetPage(0-based) -> cursor(1-based)
+        const cursorForBackend = targetPage + 1;
+
+        // ✅ size+1로 다음 페이지 존재 여부 판단 (백엔드가 그대로 size만큼만 주면 hasNext는 정확히 못 잡음)
+        // 그래도 최소한 목록은 뜬다. (정확한 hasNext는 아래 보완 로직으로 처리)
+        const data = isReviews
+          ? await myActivityApi.getMyReviews({ size: size + 1, cursor: cursorForBackend })
+          : await myActivityApi.getMyComments({ size: size + 1, cursor: cursorForBackend });
+
+        console.log("raw api response =", data);
+        console.log("normalized list =", normalizeList(data));
+
+        if (myReq !== reqSeqRef.current) return;
+
+        const list = normalizeList(data);
+
+        // ✅ size+1 방식
+        const next = list.length > size;
+        const sliced = next ? list.slice(0, size) : list;
+
+        setItems(sliced);
+        setHasNext(next);
+        setPage(targetPage);
+
+        // ✅ 방문 가능한 페이지 커서 저장(다음 페이지 번호)
+        // 다음 페이지는 targetPage+1 -> cursor = (targetPage+1)+1 = targetPage+2
         setPageCursor((prev) => {
           const copy = [...prev];
-          // targetPage+1 위치에 "다음 페이지를 불러오기 위한 cursor" 저장
-          copy[targetPage + 1] = nextCursor;
+          copy[targetPage] = targetPage + 1; // 현재 페이지 cursor
+          copy[targetPage + 1] = targetPage + 2; // 다음 페이지 cursor
           return copy;
         });
+      } catch (e) {
+        console.error(e);
+        alert("내 리뷰/댓글 조회 실패");
+        setItems([]);
+        setHasNext(false);
+      } finally {
+        if (myReq === reqSeqRef.current) setLoading(false);
+        inFlightRef.current = false;
       }
-    } catch (e) {
-      console.error(e);
-      alert("내 리뷰/댓글 조회 실패");
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [isReviews, size]
+  );
+
+  useEffect(() => {
+    reqSeqRef.current++;
+    inFlightRef.current = false;
+
+    setItems([]);
+    setPage(0);
+    setHasNext(true);
+    setPageCursor([1]);
+
+    fetchPage(0);
+  }, [type, fetchPage]);
 
   const onDeleteReview = async (reviewNo) => {
     if (!window.confirm("리뷰를 삭제할까요?")) return;
     try {
       await myActivityApi.deleteReview(reviewNo);
-      // 현재 페이지 다시 로드 (삭제 후 페이지 유지)
-      fetchPage(page, pageCursor[page] ?? null);
+      fetchPage(page);
       alert("삭제 완료");
     } catch (e) {
       console.error(e);
@@ -89,7 +128,7 @@ export default function MyListPage() {
     if (!window.confirm("댓글을 삭제할까요?")) return;
     try {
       await myActivityApi.deleteComment(commentNo);
-      fetchPage(page, pageCursor[page] ?? null);
+      fetchPage(page);
       alert("삭제 완료");
     } catch (e) {
       console.error(e);
@@ -100,32 +139,25 @@ export default function MyListPage() {
   const goEditReview = (reviewNo) => navigate(`/reviews/${reviewNo}/edit`);
   const goEditComment = (commentNo) => navigate(`/comments/${commentNo}/edit`);
 
-  // 페이지 버튼(1 2 3 4 5) 범위 계산
+  // 페이지 버튼(1 2 3 4 5) — "현재까지 방문한 페이지" 기준으로 보여줌
+  const knownLastPage = Math.max(0, pageCursor.length - 1);
   const visibleCount = 5;
   const start = Math.max(0, page - 2);
-  const end = Math.min(
-    start + visibleCount - 1,
-    // 우리가 "방문해본/알고있는" 마지막 페이지 인덱스
-    Math.max(0, pageCursor.length - 1)
-  );
+  const end = Math.min(start + visibleCount - 1, knownLastPage);
   const pages = [];
   for (let p = start; p <= end; p++) pages.push(p);
 
   const goPrev = () => {
     if (page === 0) return;
-    const prevPage = page - 1;
-    fetchPage(prevPage, pageCursor[prevPage] ?? null);
+    fetchPage(page - 1);
   };
 
   const goNext = () => {
     if (!hasNext) return;
-    const nextPage = page + 1;
-    fetchPage(nextPage, pageCursor[nextPage] ?? null);
+    fetchPage(page + 1);
   };
 
-  const goPage = (p) => {
-    fetchPage(p, pageCursor[p] ?? null);
-  };
+  const goPage = (p) => fetchPage(p);
 
   return (
     <div>
@@ -147,53 +179,53 @@ export default function MyListPage() {
       ) : isReviews ? (
         <div style={styles.list}>
           {items.map((r) => (
-            <div key={r.reviewNo} style={styles.card}>
+            <div key={r.reviewNo ?? r.reviewId ?? r.id} style={styles.card}>
               <div style={styles.cardTop}>
                 <div>
-                  <div style={styles.cardTitle}>{r.restaurantName}</div>
+                  <div style={styles.cardTitle}>{r.restaurantName ?? "가게명 없음"}</div>
                   <div style={styles.meta}>
                     {r.nickname} · ⭐ {r.rating} · 👍 {r.likeCount} · 💬 {r.commentCount}
                   </div>
                 </div>
 
                 <div style={styles.btnRow}>
-                  <a href={`/reviews/${r.reviewNo}`} style={styles.btnLink}>
+                  <a href={`/reviews/${r.reviewNo ?? r.reviewId ?? r.id}`} style={styles.btnLink}>
                     상세
                   </a>
-                  <button onClick={() => goEditReview(r.reviewNo)} style={styles.btnDark}>
+                  <button onClick={() => goEditReview(r.reviewNo ?? r.reviewId ?? r.id)} style={styles.btnDark}>
                     수정
                   </button>
-                  <button onClick={() => onDeleteReview(r.reviewNo)} style={styles.btnDanger}>
+                  <button onClick={() => onDeleteReview(r.reviewNo ?? r.reviewId ?? r.id)} style={styles.btnDanger}>
                     삭제
                   </button>
                 </div>
               </div>
 
               <div style={styles.content}>{r.content}</div>
-              <div style={styles.footer}>업데이트: {String(r.updateDate)}</div>
+              <div style={styles.footer}>업데이트: {String(r.updateDate ?? r.updatedAt ?? "")}</div>
             </div>
           ))}
         </div>
       ) : (
         <div style={styles.list}>
           {items.map((c) => (
-            <div key={c.commentNo} style={styles.card}>
+            <div key={c.commentNo ?? c.commentId ?? c.id} style={styles.card}>
               <div style={styles.cardTop}>
                 <div>
-                  <div style={styles.cardTitle}>리뷰 #{c.reviewNo}</div>
+                  <div style={styles.cardTitle}>리뷰 #{c.reviewNo ?? c.reviewId ?? "?"}</div>
                   <div style={styles.meta}>
-                    {c.nickname} · 👍 {c.likeCount} · 작성일 {String(c.commentDate)}
+                    {c.nickname} · 👍 {c.likeCount} · 작성일 {String(c.commentDate ?? c.createdAt ?? "")}
                   </div>
                 </div>
 
                 <div style={styles.btnRow}>
-                  <a href={`/reviews/${c.reviewNo}`} style={styles.btnLink}>
+                  <a href={`/reviews/${c.reviewNo ?? c.reviewId ?? ""}`} style={styles.btnLink}>
                     리뷰로
                   </a>
-                  <button onClick={() => goEditComment(c.commentNo)} style={styles.btnDark}>
+                  <button onClick={() => goEditComment(c.commentNo ?? c.commentId ?? c.id)} style={styles.btnDark}>
                     수정
                   </button>
-                  <button onClick={() => onDeleteComment(c.commentNo)} style={styles.btnDanger}>
+                  <button onClick={() => onDeleteComment(c.commentNo ?? c.commentId ?? c.id)} style={styles.btnDanger}>
                     삭제
                   </button>
                 </div>
@@ -205,7 +237,6 @@ export default function MyListPage() {
         </div>
       )}
 
-      {/*  페이지네이션 (이전 1 2 3 다음) */}
       <div style={styles.pagerWrap}>
         <button disabled={page === 0 || loading} onClick={goPrev} style={styles.pagerNavBtn(page === 0 || loading)}>
           이전

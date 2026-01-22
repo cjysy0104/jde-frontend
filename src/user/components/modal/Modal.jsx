@@ -57,9 +57,11 @@ export default function Modal({
           <Body>{children}</Body>
 
           <Footer>
-            <GhostBtn type="button" onClick={onClose}>
-              {cancelText}
-            </GhostBtn>
+            {cancelText && (
+              <GhostBtn type="button" onClick={onClose}>
+                {cancelText}
+              </GhostBtn>
+            )}
             <PrimaryBtn type="submit">{primaryText}</PrimaryBtn>
           </Footer>
         </form>

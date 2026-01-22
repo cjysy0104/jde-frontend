@@ -58,7 +58,19 @@ export const CloseButton = styled.button`
 `;
 
 export const Body = styled.div`
-  padding: 16px;
+  padding: 20px;
+  /* 화면 높이에 따라 유동적으로 조절되도록 설정 */
+  max-height: 65vh; 
+  overflow-y: auto;
+  
+  /* 스크롤바 디자인 (선택 사항 - 브라우저 기본 사용 시 생략 가능) */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+  }
 `;
 
 export const Footer = styled.div`
@@ -98,3 +110,4 @@ export const PrimaryBtn = styled.button`
     background: #0b1220;
   }
 `;
+

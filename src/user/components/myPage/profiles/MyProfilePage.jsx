@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { memberApi, authStorage } from "../../../../utils/api";
+import { memberApi } from "../../../../utils/api";
+import { authStorage } from "../../../../utils/apiClient";
 import Modal from "../../modal/Modal";
 
 import {

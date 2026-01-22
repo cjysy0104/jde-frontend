@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { authApi } from "../../../utils/api";
+import { authApi } from "../../../utils/authApi";
 import { AuthContext } from "../context/AuthContext";
 
 import {

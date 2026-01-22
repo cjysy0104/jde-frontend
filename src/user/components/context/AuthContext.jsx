@@ -1,5 +1,6 @@
 import { createContext, useEffect, useState } from "react";
-import { authStorage, authApi } from "../../../utils/api";
+import { authStorage } from "../../../utils/apiClient";
+import { authApi } from "../../../utils/authApi";
 
 export const AuthContext = createContext();
 

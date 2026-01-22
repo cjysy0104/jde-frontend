@@ -306,6 +306,19 @@ export const memberApi = {
     });
   },
 
+  // 비밀번호 검증
+  verifyPassword: async (password) => {
+    return await apiClient.post("/api/members/password/verify", { password });
+  },
+
+  // 비밀번호 변경
+  changePassword: async (currentPassword, newPassword) => {
+    return await apiClient.patch("/api/members/password", {
+      currentPassword,
+      newPassword,
+    });
+  },
+
   // 이름 변경
   changeName: async (currentPassword, memberName) => {
     return await apiClient.patch(`/api/members/name`, {

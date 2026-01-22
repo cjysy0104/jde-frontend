@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { authApi } from "../../../utils/api";
 import { AuthContext } from "../context/AuthContext";
 
@@ -11,6 +11,7 @@ import {
   LoginSubtitle,
   FormGroup,
   Label,
+  LabelRow,
   Input,
   PasswordInputWrapper,
   PasswordToggle,
@@ -25,14 +26,12 @@ import {
   SignUpPrompt,
   SignUpLink,
   ErrorMessage,
+  InlineErrorMessage,
 } from "./styles";
 
 /* 유효성 검사 정책 */
-const emailRegex =
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const passwordRegex =
-  /^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,16}$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const passwordRegex = /^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,16}$/;
 
 const Login = () => {
   /* 상태관리 */
@@ -89,14 +88,7 @@ const Login = () => {
     e.preventDefault();
 
     // 서밋 하기전에 최종 방어
-    if (
-      emailError ||
-      passwordError ||
-      !email ||
-      !password
-    ) {
-      return;
-    }
+    if (emailError || passwordError || !email || !password) return;
 
     setIsLoading(true);
     setError("");
@@ -106,9 +98,9 @@ const Login = () => {
 
       if (response.success) {
         login(response.data);
-        navigate(-1);
+        navigate(from, { replace: true });
       } else {
-        navigate("/");
+        navigate("/", { replace: true });
       }
     } catch (err) {
       setError(err.message || "로그인에 실패했습니다.");
@@ -129,7 +121,10 @@ const Login = () => {
           {error && <ErrorMessage>{error}</ErrorMessage>}
 
           <FormGroup>
-            <Label>이메일</Label>
+            <LabelRow>
+              <Label>이메일</Label>
+              {emailError && <InlineErrorMessage>{emailError}</InlineErrorMessage>}
+            </LabelRow>
             <Input
               type="email"
               placeholder="example@email.com"
@@ -137,13 +132,13 @@ const Login = () => {
               onChange={handleEmailChange}
               disabled={isLoading}
             />
-            {emailError && (
-              <ErrorMessage>{emailError}</ErrorMessage>
-            )}
           </FormGroup>
 
           <FormGroup>
-            <Label>비밀번호</Label>
+            <LabelRow>
+              <Label>비밀번호</Label>
+              {passwordError && <InlineErrorMessage>{passwordError}</InlineErrorMessage>}
+            </LabelRow>
             <PasswordInputWrapper>
               <Input
                 type={showPassword ? "text" : "password"}
@@ -154,16 +149,11 @@ const Login = () => {
               />
               <PasswordToggle
                 type="button"
-                onClick={() =>
-                  setShowPassword(!showPassword)
-                }
+                onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </PasswordToggle>
             </PasswordInputWrapper>
-            {passwordError && (
-              <ErrorMessage>{passwordError}</ErrorMessage>
-            )}
           </FormGroup>
 
           <FormOptions>
@@ -171,27 +161,17 @@ const Login = () => {
               <Checkbox
                 type="checkbox"
                 checked={keepLoggedIn}
-                onChange={(e) =>
-                  setKeepLoggedIn(e.target.checked)
-                }
+                onChange={(e) => setKeepLoggedIn(e.target.checked)}
               />
-              <CheckboxLabel>
-                로그인 상태 유지
-              </CheckboxLabel>
+              <CheckboxLabel>로그인 상태 유지</CheckboxLabel>
             </CheckboxWrapper>
 
-            <ForgotPasswordLink href="#">
-              비밀번호 찾기
-            </ForgotPasswordLink>
+            <ForgotPasswordLink href="#">비밀번호 찾기</ForgotPasswordLink>
           </FormOptions>
 
           <LoginButton
             disabled={
-              isLoading ||
-              !!emailError ||
-              !!passwordError ||
-              !email ||
-              !password
+              isLoading || !!emailError || !!passwordError || !email || !password
             }
           >
             {isLoading ? "로그인 중..." : "로그인"}
@@ -203,10 +183,7 @@ const Login = () => {
         </Divider>
 
         <SignUpPrompt>
-          계정이 없으신가요?{" "}
-          <SignUpLink href="/signup">
-            회원가입
-          </SignUpLink>
+          계정이 없으신가요? <SignUpLink as={Link} to="/signup">회원가입</SignUpLink>
         </SignUpPrompt>
       </LoginFormContainer>
     </LoginPageContainer>

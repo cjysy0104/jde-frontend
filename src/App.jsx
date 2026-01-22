@@ -13,7 +13,9 @@ import MyProfilePage from "./user/components/myPage/profiles/MyProfilePage.jsx";
 import MyListPage from "./user/components/myPage/lists/MyListPage.jsx";
 import MyBookmarksPage from "./user/components/myPage/bookmarks/MyBookmarksPage.jsx";
 
+
 import "./App.css";
+import NotFoundPage from "./user/pages/NotFoundPage.jsx";
 
 export default function App() {
   return (
@@ -37,7 +39,7 @@ export default function App() {
 
         <Route path="/user/*" element={<Navigate to="/" replace />} />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );

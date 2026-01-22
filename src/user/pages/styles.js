@@ -7,3 +7,10 @@ export const UserPageContainer = styled.div`
   flex-direction: column;
 `;
 
+export const NotFoundPageContainer = styled.div`
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column; 
+  background-color: white;
+`;
+

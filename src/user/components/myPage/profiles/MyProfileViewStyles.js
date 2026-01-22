@@ -4,6 +4,7 @@ export const Page = styled.div`
   width: 100%;
   max-width: 760px;
   margin: 0 auto;
+  padding: 24px; /* ✅ ProfilePage 톤과 통일 */
 `;
 
 export const TopBar = styled.div`
@@ -26,6 +27,10 @@ export const EditButton = styled.button`
   border-radius: 12px;
   font-weight: 800;
   cursor: pointer;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.03);
+  }
 `;
 
 export const Card = styled.div`
@@ -43,8 +48,8 @@ export const ProfileRow = styled.div`
 `;
 
 export const AvatarWrap = styled.div`
-  width: 72px;
-  height: 72px;
+  width: 110px;
+  height: 110px;
   border-radius: 999px;
   overflow: hidden;
   border: 1px solid #e5e7eb;
@@ -72,14 +77,14 @@ export const ProfileMeta = styled.div`
 `;
 
 export const MainName = styled.div`
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 900;
   color: #111827;
 `;
 
 export const SubEmail = styled.div`
-  margin-top: 4px;
-  font-size: 13px;
+  margin-top: 6px;
+  font-size: 14px;
   font-weight: 700;
   color: #6b7280;
   overflow: hidden;

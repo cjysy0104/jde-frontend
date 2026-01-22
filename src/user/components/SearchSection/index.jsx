@@ -48,7 +48,7 @@ const SearchSection = () => {
             return (
               <FilterButton
                 key={filter.id}
-                active={activeFilter === filter.id}
+                $active={activeFilter === filter.id}
                 onClick={() => setActiveFilter(filter.id)}
               >
                 {Icon && <Icon />}

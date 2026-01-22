@@ -8,10 +8,10 @@ export default function MyLayout() {
   return (
     <Layout>
       <Side>
-        <Title onClick={() => navigate("/user/my")}>My 페이지</Title>
+        <Title onClick={() => navigate("/my")}>My 페이지</Title>
 
         <NavLink
-          to="/user/my/list"
+          to="/my/list"
           className={({ isActive }) => (isActive ? "active" : "")}
           style={{ textDecoration: "none" }}
         >
@@ -21,7 +21,7 @@ export default function MyLayout() {
         </NavLink>
 
         <NavLink
-          to="/user/my/bookmarks"
+          to="/my/bookmarks"
           className={({ isActive }) => (isActive ? "active" : "")}
           style={{ textDecoration: "none" }}
         >

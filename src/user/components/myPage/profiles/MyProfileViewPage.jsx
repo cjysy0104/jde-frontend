@@ -77,10 +77,13 @@ export default function MyProfileViewPage() {
 
     load();
 
-    // localStorage 값 변경(다른 탭/창) 반영
     const onStorage = () => load();
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    window.addEventListener("authChanged", onStorage);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("authChanged", onStorage);
+    };
   }, []);
 
   const initial = (member?.nickname || member?.name || member?.email || "U")
@@ -92,7 +95,7 @@ export default function MyProfileViewPage() {
     <Page>
       <TopBar>
         <Title>My 페이지</Title>
-        <EditButton onClick={() => navigate("/user/my/profile")}>
+        <EditButton type="button" onClick={() => navigate("/my/profile")}>
           정보 수정하기
         </EditButton>
       </TopBar>
@@ -101,7 +104,14 @@ export default function MyProfileViewPage() {
         <ProfileRow>
           <AvatarWrap>
             {member?.profileUrl ? (
-              <AvatarImg src={member.profileUrl} alt="profile" />
+              <AvatarImg
+                src={member.profileUrl}
+                alt="profile"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "https://placehold.co/160x160?text=USER";
+                }}
+              />
             ) : (
               <AvatarFallback>{initial}</AvatarFallback>
             )}

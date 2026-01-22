@@ -1,36 +1,99 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { memberApi, authStorage } from "../../../../utils/api";
-import { updateAuthUser } from "../../../../utils/auth";
 import Modal from "../../modal/Modal";
+
 import {
+  Page,
   Row,
   Label,
   Value,
   Btn,
-  AvatarWrap,
-  AvatarImg,
   SectionTitle,
-} from "./myprofileStyles";
+  BigAvatarWrap,
+  BigAvatar,
+  Badge,
+  ActionRow,
+  PrimaryButton,
+  ModalDesc,
+  ModalInput,
+  Hint,
+  Split,
+  Card,
+  CardTitle,
+  CardRow,
+  HiddenFileInput,
+  GhostButton,
+  FileName,
+  PreviewBox,
+  PreviewImg,
+  PreviewPlaceholder,
+  CardActions,
+  MiniPrimary,
+  Grid,
+  Thumb,
+  ThumbImg,
+  ThumbMeta,
+} from "./MyprofileStyles";
+
+/**
+ * 기본이미지 목록 (DB 캡쳐 기준 임시 하드코딩)
+ * 나중에 백엔드 API로 교체하면 됨.
+ */
+const DEFAULT_IMAGES = [
+  {
+    fileNo: 14,
+    fileName: "rabbit",
+    fileUrl:
+      "https://kh-yogurt.s3.ap-southeast-2.amazonaws.com/DefaultImage/JDE_20260119163533_9ba8d90f56e34900b9bf187f51edcf8e.png",
+  },
+  {
+    fileNo: 11,
+    fileName: "bear",
+    fileUrl:
+      "https://kh-yogurt.s3.ap-southeast-2.amazonaws.com/DefaultImage/JDE_20260119141936_3505be05ec8044db8eb62c4de9bed572.png",
+  },
+  {
+    fileNo: 12,
+    fileName: "deer",
+    fileUrl:
+      "https://kh-yogurt.s3.ap-southeast-2.amazonaws.com/DefaultImage/JDE_20260119141957_0d50a96a08f347b49bd2de69bde73f77.png",
+  },
+  {
+    fileNo: 13,
+    fileName: "frog",
+    fileUrl:
+      "https://kh-yogurt.s3.ap-southeast-2.amazonaws.com/DefaultImage/JDE_20260119142015_ce8fa8d1caba46b685459b6a6a5b5c31.png",
+  },
+  {
+    fileNo: 9,
+    fileName: "tiger",
+    fileUrl:
+      "https://kh-yogurt.s3.ap-southeast-2.amazonaws.com/DefaultImage/JDE_20260119123107_8bac6834252e4558b974499fa6a4107c.png",
+  },
+  {
+    fileNo: 10,
+    fileName: "penguin",
+    fileUrl:
+      "https://kh-yogurt.s3.ap-southeast-2.amazonaws.com/DefaultImage/JDE_20260119141150_f6a198feb4f84adeb1806938cce9ddc7.png",
+  },
+];
 
 export default function MyProfilePage() {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
-  // ✅ authStorage / localStorage에서 회원정보 읽기 (로그인 페이지 저장 방식에 맞춤)
   const readMemberInfo = () => {
     try {
-      if (authStorage?.getMemberInfo) return authStorage.getMemberInfo();
-      const raw = localStorage.getItem("memberInfo"); // login에서 저장한 키가 이거라면 OK
-      return raw ? JSON.parse(raw) : null;
+      return authStorage.getMemberInfo();
     } catch {
       return null;
     }
   };
 
-  const readAccessToken = () => {
+  const readToken = () => {
     try {
-      if (authStorage?.getToken) return authStorage.getToken();
-      return localStorage.getItem("accessToken");
+      return authStorage.getToken();
     } catch {
       return null;
     }
@@ -38,124 +101,315 @@ export default function MyProfilePage() {
 
   const [me, setMe] = useState(readMemberInfo());
 
+  // ===== 정보 변경(비번→값) =====
   const [pwModalOpen, setPwModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-
-  const [pendingField, setPendingField] = useState(null); // name|nickname|phone
+  const [pendingField, setPendingField] = useState(null); // "name" | "nickname" | "phone"
   const [currentPassword, setCurrentPassword] = useState("");
   const [newValue, setNewValue] = useState("");
 
-  // ✅ 로그인/로그아웃 후 같은 탭에서도 헤더/마이페이지 즉시 갱신되도록 동기화
+  // ===== 프로필 사진 변경 모달 =====
+  const [photoPwModalOpen, setPhotoPwModalOpen] = useState(false);
+  const [photoModalOpen, setPhotoModalOpen] = useState(false);
+  const [photoPassword, setPhotoPassword] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadPreviewUrl, setUploadPreviewUrl] = useState("");
+  const [selectedDefault, setSelectedDefault] = useState(null); // {fileNo,fileName,fileUrl}
+
+  const fieldLabel = useMemo(() => {
+    if (pendingField === "name") return "이름";
+    if (pendingField === "nickname") return "닉네임";
+    if (pendingField === "phone") return "전화번호";
+    return "";
+  }, [pendingField]);
+
+  const currentFieldValue = useMemo(() => {
+    if (!me) return "";
+    if (pendingField === "name") return me.memberName || "";
+    if (pendingField === "nickname") return me.nickname || "";
+    if (pendingField === "phone") return me.phone || "";
+    return "";
+  }, [me, pendingField]);
+
+  // localStorage 동기화
   useEffect(() => {
     const sync = () => setMe(readMemberInfo());
-
-    window.addEventListener("storage", sync); // 다른 탭 변경 감지
-    window.addEventListener("authChanged", sync); // 같은 탭 갱신 이벤트
-
+    window.addEventListener("storage", sync);
+    window.addEventListener("authChanged", sync);
     return () => {
       window.removeEventListener("storage", sync);
       window.removeEventListener("authChanged", sync);
     };
   }, []);
 
-  // ✅ 토큰은 있는데 memberInfo만 비어있을 수도 있어서, 그때 다시 읽기 시도
+  // 업로드 미리보기 URL 관리
   useEffect(() => {
-    const token = readAccessToken();
-    if (!me && token) setMe(readMemberInfo());
-  }, [me]);
+    if (!selectedFile) {
+      setUploadPreviewUrl("");
+      return;
+    }
+    const url = URL.createObjectURL(selectedFile);
+    setUploadPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [selectedFile]);
 
-  // ✅ 로그인 안 됐으면 안내 + 로그인으로 보내기
   if (!me) {
     return (
       <div style={{ padding: 24 }}>
         <h3 style={{ marginBottom: 8 }}>로그인이 필요합니다.</h3>
-        <button onClick={() => navigate("/login")}>로그인 하러가기</button>
+        <button type="button" onClick={() => navigate("/login")}>
+          로그인 하러가기
+        </button>
       </div>
     );
   }
 
+  const closeAllModals = () => {
+    setPwModalOpen(false);
+    setEditModalOpen(false);
+    setPhotoPwModalOpen(false);
+    setPhotoModalOpen(false);
+
+    setPendingField(null);
+    setCurrentPassword("");
+    setNewValue("");
+
+    setPhotoPassword("");
+    setSelectedFile(null);
+    setSelectedDefault(null);
+    setUploadPreviewUrl("");
+  };
+
+  // ====== 정보 수정 ======
   const openEdit = (field) => {
     setPendingField(field);
     setCurrentPassword("");
-    setNewValue(
+
+    const preset =
       field === "name"
         ? me.memberName || ""
         : field === "nickname"
         ? me.nickname || ""
-        : me.phone || ""
-    );
-    setPwModalOpen(true);
+        : me.phone || "";
+    setNewValue(preset);
+
+    setPwModalOpen(true); // 비번 모달
   };
 
   const afterPwConfirm = () => {
-    if (!currentPassword) return alert("비밀번호를 입력하세요.");
+    if (!currentPassword?.trim()) return alert("비밀번호를 입력하세요.");
     setPwModalOpen(false);
-    setEditModalOpen(true);
+    setEditModalOpen(true); // 값 모달
   };
 
-  const save = async () => {
+  const saveInfo = async () => {
     try {
+      const token = readToken();
+      if (!token) {
+        alert("로그인이 만료되었습니다. 다시 로그인 해주세요.");
+        navigate("/login");
+        return;
+      }
+
+      const trimmed = newValue?.trim();
+      if (!trimmed) {
+        alert("새 값을 입력하세요.");
+        return;
+      }
+
       if (pendingField === "name") {
-        await memberApi.changeName(currentPassword, newValue);
-        updateAuthUser({ memberName: newValue });
-        setMe((p) => ({ ...p, memberName: newValue }));
+        await memberApi.changeName(currentPassword, trimmed);
+      } else if (pendingField === "nickname") {
+        await memberApi.changeNickname(currentPassword, trimmed);
+      } else if (pendingField === "phone") {
+        await memberApi.changePhone(currentPassword, trimmed);
+      } else {
+        alert("수정할 항목이 선택되지 않았습니다.");
+        return;
       }
 
-      if (pendingField === "nickname") {
-        await memberApi.changeNickname(currentPassword, newValue);
-        updateAuthUser({ nickname: newValue });
-        setMe((p) => ({ ...p, nickname: newValue }));
-      }
-
-      if (pendingField === "phone") {
-        await memberApi.changePhone(currentPassword, newValue);
-        updateAuthUser({ phone: newValue });
-        setMe((p) => ({ ...p, phone: newValue }));
-      }
-
-      // ✅ 저장 후 storage에도 반영 (로그인 유지 시 화면 깨짐 방지)
       const updated = {
         ...me,
-        memberName: pendingField === "name" ? newValue : me.memberName,
-        nickname: pendingField === "nickname" ? newValue : me.nickname,
-        phone: pendingField === "phone" ? newValue : me.phone,
+        memberName: pendingField === "name" ? trimmed : me.memberName,
+        nickname: pendingField === "nickname" ? trimmed : me.nickname,
+        phone: pendingField === "phone" ? trimmed : me.phone,
       };
 
-      if (authStorage?.setMemberInfo) authStorage.setMemberInfo(updated);
-      else localStorage.setItem("memberInfo", JSON.stringify(updated));
-
-      // ✅ 같은 탭에서도 즉시 반영
+      authStorage.setMemberInfo(updated);
+      setMe(updated);
       window.dispatchEvent(new Event("authChanged"));
 
       setEditModalOpen(false);
       alert("변경 완료!");
+      navigate("/my/profile", { replace: true });
     } catch (e) {
-      const msg =
-        e?.response?.data?.message ||
-        e?.message ||
-        "변경에 실패했습니다.";
-      alert(msg);
+      alert(e?.message || "변경에 실패했습니다.");
       setEditModalOpen(false);
       setPwModalOpen(true);
     }
   };
 
-  // ✅ placeholder DNS 문제 방지용 fallback(원하면 로컬 이미지로 교체 추천)
-  const fallbackImg = "https://placehold.co/80x80?text=USER";
+  // ====== 프로필 사진 변경 ======
+  const openPhotoModal = () => {
+    setPhotoPassword("");
+    setSelectedFile(null);
+    setSelectedDefault(null);
+    setUploadPreviewUrl("");
+    setPhotoModalOpen(false);
+    setPhotoPwModalOpen(true);
+  };
+
+  const afterPhotoPwConfirm = () => {
+    if (!photoPassword?.trim()) return alert("비밀번호를 입력하세요.");
+    setPhotoPwModalOpen(false);
+    setPhotoModalOpen(true);
+  };
+
+  const triggerFilePick = () => fileInputRef.current?.click();
+
+  const ensureAuth = () => {
+    const token = readToken();
+    if (!token) {
+      alert("로그인이 만료되었습니다. 다시 로그인 해주세요.");
+      navigate("/login");
+      return false;
+    }
+    return true;
+  };
+
+  const cacheBust = (url) =>
+    url ? `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}` : "";
+
+  const pickUrl = (res) =>
+  res?.result?.profileUrl ||
+  res?.result?.fileUrl ||
+  res?.result?.url ||
+  res?.profileUrl ||
+  res?.fileUrl ||
+  res?.url ||
+  "";
+
+  const applyUpload = async () => {
+    try {
+      if (!ensureAuth()) return;
+      if (!photoPassword?.trim()) return alert("비밀번호를 입력하세요.");
+      if (!selectedFile) return alert("업로드할 파일을 선택하세요.");
+
+      // 1) 업로드 (업로드 응답에 url이 올 수도 있으니 받아둠)
+      const uploadRes = await memberApi.uploadProfileImage(photoPassword, selectedFile);
+      const uploadUrl = pickUrl(uploadRes); // 서버가 url 내려주면 여기서 잡힘
+
+      // 2) 서버 최신값 재조회 (가장 정확)
+      let latestUrl = "";
+      try {
+        const meRes = await memberApi.getMe();
+        latestUrl = pickUrl(meRes);
+      } catch (e) {
+        console.warn("getMe failed:", e?.message);
+      }
+
+      // 3) 최종 URL 결정: getMe 우선, 없으면 upload 응답 url
+      const finalUrl = latestUrl || uploadUrl;
+
+      if (!finalUrl) {
+        alert("업로드는 됐는데 프로필 URL을 받지 못했습니다. (업로드 응답/ getMe 확인)");
+        return;
+      }
+
+      // localStorage에는 blob 말고 서버 URL만 저장!
+      const updated = {
+        ...me,
+        profileUrl: cacheBust(finalUrl),
+        fileUrl: cacheBust(finalUrl),
+      };
+
+      authStorage.setMemberInfo(updated);
+      setMe(updated);
+      window.dispatchEvent(new Event("authChanged"));
+
+      setPhotoModalOpen(false);
+      alert("프로필 사진이 변경되었습니다!");
+      navigate("/my/profile", { replace: true });
+    } catch (e) {
+      alert(e?.message || "프로필 사진 변경에 실패했습니다.");
+    }
+  };
+
+  const applyDefault = async () => {
+    try {
+      if (!ensureAuth()) return;
+      if (!photoPassword?.trim()) return alert("비밀번호를 입력하세요.");
+      if (!selectedDefault?.fileNo) return alert("기본 이미지를 선택하세요.");
+
+      await memberApi.changeProfileToDefault(photoPassword, selectedDefault.fileNo);
+
+      // 우선 즉시 반영
+      const optimistic = selectedDefault.fileUrl;
+      const optimisticUpdated = { ...me, profileUrl: optimistic, fileUrl: optimistic };
+      authStorage.setMemberInfo(optimisticUpdated);
+      setMe(optimisticUpdated);
+      window.dispatchEvent(new Event("authChanged"));
+
+      // 서버 최신값 재조회
+      try {
+        const meRes = await memberApi.getMe();
+        const latestUrl =
+          meRes?.result?.profileUrl ||
+          meRes?.result?.fileUrl ||
+          meRes?.profileUrl ||
+          meRes?.fileUrl ||
+          "";
+
+        if (latestUrl) {
+          const updated = {
+            ...optimisticUpdated,
+            profileUrl: cacheBust(latestUrl),
+            fileUrl: cacheBust(latestUrl),
+          };
+          authStorage.setMemberInfo(updated);
+          setMe(updated);
+          window.dispatchEvent(new Event("authChanged"));
+        }
+      } catch (e) {
+        console.warn("getMe failed:", e?.message);
+      }
+
+      setPhotoModalOpen(false);
+      alert("기본 이미지로 변경되었습니다!");
+      navigate("/my/profile", { replace: true });
+    } catch (e) {
+      alert(e?.message || "기본 이미지 변경에 실패했습니다.");
+    }
+  };
+
+  // 프로필 모달에서 Enter 누르면 자동 적용
+  const primaryPhotoAction = () => {
+    if (selectedFile) return applyUpload();
+    if (selectedDefault) return applyDefault();
+    alert("업로드 파일을 선택하거나 기본 이미지를 선택하세요.");
+  };
+
+  const fallbackImg = "https://placehold.co/160x160?text=USER";
 
   return (
-    <div>
+    <Page>
       <SectionTitle>회원정보</SectionTitle>
 
-      <AvatarWrap>
-        <AvatarImg
+      <BigAvatarWrap>
+        <BigAvatar
           src={me.profileUrl || me.fileUrl || fallbackImg}
           alt="profile"
-          onError={(e) => {
-            e.currentTarget.src = fallbackImg;
-          }}
+          onError={(e) => (e.currentTarget.src = fallbackImg)}
+          onClick={openPhotoModal}
+          title="클릭해서 프로필 사진 변경"
         />
-      </AvatarWrap>
+      </BigAvatarWrap>
+
+      <ActionRow>
+        <PrimaryButton type="button" onClick={openPhotoModal}>
+          프로필 사진 변경
+        </PrimaryButton>
+      </ActionRow>
 
       <Row>
         <Label>이메일</Label>
@@ -166,53 +420,203 @@ export default function MyProfilePage() {
       <Row>
         <Label>이름</Label>
         <Value>{me.memberName}</Value>
-        <Btn onClick={() => openEdit("name")}>변경</Btn>
+        <Btn type="button" onClick={() => openEdit("name")}>
+          변경
+        </Btn>
       </Row>
 
       <Row>
         <Label>닉네임</Label>
         <Value>{me.nickname}</Value>
-        <Btn onClick={() => openEdit("nickname")}>변경</Btn>
+        <Btn type="button" onClick={() => openEdit("nickname")}>
+          변경
+        </Btn>
       </Row>
 
       <Row>
         <Label>전화번호</Label>
         <Value>{me.phone}</Value>
-        <Btn onClick={() => openEdit("phone")}>변경</Btn>
+        <Btn type="button" onClick={() => openEdit("phone")}>
+          변경
+        </Btn>
       </Row>
 
+      {/* ===== 1) 비밀번호 인증 ===== */}
       {pwModalOpen && (
-        <Modal onClose={() => setPwModalOpen(false)}>
-          <h3>비밀번호 인증</h3>
-          <input
+        <Modal
+          title="비밀번호 인증"
+          onClose={closeAllModals}
+          primaryText="확인"
+          cancelText="취소"
+          onPrimary={afterPwConfirm}
+        >
+          <ModalDesc>
+            {fieldLabel
+              ? `${fieldLabel} 변경을 위해 비밀번호를 입력하세요.`
+              : "비밀번호를 입력하세요."}
+          </ModalDesc>
+          <ModalInput
             type="password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             placeholder="현재 비밀번호"
-            style={{ width: "100%", padding: 12, marginTop: 12 }}
           />
-          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16 }}>
-            <button onClick={() => setPwModalOpen(false)}>취소</button>
-            <button onClick={afterPwConfirm}>확인</button>
-          </div>
+          <Hint>Enter: 확인 · ESC: 닫기</Hint>
         </Modal>
       )}
 
+      {/* ===== 2) 값 입력 ===== */}
       {editModalOpen && (
-        <Modal onClose={() => setEditModalOpen(false)}>
-          <h3>정보 수정</h3>
-          <input
+        <Modal
+          title={`${fieldLabel} 수정`}
+          onClose={closeAllModals}
+          primaryText="저장"
+          cancelText="취소"
+          onPrimary={saveInfo}
+        >
+          <ModalDesc>
+            현재 값: <b>{currentFieldValue || "-"}</b>
+          </ModalDesc>
+          <ModalInput
             value={newValue}
             onChange={(e) => setNewValue(e.target.value)}
             placeholder="새 값 입력"
-            style={{ width: "100%", padding: 12, marginTop: 12 }}
           />
-          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16 }}>
-            <button onClick={() => setEditModalOpen(false)}>취소</button>
-            <button onClick={save}>저장</button>
-          </div>
+          <Hint>Enter: 저장 · ESC: 닫기</Hint>
         </Modal>
       )}
-    </div>
+
+      {photoPwModalOpen && (
+        <Modal
+          title="비밀번호 인증"
+          onClose={closeAllModals}
+          primaryText="확인"
+          cancelText="취소"
+          onPrimary={afterPhotoPwConfirm}
+          maxWidth={560}
+        >
+          <ModalDesc>프로필 사진 변경을 위해 비밀번호를 입력하세요.</ModalDesc>
+          <ModalInput
+            type="password"
+            value={photoPassword}
+            onChange={(e) => setPhotoPassword(e.target.value)}
+            placeholder="현재 비밀번호"
+          />
+          <Hint>Enter: 확인 · ESC: 닫기</Hint>
+        </Modal>
+      )}
+
+      {/* ===== 3) 프로필 사진 변경 ===== */}
+      {photoModalOpen && (
+        <Modal
+          title="프로필 사진 변경"
+          onClose={closeAllModals}
+          primaryText={selectedFile ? "업로드 저장" : "적용"}
+          cancelText="닫기"
+          onPrimary={primaryPhotoAction}
+          maxWidth={860}
+        >
+          <ModalDesc>
+            업로드/기본 중 하나 선택
+          </ModalDesc>
+
+          <Split>
+            <Card>
+              <CardTitle>업로드로 변경</CardTitle>
+
+              <HiddenFileInput
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] || null;
+                  setSelectedFile(f);
+                  if (f) setSelectedDefault(null);
+                }}
+                style={{ display: "none" }}
+              />
+
+              <CardRow>
+                <GhostButton type="button" onClick={triggerFilePick}>
+                  파일 선택
+                </GhostButton>
+                <FileName>
+                  {selectedFile ? selectedFile.name : "선택된 파일 없음"}
+                </FileName>
+              </CardRow>
+
+              <PreviewBox>
+                {uploadPreviewUrl ? (
+                  <PreviewImg src={uploadPreviewUrl} alt="upload preview" />
+                ) : (
+                  <PreviewPlaceholder>업로드 미리보기</PreviewPlaceholder>
+                )}
+              </PreviewBox>
+
+              <CardActions>
+                <MiniPrimary
+                  type="button"
+                  onClick={applyUpload}
+                  disabled={!selectedFile}
+                >
+                  업로드 저장
+                </MiniPrimary>
+              </CardActions>
+            </Card>
+
+            {/* 기본 이미지 */}
+            <Card>
+              <CardTitle>기본 이미지로 변경</CardTitle>
+
+              <Grid>
+                {DEFAULT_IMAGES.map((img) => {
+                  const isSelected = selectedDefault?.fileNo === img.fileNo;
+                  return (
+                    <Thumb
+                      key={img.fileNo}
+                      type="button"
+                      $active={isSelected}
+                      onClick={() => {
+                        setSelectedDefault(img);
+                        setSelectedFile(null);
+                        setUploadPreviewUrl("");
+                      }}
+                      title={`${img.fileName} (#${img.fileNo})`}
+                    >
+                      <ThumbImg src={img.fileUrl} alt={img.fileName} />
+                      <ThumbMeta>
+                        <span>{img.fileName}</span>
+                        <small>#{img.fileNo}</small>
+                      </ThumbMeta>
+                    </Thumb>
+                  );
+                })}
+              </Grid>
+
+              <PreviewBox style={{ marginTop: 10, height: 280 }}>
+                {selectedDefault ? (
+                  <PreviewImg
+                    src={selectedDefault.fileUrl}
+                    alt="default preview"
+                  />
+                ) : (
+                  <PreviewPlaceholder>기본 이미지 미리보기</PreviewPlaceholder>
+                )}
+              </PreviewBox>
+            </Card>
+          </Split>
+
+          <Hint>
+            Enter:{" "}
+            {selectedFile
+              ? "업로드 저장"
+              : selectedDefault
+              ? "기본 적용"
+              : "선택 필요"}{" "}
+            · ESC: 닫기
+          </Hint>
+        </Modal>
+      )}
+    </Page>
   );
 }

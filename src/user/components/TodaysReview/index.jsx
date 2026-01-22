@@ -62,7 +62,7 @@ const TodaysReview = () => {
   const handleMore = () => {
     fetchBestReviews({append: true});
   };
-  
+
   return (
     <ReviewSectionContainer>
       <ReviewContent>
@@ -72,10 +72,12 @@ const TodaysReview = () => {
             <ReviewCard key={review.reviewNo} review={review} />
           ))}
         </ReviewGrid>
-        <MoreButton onClick={handleMore} disabled={loading}>
-          더보기
-          <span>+</span>
-        </MoreButton>
+        {hasNext && (
+          <MoreButton onClick={handleMore} disabled={loading}>
+            {loading ? "로딩 중..." : "더보기"}
+            <span>+</span>
+          </MoreButton>
+        )}
       </ReviewContent>
     </ReviewSectionContainer>
   );

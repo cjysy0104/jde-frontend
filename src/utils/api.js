@@ -1,4 +1,3 @@
-// api.js (필수 수정 없음: 네가 올린 인터셉터/refresh 구조는 최소 요건 충족)
 import axios from "axios";
 
 const API_BASE_URL = window.ENV?.API_BASE_URL || "http://localhost:8080";
@@ -376,6 +375,20 @@ export const memberApi = {
     });
   },
 
+  // 비밀번호 검증
+  verifyPassword: async (password) => {
+    return await apiClient.post("/api/members/password/verify", { password });
+  },
+
+  // 비밀번호 변경
+  changePassword: async (currentPassword, newPassword) => {
+    return await apiClient.patch("/api/members/password", {
+      currentPassword,
+      newPassword,
+    });
+  },
+
+  // 이름 변경
   changeName: async (currentPassword, memberName) => {
     return await apiClient.patch(`/api/members/name`, {
       currentPassword,

@@ -7,7 +7,7 @@ import {
   ReviewGrid,
   MoreButton,
 } from './styles';
-import { reviewApi } from '../../../utils/api';
+import { reviewApi } from '../../../utils/reviewApi';
 
 
 const TodaysReview = () => {

@@ -109,15 +109,11 @@ const ReviewList = () => {
         ))}
       </ReviewGrid>
 
-      {hasNext ? (
-        <div ref={elementRef} style={{ textAlign: "center", padding: "16px 0" }}>
-            {loading ? "로딩중..." : ""}
+      {hasNext && !loading && (
+        <div ref={elementRef} style={{textAlign: 'center'}}>
+            로딩중
         </div>
-        ) : (
-        <div style={{ textAlign: "center", padding: "16px 0" }}>
-            더 이상 리뷰가 없습니다.
-        </div>
-        )}
+      )}
 
       <FloatingButton>
         <PlusIcon>+</PlusIcon>

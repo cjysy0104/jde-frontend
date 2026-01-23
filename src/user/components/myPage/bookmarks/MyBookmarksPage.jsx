@@ -1,123 +1,227 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  FaHeart,
+  FaRegCommentDots,
+  FaRegBookmark,
+  FaBookmark,
+  FaEllipsisH,
+} from "react-icons/fa";
 import { bookmarkApi } from "../../../../utils/api";
-import ReviewCard from "../../../components/ReviewCard";
-import { styles } from "../lists/myListStyles";
+import { styles } from "./myBookmarksStyles";
 
 export default function MyBookmarksPage() {
+  const size = 20;
+
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(0);
-
-  const size = 20;
   const [loading, setLoading] = useState(false);
   const [hasNext, setHasNext] = useState(true);
+  const [expanded, setExpanded] = useState({});
 
-  const load = async (p = 0) => {
+  const sentinelRef = useRef(null);
+
+  const pickList = (payload) => {
+    if (Array.isArray(payload?.result)) return payload.result;
+    if (Array.isArray(payload?.data?.result)) return payload.data.result;
+    if (Array.isArray(payload)) return payload;
+    return [];
+  };
+
+  const normalize = (b) => ({
+    reviewNo: b.reviewNo,
+    thumbnailUrl: b.thumbnailUrl || b.imageUrl,
+    writerNickname: b.writerNickname || b.nickname || "작성자",
+    content: b.content || "",
+    likeCount: b.likeCount ?? 0,
+    commentCount: b.commentCount ?? 0,
+    createdAt: b.reviewCreatedAt || b.createdAt || b.bookmarkEnrollDate,
+    bookmarked: b.bookmarked ?? true,
+  });
+
+  const formatDate = (v) => {
+    if (!v) return "";
+    if (typeof v === "string") return v.slice(0, 10);
+    try {
+      const d = new Date(v);
+      if (Number.isNaN(d.getTime())) return String(v).slice(0, 10);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    } catch {
+      return String(v).slice(0, 10);
+    }
+  };
+
+  const getPreview = (text, max = 60) => {
+    const t = (text ?? "").toString();
+    if (t.length <= max) return { preview: t, clipped: false };
+    return { preview: t.slice(0, max), clipped: true };
+  };
+
+  const loadPage = async (p, { append } = { append: true }) => {
     if (loading) return;
+    if (!hasNext && append) return;
+
     setLoading(true);
     try {
-      const data = await bookmarkApi.getMyBookmarks(p, size);
-      const list = data?.result ?? data;
-      const arr = Array.isArray(list) ? list : [];
+      const payload = await bookmarkApi.getMyBookmarks(p, size);
+      const arr = pickList(payload).map(normalize);
 
-      setItems(arr);
+      setItems((prev) => (append ? [...prev, ...arr] : arr));
       setPage(p);
-
-      // 다음 여부: size만큼 꽉 차면 다음 있을 가능성
       setHasNext(arr.length === size);
     } catch (e) {
       console.error(e);
       alert("즐겨찾기 조회 실패");
+      if (!append) setItems([]);
+      setHasNext(false);
     } finally {
       setLoading(false);
     }
   };
 
+  const resetAndLoadFirst = async () => {
+    setItems([]);
+    setExpanded({});
+    setPage(0);
+    setHasNext(true);
+    await loadPage(0, { append: false });
+  };
+
   useEffect(() => {
-    load(0);
+    resetAndLoadFirst();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const toggle = async (reviewNo) => {
-    if (loading) return;
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (!first?.isIntersecting) return;
+        if (loading || !hasNext) return;
+        loadPage(page + 1, { append: true });
+      },
+      { root: null, rootMargin: "350px 0px", threshold: 0 }
+    );
+
+    io.observe(el);
+    return () => io.disconnect();
+  }, [page, hasNext, loading]);
+
+  const toggleExpand = (reviewNo) => {
+    setExpanded((prev) => ({ ...prev, [reviewNo]: !prev[reviewNo] }));
+  };
+
+  const toggleBookmark = async (reviewNo) => {
+    if (!reviewNo || loading) return;
     try {
       await bookmarkApi.toggle(reviewNo);
-      await load(page);
+      setItems((prev) => prev.filter((x) => x.reviewNo !== reviewNo));
     } catch (e) {
       console.error(e);
-      alert("즐겨찾기 해제 실패");
+      alert("즐겨찾기 토글 실패");
     }
   };
 
-  // 페이지 번호(현재 기준 5개 노출)
-  const visibleCount = 5;
-  const start = Math.max(0, page - 2);
-  const end = start + visibleCount - 1;
-  const pages = [];
-  for (let p = start; p <= end; p++) pages.push(p);
-
-  const goPrev = () => {
-    if (page === 0) return;
-    load(page - 1);
-  };
-
-  const goNext = () => {
-    if (!hasNext) return;
-    load(page + 1);
-  };
+  const pagesForSkeleton = useMemo(() => Array.from({ length: 6 }, (_, i) => i), []);
 
   return (
-    <div>
-      {/* MyListPage 톤의 헤더 */}
+    <div style={styles.page}>
       <div style={styles.headerRow}>
         <h2 style={styles.title}>내 즐겨찾기</h2>
+        <button onClick={resetAndLoadFirst} disabled={loading} style={styles.refreshBtn(loading)}>
+          새로고침
+        </button>
       </div>
 
-      {/* 카드 영역: MyListPage 카드 컨테이너 톤으로 감싸기 */}
       {items.length === 0 ? (
-        <div style={styles.empty}>{loading ? "로딩중..." : "목록이 없습니다."}</div>
+        <div style={styles.empty}>
+          {loading ? (
+            <div style={styles.skeletonGrid}>
+              {pagesForSkeleton.map((i) => (
+                <div key={i} style={styles.skeletonCard} />
+              ))}
+            </div>
+          ) : (
+            "목록이 없습니다."
+          )}
+        </div>
       ) : (
         <div style={styles.grid3}>
-          {items.map((b, idx) => (
-            <div key={b.reviewNo ?? idx} style={styles.card}>
-              <ReviewCard
-                review={{
-                  restaurantName: b.storeName || b.restaurantName || "맛집",
-                  rating: b.rating ?? 0,
-                  category: b.category || "",
-                  image: b.thumbnailUrl || b.imageUrl || "https://via.placeholder.com/300x200?text=IMG",
-                }}
-              />
+          {items.map((b) => {
+            const { preview, clipped } = getPreview(b.content, 60);
+            const isExpanded = !!expanded[b.reviewNo];
 
-              <button onClick={() => toggle(b.reviewNo)} style={styles.fullBtn}>
-                즐겨찾기 해제
-              </button>
-            </div>
-          ))}
+            return (
+              <div key={b.reviewNo} style={styles.card}>
+                <div style={styles.mediaWrap}>
+                  <img
+                    src={b.thumbnailUrl || "https://via.placeholder.com/900x700?text=IMG"}
+                    alt=""
+                    style={styles.media}
+                    loading="lazy"
+                  />
+                  <button type="button" style={styles.kebabBtn} onClick={() => {}}>
+                    <FaEllipsisH />
+                  </button>
+                </div>
+
+                <div style={styles.meta}>
+                  <div style={styles.iconRow}>
+                    <div style={styles.leftIcons}>
+                      <div style={styles.iconItem}>
+                        <FaHeart />
+                        <span style={styles.iconCount}>{b.likeCount}</span>
+                      </div>
+                      <div style={styles.iconItem}>
+                        <FaRegCommentDots />
+                        <span style={styles.iconCount}>{b.commentCount}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      style={styles.bookmarkBtn}
+                      onClick={() => toggleBookmark(b.reviewNo)}
+                      aria-label="bookmark-toggle"
+                      title="즐겨찾기 토글"
+                    >
+                      {b.bookmarked ? <FaBookmark /> : <FaRegBookmark />}
+                    </button>
+                  </div>
+
+                  <div style={styles.titleLine}>{b.writerNickname}</div>
+
+                  <div style={styles.contentLine}>
+                    {isExpanded ? b.content : preview}
+                    {clipped && (
+                      <button
+                        type="button"
+                        style={styles.moreBtn}
+                        onClick={() => toggleExpand(b.reviewNo)}
+                      >
+                        {isExpanded ? "접기" : "...더보기"}
+                      </button>
+                    )}
+                  </div>
+
+                  <div style={styles.dateLine}>{formatDate(b.createdAt)}</div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
-      <div style={styles.pagerWrap}>
-        <button
-          disabled={page === 0 || loading}
-          onClick={goPrev}
-          style={styles.pagerNavBtn(page === 0 || loading)}
-        >
-          이전
-        </button>
+      <div ref={sentinelRef} style={{ height: 1 }} />
 
-        {pages.map((p) => (
-          <button key={p} onClick={() => load(p)} style={styles.pagerBtn(p === page)} disabled={loading}>
-            {p + 1}
-          </button>
-        ))}
-
-        <button
-          disabled={!hasNext || loading}
-          onClick={goNext}
-          style={styles.pagerNavBtn(!hasNext || loading)}
-        >
-          다음
-        </button>
+      <div style={styles.bottomStatus}>
+        {loading && items.length > 0 && <div style={styles.bottomText}>불러오는 중...</div>}
+        {!loading && !hasNext && items.length > 0 && <div style={styles.bottomText}>마지막입니다.</div>}
       </div>
     </div>
   );

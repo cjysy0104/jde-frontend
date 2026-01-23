@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import OverviewCard from '../OverviewCard';
 import UserAvatarList from '../UserAvatarList';
 import PopularReviews from '../PopularReviews';
 import CommentsWidget from '../CommentsWidget';
 import SubscriberChart from '../SubscriberChart';
 import MonthlyReviewChart from '../MonthlyReviewChart';
+import { adminApi } from '../../../utils/adminApi';
 import { FaChevronDown } from 'react-icons/fa';
 import {
   DashboardContainer,
@@ -21,6 +22,50 @@ import {
 } from './styles';
 
 const Dashboard = () => {
+  const [totalMemberCount, setTotalMemberCount] = useState(0);
+  const [newMemberCount, setNewMemberCount] = useState(0);
+  const [monthlyReviewData, setMonthlyReviewData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        
+        // 전체 회원 수 조회
+        const totalMemberResponse = await adminApi.getTotalMemberCount();
+        if (totalMemberResponse?.data !== undefined) {
+          setTotalMemberCount(totalMemberResponse.data);
+        }
+        
+        // 최근 1개월 신규 가입자 수 조회
+        const newMemberResponse = await adminApi.getNewMemberCountLastMonth();
+        if (newMemberResponse?.data !== undefined) {
+          setNewMemberCount(newMemberResponse.data);
+        }
+        
+        // 월별 리뷰 수 조회
+        const monthlyReviewResponse = await adminApi.getMonthlyReviewCount();
+        if (monthlyReviewResponse?.data && Array.isArray(monthlyReviewResponse.data)) {
+          setMonthlyReviewData(monthlyReviewResponse.data);
+        }
+      } catch (error) {
+        console.error('대시보드 데이터 로딩 실패:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  // 이전 달 대비 증가율 계산 (간단한 예시)
+  const calculateChange = (current, previous) => {
+    if (!previous || previous === 0) return '0%';
+    const change = ((current - previous) / previous) * 100;
+    return `${change > 0 ? '+' : ''}${change.toFixed(1)}%`;
+  };
+
   return (
     <DashboardContainer>
       <DashboardHeader>
@@ -39,14 +84,14 @@ const Dashboard = () => {
         <OverviewCards>
           <OverviewCard
             title="이용자"
-            value="90,243"
-            change="8%"
+            value={loading ? '로딩 중...' : totalMemberCount.toLocaleString()}
+            change=""
             positive
           />
           <OverviewCard
             title="신규 가입자"
-            value="9,450"
-            change="11%"
+            value={loading ? '로딩 중...' : newMemberCount.toLocaleString()}
+            change=""
             positive
             showArrow
           />
@@ -60,7 +105,7 @@ const Dashboard = () => {
       <ContentGrid>
         <LeftColumn>
           <SubscriberChart />
-          <MonthlyReviewChart />
+          <MonthlyReviewChart monthlyData={monthlyReviewData} />
         </LeftColumn>
         
         <RightColumn>

@@ -90,17 +90,24 @@ export const memberApi = {
   },
 };
 
+const unwrap = (x) => x?.data ?? x;
+
 export const bookmarkApi = {
   toggle: async (reviewNo) => {
-    return await apiClient.post(`/api/bookmarks/${reviewNo}/toggle`);
+    const res = await apiClient.post(`/api/bookmarks/${reviewNo}/toggle`);
+    return unwrap(res);
   },
 
   getMyBookmarks: async (page = 0, size = 20) => {
-    return await apiClient.get(`/api/bookmarks/me?page=${page}&size=${size}`);
+    const res = await apiClient.get(`/api/bookmarks/me`, {
+      params: { page, size },
+    });
+    return unwrap(res);
   },
 
   delete: async (reviewNo) => {
-    return await apiClient.delete(`/api/bookmarks/${reviewNo}`);
+    const res = await apiClient.delete(`/api/bookmarks/${reviewNo}`);
+    return unwrap(res);
   },
 };
 

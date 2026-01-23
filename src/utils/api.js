@@ -135,5 +135,9 @@ export const myActivityApi = {
     const res = await apiClient.delete(`/api/comments/${commentNo}`);
     return res.data;
   },
+
+  getCaptainList: async () =>{
+    return await apiClient.get(`/api/members`);
+  }
 };
 

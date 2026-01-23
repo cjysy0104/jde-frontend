@@ -97,7 +97,7 @@ const Dashboard = () => {
           />
         </OverviewCards>
         
-        <WelcomeMessage>Welcome to our new online experience</WelcomeMessage>
+        <WelcomeMessage>미식대장 Top 5</WelcomeMessage>
         
         <UserAvatarList />
       </OverviewSection>

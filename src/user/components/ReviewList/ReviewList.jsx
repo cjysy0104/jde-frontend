@@ -1,124 +1,93 @@
-// ReviewList.jsx
-import React, { useState, useEffect } from 'react';
-import ReviewCard from './ReviewCard';
+import React, { useEffect, useRef, useState } from "react";
+import ReviewCard from "./ReviewCard";
 import {
   Container,
+  ReviewGrid,
   SearchSection,
   SearchBar,
   SearchInput,
   SearchIcon,
   SortDropdown,
-  ReviewGrid,
   FloatingButton,
-  PlusIcon
-} from './ReviewList.styled';
+  PlusIcon,
+} from "./ReviewList.styled";
+import { reviewApi } from "../../../utils/api";
+/* =========================================================
+ * 무한 스크롤 구현
+ * - Intersection Observer 사용한 스크롤 감지
+ * 1. hasNext: true (데이터를 더 불러올 수 있는 상태)인 경우
+ *  fetchNextReviews 호출
+ * 2. 컴포넌트 렌더링 이후 Intersection Observer 설정
+ * - elementRef: 현재 존재하면 observer로 해당 요소 관찰
+ * - 관찰할 필요가 없어지면 반환
+ * 3. 추가 리뷰글 불러오기 - 비동기식
+ * 4. 컴포넌트 렌더링
+ * ========================================================= */
+
+
 
 const ReviewList = () => {
-  const [reviews, setReviews] = useState([]);
-  const [sortOption, setSortOption] = useState('최신순');
+    const [reviews, setReviews] = useState([]);
+    const [hasNext, setHasNext] = useState(true);
+    const [cursor, setCursor] = useState(null);
 
-  // API 호출 예시 (실제 사용 시 주석 해제)
-  useEffect(() => {
-    // fetchReviews();
-    
-    // 임시 데이터
-    setReviews([
-      {
-        reviewNo: 11,
-        thumbnailUrl: "https://images.unsplash.com/photo-1553621042-f6e147245754?w=400&h=300&fit=crop",
-        restaurantName: "부산어묵집",
-        nickname: "seoyeon",
-        content: "국물이 조금 짰어요.",
-        rating: 2.0,
-        updateDate: "2026-01-13",
-        viewCount: 30,
-        likeCount: 0,
-        commentCount: 1,
-        isLiked: "N",
-        isMarked: "N",
-        keywords: [
-          {
-            keywordNo: 4,
-            keywordName: "가성비"
-          }
-        ]
-      },
-      {
-        reviewNo: 12,
-        thumbnailUrl: "https://images.unsplash.com/photo-1553163147-622ab57be1c7?w=400&h=300&fit=crop",
-        restaurantName: "건강한 한식당",
-        nickname: "foodlover",
-        content: "비빔밥 정말 맛있어요! 야채도 신선하고 양도 푸짐해요.",
-        rating: 4.5,
-        updateDate: "2026-01-14",
-        viewCount: 85,
-        likeCount: 12,
-        commentCount: 5,
-        isLiked: "Y",
-        isMarked: "N",
-        keywords: [
-          {
-            keywordNo: 1,
-            keywordName: "맛있어요"
-          },
-          {
-            keywordNo: 2,
-            keywordName: "신선해요"
-          }
-        ]
-      }
-    ]);
-  }, []);
+    const [loading, setLoading] = useState(false);
 
-  // 실제 API 호출 함수
-  const fetchReviews = async () => {
-    try {
-      const response = await fetch('/api/reviews'); // 실제 API 엔드포인트로 변경
-      const result = await response.json();
-      
-      if (result.success) {
-        setReviews(result.data);
-      }
-    } catch (error) {
-      console.error('리뷰 조회 실패:', error);
-    }
-  };
+    const elementRef = useRef(null);
 
-  const handleLike = async (reviewNo) => {
-    try {
-      // API 호출
-      // await fetch(`/api/reviews/${reviewNo}/like`, { method: 'POST' });
-      
-      // 로컬 상태 업데이트
-      setReviews(reviews.map(review => 
-        review.reviewNo === reviewNo 
-          ? { 
-              ...review, 
-              isLiked: review.isLiked === 'Y' ? 'N' : 'Y',
-              likeCount: review.isLiked === 'Y' ? review.likeCount - 1 : review.likeCount + 1
+    const onIntersection = (entries) => {
+        const firstEntry = entries[0];
+
+        if(firstEntry.isIntersecting && hasNext && !loading){
+            fetchNextReviews();
+        }
+    };
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(onIntersection);
+
+        if(elementRef.current) {
+            observer.observe(elementRef.current);
+        }
+
+        return () => {
+            if(elementRef.current) {
+                observer.unobserve(elementRef.current);
             }
-          : review
-      ));
-    } catch (error) {
-      console.error('좋아요 처리 실패:', error);
-    }
-  };
+        };
 
-  const handleBookmark = async (reviewNo) => {
-    try {
-      // API 호출
-      // await fetch(`/api/reviews/${reviewNo}/bookmark`, { method: 'POST' });
-      
-      // 로컬 상태 업데이트
-      setReviews(reviews.map(review => 
-        review.reviewNo === reviewNo 
-          ? { ...review, isMarked: review.isMarked === 'Y' ? 'N' : 'Y' }
-          : review
-      ));
-    } catch (error) {
-      console.error('북마크 처리 실패:', error);
-    }
-  };
+    }, [hasNext, loading]);
+
+    const fetchNextReviews = async() => {
+        if(loading || !hasNext) return;
+        setLoading(true);
+
+        try {
+            const response = await reviewApi.getReviewList({
+                cursor: cursor,
+                sort: 'latest',
+            });
+            const data = response.data;
+            console.log(data);
+    
+            setReviews((prevReviews) => [...prevReviews, ...data]);
+    
+            if(data.length === 0){
+                setHasNext(false);
+                return;
+            } else {
+                setCursor(data[data.length - 1].reviewNo);
+            }
+        } catch (error) {
+            console.log("?", error);
+        } finally {
+            setLoading(false)
+        }
+
+    };
+
+
+
 
   return (
     <Container>
@@ -128,24 +97,27 @@ const ReviewList = () => {
           <SearchIcon>🔍</SearchIcon>
         </SearchBar>
         <SortDropdown>
-          <select value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
+          <select defaultValue="최신순" disabled>
             <option>최신순</option>
-            <option>인기순</option>
-            <option>평점순</option>
           </select>
         </SortDropdown>
       </SearchSection>
 
       <ReviewGrid>
-        {reviews.map(review => (
-          <ReviewCard
-            key={review.reviewNo}
-            review={review}
-            onLike={handleLike}
-            onBookmark={handleBookmark}
-          />
+        {reviews.map((review) => (
+          <ReviewCard key={review.reviewNo} review={review} />
         ))}
       </ReviewGrid>
+
+      {hasNext ? (
+        <div ref={elementRef} style={{ textAlign: "center", padding: "16px 0" }}>
+            {loading ? "로딩중..." : ""}
+        </div>
+        ) : (
+        <div style={{ textAlign: "center", padding: "16px 0" }}>
+            더 이상 리뷰가 없습니다.
+        </div>
+        )}
 
       <FloatingButton>
         <PlusIcon>+</PlusIcon>

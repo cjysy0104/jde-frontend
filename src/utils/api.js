@@ -321,24 +321,27 @@ export const reviewApi = {
     }
   },
 
-  getReviewList: async (query) => {
-    try {
-      return await apiClient.get(`/api/reviews`,{
-        params:{
-          query: query.query,
-          keyword: query.keyword,
-          minRating: query.minRating,
-          maxRating: query.maxRating,
-          size:query.size,
-          sort: query.sort,
-          cursor: query.cursor,
-          cursorRating: query.cursorRating,
-          cursorLikedCount: query.cursorLikedCount,
+  getReviewList: async ({
+    query,
+    keyword,
+    minRating,
+    maxRating,
+    sort,
+    cursor,
+    cursorRating,
+    cursorLikedCount,} = {}) => {
+    return apiClient.get('/api/reviews', {
+        params: {
+          query,
+          keyword,
+          minRating,
+          maxRating,
+          sort,
+          cursor,
+          cursorRating,
+          cursorLikedCount,
         },
       });
-    } catch (error) {
-      console.error('getReviewList error:', error);
-      throw error;
-    }
-  },
+    },
+
 }

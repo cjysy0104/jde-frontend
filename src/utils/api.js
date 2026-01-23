@@ -132,5 +132,9 @@ export const myActivityApi = {
   deleteComment: async (commentNo) => {
     return await apiClient.delete(`/api/comments/${commentNo}`);
   },
+
+  getCaptainList: async () =>{
+    return await apiClient.get(`/api/members`);
+  }
 };
 

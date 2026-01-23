@@ -105,32 +105,35 @@ export const bookmarkApi = {
 };
 
 export const myActivityApi = {
-  getMyReviews: async ({ cursor = 1, size = 10, sort } = {}) => {
+  getMyReviews: async ({ cursor = 1, size = 10, sort, memberNo } = {}) => {
     const params = new URLSearchParams();
-
-    if (cursor != null) params.set("cursor", String(cursor));
+    params.set("cursor", String(cursor));
     params.set("scroll.size", String(size));
-
     if (sort) params.set("sort", sort);
-    
-    return await apiClient.get(`/api/reviews/me?${params.toString()}`);
+    if (memberNo != null) params.set("memberNo", String(memberNo));
+
+    const res = await apiClient.get(`/api/reviews/me?${params.toString()}`);
+    return res.data;
   },
 
-  getMyComments: async ({ cursor = 1, size = 10 } = {}) => {
+  getMyComments: async ({ cursor = 1, size = 10, memberNo } = {}) => {
     const params = new URLSearchParams();
-
-    if (cursor != null) params.set("cursor", String(cursor));
+    params.set("cursor", String(cursor));
     params.set("scroll.size", String(size));
+    if (memberNo != null) params.set("memberNo", String(memberNo));
 
-    return await apiClient.get(`/api/comments/me?${params.toString()}`);
+    const res = await apiClient.get(`/api/comments/me?${params.toString()}`);
+    return res.data;
   },
 
   deleteReview: async (reviewNo) => {
-    return await apiClient.delete(`/api/reviews/${reviewNo}`);
+    const res = await apiClient.delete(`/api/reviews/${reviewNo}`);
+    return res.data;
   },
 
   deleteComment: async (commentNo) => {
-    return await apiClient.delete(`/api/comments/${commentNo}`);
+    const res = await apiClient.delete(`/api/comments/${commentNo}`);
+    return res.data;
   },
 
   getCaptainList: async () =>{

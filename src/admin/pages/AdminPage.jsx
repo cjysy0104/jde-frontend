@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import Dashboard from '../components/Dashboard';
@@ -7,10 +7,26 @@ import MemberManagement from '../components/MemberManagement';
 import CommentManagement from '../components/CommentManagement';
 import ReviewManagement from '../components/ReviewManagement';
 import { AdminPageContainer, MainContent } from './styles';
+import { authStorage } from '../../utils/apiClient';
+import { AuthContext } from '../../user/components/context/AuthContext';
+import { Navigate } from 'react-router';
 
 const AdminPage = () => {
+  const {auth} = useContext(AuthContext);
+  const role = authStorage.getMemberInfo().role;
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [searchKeyword, setSearchKeyword] = useState('');
+
+  console.log(auth.isAuthenticated);
+  console.log(role);
+
+  if(!auth.isInitialized){
+    return <h3>Loading..</h3>;
+  }
+
+  if(!auth.isAuthenticated || role !== 'ROLE_ADMIN'){
+    return <Navigate to="/" replace />;
+  }
 
   // 메뉴 클릭 시: 페이지 변경 + 검색어 초기화
   const handleMenuClick = (page) => {

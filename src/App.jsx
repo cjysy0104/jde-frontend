@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "./user/components/context/AuthContext";
 
 import AdminPage from "./admin/pages/AdminPage";
 import UserPage from "./user/pages/UserPage";
@@ -16,6 +18,8 @@ import MyBookmarksPage from "./user/components/myPage/bookmarks/MyBookmarksPage.
 
 import "./App.css";
 import NotFoundPage from "./user/pages/NotFoundPage.jsx";
+
+
 
 export default function App() {
   return (

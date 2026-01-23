@@ -63,7 +63,6 @@ reviewThumbImg: {
   height: 110,
   borderRadius: 22,
   objectFit: "cover",
-  border: "4px solid #fbbf24",
   display: "block",
 },
 

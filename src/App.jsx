@@ -12,7 +12,7 @@ import MyProfileViewPage from "./user/components/myPage/profiles/MyProfileViewPa
 import MyProfilePage from "./user/components/myPage/profiles/MyProfilePage.jsx";
 import MyListPage from "./user/components/myPage/lists/MyListPage.jsx";
 import MyBookmarksPage from "./user/components/myPage/bookmarks/MyBookmarksPage.jsx";
-
+import CaptainsPage from "./user/pages/CaptainPage.jsx";
 
 import "./App.css";
 import NotFoundPage from "./user/pages/NotFoundPage.jsx";
@@ -28,6 +28,7 @@ export default function App() {
 
         <Route path="/" element={<UserPage />}>
           <Route index element={<UserHome />} />
+          <Route path="captains" element={<CaptainsPage />} />
 
           <Route path="my" element={<MyLayout />}>
             <Route index element={<MyProfileViewPage />} />

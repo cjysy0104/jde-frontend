@@ -1,9 +1,10 @@
 import styled from "styled-components";
+import { NavLink as RouterNavLink } from "react-router-dom";
 
 export const NavContainer = styled.nav`
   display: flex;
   align-items: center;
-  justify-content: center; /* 중앙 정렬 */
+  justify-content: center;
   gap: 32px;
 `;
 
@@ -11,7 +12,8 @@ export const NavItem = styled.div`
   position: relative;
 `;
 
-export const NavLink = styled.a`
+/* react-router NavLink 기반 */
+export const NavLink = styled(RouterNavLink)`
   font-size: 22px;
   font-weight: 600;
   color: #111827;
@@ -26,6 +28,15 @@ export const NavLink = styled.a`
   }
 
   &:hover div {
+    transform: scaleX(1);
+  }
+
+  /* ✅ 현재 페이지(active)일 때 */
+  &.active {
+    color: #f97316;
+  }
+
+  &.active div {
     transform: scaleX(1);
   }
 `;

@@ -10,28 +10,28 @@ const Nav = () => {
   return (
     <NavContainer>
       <NavItem>
-        <NavLink>
+        <NavLink to="/" end>
           Home
           <ActiveIndicator />
         </NavLink>
       </NavItem>
 
       <NavItem>
-        <NavLink>
+        <NavLink to="/reviews">
           리뷰조회
           <ActiveIndicator />
         </NavLink>
       </NavItem>
 
       <NavItem>
-        <NavLink>
+        <NavLink to="/map">
           지도검색
           <ActiveIndicator />
         </NavLink>
       </NavItem>
 
       <NavItem>
-        <NavLink>
+        <NavLink to="/captains">
           미식대장
           <ActiveIndicator />
         </NavLink>

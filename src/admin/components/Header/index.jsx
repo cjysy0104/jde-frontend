@@ -57,7 +57,13 @@ const Header = ({ searchPlaceholder, onSearch, searchKeyword = '' }) => {
           <FaEdit />
         </IconButton>
         <Avatar>
-          <img src="https://via.placeholder.com/40" alt="User" />
+          <img 
+            src="https://via.placeholder.com/40" 
+            alt="User" 
+            onError={(e) => {
+              e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNFNUU3RUIiLz4KPHBhdGggZD0iTTIwIDEyQzIyLjIwOTEgMTIgMjQgMTMuNzkwOSAyNCAxNkMyNCAxOC4yMDkxIDIyLjIwOTEgMjAgMjAgMjBDMTcuNzkwOSAyMCAxNiAxOC4yMDkxIDE2IDE2QzE2IDEzLjc5MDkgMTcuNzkwOSAxMiAyMCAxMloiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTIwIDIyQzE1LjU4MTcgMjIgMTEuODQxNyAyNC4yMTQzIDEwIDI3LjQ3NDlWMjJIMzBWMjcuNDc0OUMyOC4xNTgzIDI0LjIxNDMgMjQuNDE4MyAyMiAyMCAyMloiIGZpbGw9IiM5Q0EzQUYiLz4KPC9zdmc+';
+            }}
+          />
         </Avatar>
       </RightSection>
     </HeaderContainer>

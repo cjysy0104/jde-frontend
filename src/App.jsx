@@ -5,6 +5,7 @@ import UserPage from './user/pages/UserPage';
 import './App.css';
 import LoginPage from './user/pages/LoginPage';
 import SignUpPage from './user/pages/SignUpPage';
+import ReviewPage from './user/pages/ReviewPage';
 
 function App() {
   return (
@@ -16,7 +17,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />
 
-        
+        <Route path='/reviews' element={<ReviewPage />} />
       </Routes>
     </BrowserRouter>
   );

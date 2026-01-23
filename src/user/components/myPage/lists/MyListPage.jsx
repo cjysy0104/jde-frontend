@@ -25,18 +25,11 @@ export default function MyListPage() {
   const normalizeList = (input) => {
     const payload = input?.data ?? input;
     if (Array.isArray(payload)) return payload;
+    const maybe = payload?.result ?? payload?.data ?? payload;
+    if (Array.isArray(maybe)) return maybe;
 
     const r = payload?.result ?? payload?.data;
-    const list =
-      r?.list ??
-      r?.content ??
-      r?.items ??
-      r ??
-      payload?.list ??
-      payload?.items ??
-      payload?.result ??
-      payload?.data ??
-      [];
+    const list = maybe?.list ?? maybe?.content ?? maybe?.items ?? [];
     return Array.isArray(list) ? list : [];
   };
 
@@ -168,9 +161,11 @@ export default function MyListPage() {
         // 리뷰 카드
         <div style={styles.list}>
           {items.map((r, idx) => {
-            const id = r.reviewNo ?? r.reviewId ?? r.id;
+            const idRaw = r.reviewNo ?? r.reviewId ?? r.id;
+            const id = idRaw != null ? String(idRaw) : "";
 
-            const key = id != null ? `review-${id}` : `review-idx-${idx}`;
+            const key = `review-${id || "noid"}-${idx}`;
+
             const created = fmt(pickReviewCreated(r));
             const updated = fmt(pickReviewUpdated(r));
 
@@ -202,10 +197,10 @@ export default function MyListPage() {
                 </div>
 
                 <div style={styles.reviewActionCol}>
-                  <button onClick={() => goEditReview(id)} style={styles.btnDark}>
+                  <button onClick={() => goEditReview(idRaw)} style={styles.btnDark}>
                     수정
                   </button>
-                  <button onClick={() => onDeleteReview(id)} style={styles.btnDanger}>
+                  <button onClick={() => onDeleteReview(idRaw)} style={styles.btnDanger}>
                     삭제
                   </button>
                 </div>

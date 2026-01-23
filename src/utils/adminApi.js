@@ -195,4 +195,28 @@ export const adminApi = {
       throw error;
     }
   },
+  getMonthlyReviewCount: async () => {
+    try {
+      return await apiClient.get(`/api/admin/reviews/monthly`);
+    } catch (error) {
+      console.error("getMonthlyReviewCount error:", error);
+      throw error;
+    }
+  },
+  getNewMemberCountLastMonth: async () => {
+    try {
+      return await apiClient.get(`/api/admin/members/new`);
+    } catch (error) {
+      console.error("getNewMemberCountLastMonth error:", error);
+      throw error;
+    }
+  },
+  getTotalMemberCount: async () => {
+    try {
+      return await apiClient.get(`/api/admin/members/total`);
+    } catch (error) {
+      console.error("getTotalMemberCount error:", error);
+      throw error;
+    }
+  },
 };

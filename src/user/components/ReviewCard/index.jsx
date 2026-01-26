@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaStar } from 'react-icons/fa';
+import { getImageProps } from "../../../utils/image";
 import {
   CardContainer,
   CardImage,
@@ -11,10 +12,14 @@ import {
   Category,
 } from './styles';
 
+
 const ReviewCard = ({ review }) => {
   return (
     <CardContainer>
-      <CardImage src={review.thumbnailUrl} alt={review.restaurantName} />
+      <CardImage
+        {...getImageProps(review.thumbnailUrl)}
+        alt={review.restaurantName}
+      />
       <CardContent>
         <RestaurantName>{review.restaurantName}</RestaurantName>
         <RatingSection>

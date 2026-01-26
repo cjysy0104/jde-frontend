@@ -1,6 +1,6 @@
-// ReviewCard.jsx
 import React from 'react';
 import { Heart, MessageCircle, Bookmark, Eye } from 'lucide-react';
+import { getImageProps } from "../../../utils/image";
 import {
   Card,
   FoodImageContainer,
@@ -27,7 +27,9 @@ const ReviewCard = ({ review, onLike, onBookmark }) => {
   return (
     <Card>
       <FoodImageContainer>
-        <FoodImage src={review.thumbnailUrl} alt={review.restaurantName} />
+        <FoodImage 
+          {...getImageProps(review.thumbnailUrl)}
+          alt={review.restaurantName} />
         <ProfileImage>
           <img src='/src/assets/logo.png' alt="Profile" />
         </ProfileImage>

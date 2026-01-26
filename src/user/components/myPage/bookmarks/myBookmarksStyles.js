@@ -39,124 +39,152 @@ export const styles = {
   grid3: {
     display: "grid",
     gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    gap: 16,
+    gap: 18,
   },
 
   card: {
-    border: "1px solid #eef0f3",
-    borderRadius: 14,
+    backgroundColor: "white",
+    borderRadius: 12,
     overflow: "hidden",
-    background: "#fff",
-    boxShadow: "0 1px 0 rgba(17, 24, 39, 0.04)",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+    transition: "transform 0.2s, box-shadow 0.2s",
+  },
+  cardHover: {
+    transform: "translateY(-4px)",
+    boxShadow: "0 4px 16px rgba(0, 0, 0, 0.15)",
   },
 
   mediaWrap: {
     position: "relative",
     width: "100%",
-    aspectRatio: "1 / 1",
-    background: "#f3f4f6",
+    paddingTop: "75%",
+    backgroundColor: "#f5f5f5",
+    overflow: "hidden",
   },
 
   media: {
+    position: "absolute",
+    top: 0,
+    left: 0,
     width: "100%",
     height: "100%",
     objectFit: "cover",
-    display: "block",
   },
 
-  kebabBtn: {
+  profileBubble: {
     position: "absolute",
-    top: 10,
-    right: 10,
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    border: "1px solid rgba(229,231,235,0.9)",
-    background: "rgba(255,255,255,0.85)",
+    bottom: 15,
+    left: 15,
+    width: 40,
+    height: 40,
+    backgroundColor: "white",
+    borderRadius: "50%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    cursor: "pointer",
-    color: "#111827",
+    boxShadow: "0 2px 6px rgba(0, 0, 0, 0.15)",
+  },
+
+  profileImg: {
+    width: 24,
+    height: 24,
   },
 
   meta: {
-    padding: "10px 12px 12px",
+    padding: 18,
   },
 
-  iconRow: {
+  actionBar: {
     display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 10,
-    marginBottom: 8,
-  },
-
-  leftIcons: {
-    display: "flex",
-    alignItems: "center",
     gap: 12,
+    marginBottom: 12,
   },
 
-  iconItem: {
-    display: "flex",
-    alignItems: "center",
-    gap: 6,
-    fontWeight: 900,
-    color: "#111827",
-  },
-
-  iconCount: {
-    fontSize: 13,
-    color: "#111827",
-  },
-
-  bookmarkBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    border: "1px solid #e5e7eb",
-    background: "#fff",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+  actionBtn: {
+    background: "none",
+    border: "none",
     cursor: "pointer",
-    color: "#111827",
-  },
-
-  titleLine: {
-    fontSize: 15,
-    fontWeight: 950,
-    color: "#111827",
-    marginBottom: 6,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-
-  contentLine: {
+    padding: "4px 6px",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 4,
+    fontFamily: "Pretendard, sans-serif",
     fontSize: 13,
+    fontWeight: 500,
+    lineHeight: 1,
+    color: "#666",
+    transition: "transform 0.2s, color 0.2s",
+  },
+
+  restaurantName: {
+    fontSize: 18,
     fontWeight: 700,
-    color: "#374151",
-    lineHeight: 1.45,
-    wordBreak: "break-word",
+    margin: "0 0 6px 0",
+    color: "#333",
+  },
+
+  userInfo: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
     marginBottom: 8,
   },
 
-  moreBtn: {
-    marginLeft: 6,
-    border: "none",
-    background: "transparent",
-    color: "#6b7280",
-    fontWeight: 900,
-    cursor: "pointer",
-    padding: 0,
+  nickname: {
+    fontSize: 13,
+    fontWeight: 600,
+    color: "#333",
+  },
+
+  rating: {
+    fontSize: 13,
+    color: "#ff6b35",
+    fontWeight: 600,
+  },
+
+  description: {
+    fontSize: 14,
+    color: "#555",
+    lineHeight: 1.5,
+    margin: "0 0 10px 0",
+    wordBreak: "break-word",
+  },
+
+  keywordContainer: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 6,
+    marginBottom: 12,
+  },
+
+  keywordBadge: {
+    backgroundColor: "#f0f0f0",
+    color: "#666",
+    padding: "4px 10px",
+    borderRadius: 12,
+    fontSize: 12,
+    fontWeight: 500,
+  },
+
+  footer: {
+    borderTop: "1px solid #eee",
+    paddingTop: 12,
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
 
   dateLine: {
     fontSize: 12,
-    fontWeight: 800,
-    color: "#9ca3af",
+    color: "#999",
+  },
+
+  viewCount: {
+    fontSize: 13,
+    color: "#999",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
   },
 
   bottomStatus: {
@@ -173,13 +201,13 @@ export const styles = {
   skeletonGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    gap: 16,
+    gap: 18,
   },
 
   skeletonCard: {
-    height: 320,
-    borderRadius: 14,
-    border: "1px solid #eef0f3",
+    height: 340,
+    borderRadius: 12,
+    border: "1px solid rgba(0,0,0,0.06)",
     background: "#f3f4f6",
   },
 };

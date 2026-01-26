@@ -24,6 +24,8 @@ import {
 } from './ReviewCard.styled';
 
 const ReviewCard = ({ review, onLike, onBookmark }) => {
+  const liked = review.uiLiked;
+  const marked = review.isMarked === "Y";
   return (
     <Card onClick={null}>
       <FoodImageContainer>

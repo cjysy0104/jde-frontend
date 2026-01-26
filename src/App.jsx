@@ -22,7 +22,6 @@ import NotFoundPage from "./user/pages/NotFoundPage.jsx";
 import CaptainReviewPage from "./user/pages/CaptainReviewPage.jsx";
 import AdminPage from "./admin/pages/AdminPage.jsx";
 
-
 export default function App() {
   return (
     <BrowserRouter>

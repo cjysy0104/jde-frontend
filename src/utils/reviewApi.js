@@ -2,16 +2,13 @@ import apiClient from "./apiClient.js";
 
 export const reviewApi = {
   // 베스트 리뷰 조회
-  getBestReviewList: async ({ cursor, cursorLikeCount}) => {
+  getBestReviewList: async ({ cursor, cursorLikeCount }) => {
     try {
       return await apiClient.get(`/api/reviews/best`, {
-        params:{
-          cursor,
-          cursorLikeCount
-        },
+        params: { cursor, cursorLikeCount },
       });
     } catch (error) {
-      console.error('getBestReviewList error:', error);
+      console.error("getBestReviewList error:", error);
       throw error;
     }
   },
@@ -86,7 +83,13 @@ export const reviewApi = {
     }
   },
 
+  // 추가: 리뷰 좋아요(POST)
+  likeReview: async (reviewNo) => {
+    return apiClient.post(`/api/reviewLikes/${reviewNo}`);
+  },
 
-
+  // 추가: 리뷰 좋아요 취소(DELETE)
+  unlikeReview: async (reviewNo) => {
+    return apiClient.delete(`/api/reviewLikes/${reviewNo}`);
+  },
 };
-

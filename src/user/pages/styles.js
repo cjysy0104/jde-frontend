@@ -50,3 +50,11 @@ export const CaptainEmptyBox = styled.div`
   color: #666;
 `;
 /* 여기까지 미식대장 */
+
+export const ReviewListContainer = styled.div`
+  min-height: 100vh;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+`;
+

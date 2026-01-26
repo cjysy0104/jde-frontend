@@ -4,6 +4,7 @@ import {
   FaRegCommentDots,
   FaRegBookmark,
   FaBookmark,
+  FaEye,
 } from "react-icons/fa";
 import { bookmarkApi } from "../../../../utils/api";
 import { useBookmarkToggle } from "../../../../utils/toggles/BookmarkToggle";
@@ -17,6 +18,7 @@ export default function MyBookmarksPage() {
   const [loading, setLoading] = useState(false);
   const [hasNext, setHasNext] = useState(true);
   const [expanded, setExpanded] = useState({});
+  const [hovered, setHovered] = useState(null);
 
   const sentinelRef = useRef(null);
   const fetchingRef = useRef(false);
@@ -28,14 +30,19 @@ export default function MyBookmarksPage() {
     return [];
   };
 
+  // ✅ 팀원 카드 필드와 최대한 맞춰줌(없으면 기존 값 fallback)
   const normalize = (b) => ({
     reviewNo: b.reviewNo,
     thumbnailUrl: b.thumbnailUrl || b.imageUrl,
-    writerNickname: b.writerNickname || b.nickname || "작성자",
+    restaurantName: b.restaurantName || b.normalName || b.storeName || "식당명",
+    nickname: b.nickname || b.writerNickname || "작성자",
+    rating: typeof b.rating === "number" ? b.rating : null,
     content: b.content || "",
     likeCount: b.likeCount ?? 0,
     commentCount: b.commentCount ?? 0,
-    createdAt: b.reviewCreatedAt || b.createdAt || b.bookmarkEnrollDate,
+    keywords: b.keywords || [],
+    updateDate: b.updateDate || b.reviewUpdatedAt || b.reviewCreatedAt || b.createdAt || b.bookmarkEnrollDate,
+    viewCount: b.viewCount, // 있으면 그대로 유지
     bookmarked: b.bookmarked ?? true,
   });
 
@@ -167,45 +174,66 @@ export default function MyBookmarksPage() {
             const isExpanded = !!expanded[b.reviewNo];
 
             return (
-              <div key={b.reviewNo} style={styles.card}>
+              <div
+                key={b.reviewNo}
+                style={{
+                  ...styles.card,
+                  ...(hovered === b.reviewNo ? styles.cardHover : {}),
+                }}
+                onMouseEnter={() => setHovered(b.reviewNo)}
+                onMouseLeave={() => setHovered(null)}
+              >
                 <div style={styles.mediaWrap}>
                   <img
-                    src={
-                      b.thumbnailUrl || "https://via.placeholder.com/900x700?text=IMG"
-                    }
-                    alt=""
+                    src={b.thumbnailUrl || "https://via.placeholder.com/900x700?text=IMG"}
+                    alt={b.restaurantName}
                     style={styles.media}
                     loading="lazy"
                   />
+
+                  <div style={styles.profileBubble}>
+                    <img src="/src/assets/logo.png" alt="Profile" style={styles.profileImg} />
+                  </div>
                 </div>
 
                 <div style={styles.meta}>
-                  <div style={styles.iconRow}>
-                    <div style={styles.leftIcons}>
-                      <div style={styles.iconItem}>
-                        <FaHeart />
-                        <span style={styles.iconCount}>{b.likeCount}</span>
-                      </div>
-                      <div style={styles.iconItem}>
-                        <FaRegCommentDots />
-                        <span style={styles.iconCount}>{b.commentCount}</span>
-                      </div>
-                    </div>
+                  {/* ✅ 팀원 카드처럼 한 줄로 */}
+                  <div style={styles.actionBar}>
+                    <button type="button" style={styles.actionBtn} disabled>
+                      <FaHeart color="#ff6b6b" />
+                      {b.likeCount}
+                    </button>
+
+                    <button type="button" style={styles.actionBtn} disabled>
+                      <FaRegCommentDots color="#666" />
+                      {b.commentCount}
+                    </button>
 
                     <button
                       type="button"
-                      style={styles.bookmarkBtn}
+                      style={styles.actionBtn}
                       onClick={() => toggleBookmark(b.reviewNo)}
                       aria-label="bookmark-toggle"
                       title="즐겨찾기 토글"
                     >
-                      {b.bookmarked ? <FaBookmark /> : <FaRegBookmark />}
+                      {b.bookmarked ? (
+                        <FaBookmark color="#333" />
+                      ) : (
+                        <FaRegBookmark color="#666" />
+                      )}
                     </button>
                   </div>
 
-                  <div style={styles.titleLine}>{b.writerNickname}</div>
+                  <h3 style={styles.restaurantName}>{b.restaurantName}</h3>
 
-                  <div style={styles.contentLine}>
+                  <div style={styles.userInfo}>
+                    <span style={styles.nickname}>{b.nickname}</span>
+                    {typeof b.rating === "number" && (
+                      <span style={styles.rating}>⭐ {b.rating.toFixed(1)}</span>
+                    )}
+                  </div>
+
+                  <p style={styles.description}>
                     {isExpanded ? b.content : preview}
                     {clipped && (
                       <button
@@ -216,9 +244,31 @@ export default function MyBookmarksPage() {
                         {isExpanded ? "접기" : "...더보기"}
                       </button>
                     )}
-                  </div>
+                  </p>
 
-                  <div style={styles.dateLine}>{formatDate(b.createdAt)}</div>
+                  {Array.isArray(b.keywords) && b.keywords.length > 0 && (
+                    <div style={styles.keywordContainer}>
+                      {b.keywords.map((k) => (
+                        <span
+                          key={k.keywordNo ?? k.keywordName ?? k}
+                          style={styles.keywordBadge}
+                        >
+                          #{k.keywordName ?? k}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div style={styles.footer}>
+                    <span style={styles.dateLine}>{formatDate(b.updateDate)}</span>
+
+                    {b.viewCount !== undefined && b.viewCount !== null && (
+                      <span style={styles.viewCount}>
+                        <FaEye />
+                        {b.viewCount}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -229,9 +279,7 @@ export default function MyBookmarksPage() {
       <div ref={sentinelRef} style={{ height: 1 }} />
 
       <div style={styles.bottomStatus}>
-        {loading && items.length > 0 && (
-          <div style={styles.bottomText}>불러오는 중...</div>
-        )}
+        {loading && items.length > 0 && <div style={styles.bottomText}>불러오는 중...</div>}
         {!loading && !hasNext && items.length > 0 && (
           <div style={styles.bottomText}>마지막입니다.</div>
         )}

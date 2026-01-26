@@ -12,7 +12,10 @@ import {
   CommentText,
   CommentActions,
   LikeButton,
-  LikeCount
+  LikeCount,
+  ActionGroup, 
+  DeleteButton,
+  UpdateButton
 } from './Comment.styled';
 
 const Comment = ({ comment, onLike }) => {
@@ -32,7 +35,20 @@ const Comment = ({ comment, onLike }) => {
           <UserInfo>
             <Username>{comment.nickname}</Username>
           </UserInfo>
-          <ReportButton>신고</ReportButton>
+          <ActionGroup>
+            <ReportButton>신고</ReportButton>
+            {comment.isOwner === 'Y' && (
+        <>
+            <UpdateButton onClick={() => onUpdate(comment.commentNo)}>
+            수정
+            </UpdateButton>
+            <DeleteButton onClick={() => onDelete(comment.commentNo)}>
+            삭제
+            </DeleteButton>
+        </>
+        )}
+
+          </ActionGroup>
         </CommentTop>
 
         <CommentText>{comment.content}</CommentText>

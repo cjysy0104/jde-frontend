@@ -103,3 +103,34 @@ export const LikeCount = styled.span`
   font-size: 13px;
   color: #666;
 `;
+
+export const ActionGroup = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+export const DeleteButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #ff6b6b;
+  cursor: pointer;
+  padding: 0;
+
+  &:hover {
+    color: #ff3b3b;
+  }
+`;
+
+export const UpdateButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+
+  &:hover {
+    color: #666;
+  }
+`;

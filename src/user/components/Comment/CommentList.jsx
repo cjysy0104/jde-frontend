@@ -34,6 +34,7 @@ const CommentList = ({ reviewNo }) => {
       });
 
       const data = response.data;
+      console.log(response);
 
       setComments(data?.comments ?? []);
       setPageInfo(data?.pageInfo ?? null);

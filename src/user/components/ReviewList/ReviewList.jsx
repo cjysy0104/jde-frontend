@@ -18,6 +18,18 @@ import { reviewApi } from "../../../utils/api";
 import { useBookmarkToggle } from "../../../utils/toggles/BookmarkToggle";
 import { useLikeToggle } from "../../../utils/toggles/LikeToggle";
 
+/* =========================================================
+ * 무한 스크롤 구현
+ * - Intersection Observer 사용한 스크롤 감지
+ * 1. hasNext: true (데이터를 더 불러올 수 있는 상태)인 경우
+ *  fetchNextReviews 호출
+ * 2. 컴포넌트 렌더링 이후 Intersection Observer 설정
+ * - elementRef: 현재 존재하면 observer로 해당 요소 관찰
+ * - 관찰할 필요가 없어지면 반환
+ * 3. 추가 리뷰글 불러오기 - 비동기식
+ * 4. 컴포넌트 렌더링
+ * ========================================================= */
+
 const ReviewList = ({
   mode = "ALL",
   captainNo,

@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { authApi } from "../../../utils/api";
+import { authApi } from "../../../utils/authApi";
 import { AuthContext } from "../context/AuthContext";
 
 import {
@@ -95,7 +95,7 @@ const Login = () => {
 
     try {
       const response = await authApi.login(email, password);
-
+      
       if (response.success) {
         login(response.data);
         navigate(from, { replace: true });

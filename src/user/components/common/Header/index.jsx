@@ -44,7 +44,7 @@ const Header = () => {
           {/* 로그인 상태 */}
           {auth.isAuthenticated && (
             <>
-              <AuthButton onClick={() => navigate('/mypage')}>
+              <AuthButton onClick={() => navigate('/my')}>
                 마이페이지
               </AuthButton>
               <AuthButton onClick={logout}>

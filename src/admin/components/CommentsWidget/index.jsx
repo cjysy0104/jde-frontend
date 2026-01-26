@@ -15,8 +15,10 @@ const CommentsWidget = () => {
       <CommentsTitle>Comments</CommentsTitle>
       <CommentsTable>
         <TableHeader>
-          <th>Comments</th>
-          <th>Date</th>
+          <tr>
+            <th>Comments</th>
+            <th>Date</th>
+          </tr>
         </TableHeader>
         <tbody>
           <TableRow>

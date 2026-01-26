@@ -1,5 +1,6 @@
 import { createContext, useEffect, useState } from "react";
-import { authStorage, authApi } from "../../../utils/api";
+import { authStorage } from "../../../utils/apiClient";
+import { authApi } from "../../../utils/authApi";
 
 export const AuthContext = createContext();
 
@@ -10,6 +11,37 @@ export const AuthProvider = ({ children }) => {
     role: null,
     isAuthenticated: false,
   });
+
+  // logout에 redirectTo 옵션을 받게(redirectTo ReferenceError 방지)
+  const logout = async (options = {}) => {
+    const { redirectTo = "/" } = options;
+
+    const memberInfo = authStorage.getMemberInfo();
+    const refreshToken = authStorage.getRefreshToken();
+
+    if (memberInfo?.email && refreshToken) {
+      try {
+        await authApi.logout({
+          email: memberInfo.email,
+          refreshToken,
+        });
+      } catch (e) {
+        // 로그아웃 API 실패해도 클라이언트 로그아웃은 진행
+        console.warn("Logout API failed:", e);
+      }
+    }
+
+    authStorage.clear();
+
+    setAuth({
+      memberNo: null,
+      memberName: null,
+      role: null,
+      isAuthenticated: false,
+    });
+
+    window.location.href = redirectTo;
+  };
 
   // 새로고침 시 자동 로그인
   useEffect(() => {
@@ -26,6 +58,16 @@ export const AuthProvider = ({ children }) => {
       });
     }
   }, []);
+
+  // forceLogout 이벤트 핸들러에서 navigate/state 제거(현재 구조에서 불필요 + 충돌 가능)
+  useEffect(() => {
+    const handler = () => {
+      logout({ redirectTo: "/login" });
+    };
+
+    window.addEventListener("auth:forceLogout", handler);
+    return () => window.removeEventListener("auth:forceLogout", handler);
+  }, []); // logout을 deps에 넣지 않음(필수 안정화)
 
   const login = (loginData) => {
     authStorage.setToken(loginData.accessToken);
@@ -49,29 +91,6 @@ export const AuthProvider = ({ children }) => {
       role: loginData.role,
       isAuthenticated: true,
     });
-  };
-
-  const logout = async () => {
-    const memberInfo = authStorage.getMemberInfo();
-    const refreshToken = authStorage.getRefreshToken();
-
-    if (memberInfo?.email && refreshToken) {
-      await authApi.logout({
-        email: memberInfo.email,
-        refreshToken,
-      });
-    }
-
-    authStorage.clear();
-
-    setAuth({
-      memberNo: null,
-      memberName: null,
-      role: null,
-      isAuthenticated: false,
-    });
-
-    window.location.href = "/";
   };
 
   return (

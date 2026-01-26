@@ -33,7 +33,9 @@ export const CardChange = styled.div`
   }
 `;
 
-export const ChangeBadge = styled.span`
+export const ChangeBadge = styled.span.withConfig({
+  shouldForwardProp: (prop) => prop !== 'positive',
+})`
   display: inline-block;
   padding: 4px 8px;
   background-color: ${props => props.positive ? '#d1fae5' : '#fee2e2'};

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { adminApi } from '../../../utils/api';
+import { adminApi } from '../../../utils/adminApi';
 import {
   ManagementContainer,
   ManagementHeader,

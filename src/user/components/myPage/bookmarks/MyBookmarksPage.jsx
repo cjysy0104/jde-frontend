@@ -30,7 +30,7 @@ export default function MyBookmarksPage() {
     return [];
   };
 
-  // ✅ 팀원 카드 필드와 최대한 맞춰줌(없으면 기존 값 fallback)
+  // 팀원 카드 필드와 최대한 맞춰줌(없으면 기존 값 fallback)
   const normalize = (b) => ({
     reviewNo: b.reviewNo,
     thumbnailUrl: b.thumbnailUrl || b.imageUrl,

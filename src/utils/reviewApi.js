@@ -37,5 +37,14 @@ export const reviewApi = {
           cursorLikedCount,
         },
       });
-    },
+  },
+
+  getDetailReview: async (reviewNo) => {
+    try {
+      return await apiClient.get(`/api/reviews/${reviewNo}`);
+    } catch (error) {
+        console.error('getDetailReview error:', error);
+        throw error;
+    }
+  },
 };

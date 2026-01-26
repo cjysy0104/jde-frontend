@@ -25,7 +25,7 @@ import {
 
 const ReviewCard = ({ review, onLike, onBookmark }) => {
   return (
-    <Card>
+    <Card onClick={null}>
       <FoodImageContainer>
         <FoodImage 
           {...getImageProps(review.thumbnailUrl)}

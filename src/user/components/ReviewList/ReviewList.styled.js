@@ -98,3 +98,31 @@ export const PlusIcon = styled.span`
   font-weight: 300;
   line-height: 1;
 `;
+
+export const CaptainHeader = styled.div`
+  margin-bottom: 30px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+`;
+
+export const CaptainHeaderTitle = styled.h2`
+  margin: 0;
+  font-size: 18px;      /* SearchSection과 비슷한 덩치 */
+  font-weight: 700;
+  color: #222;
+`;
+
+export const CaptainNickname = styled.span`
+  color: #ff6b35;       /* 포인트 컬러 */
+  font-weight: 800;
+`;
+
+export const CaptainHeaderSub = styled.span`
+  color: #666;
+  font-weight: 600;
+  margin-left: 2px;
+`;

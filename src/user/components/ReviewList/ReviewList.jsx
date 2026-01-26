@@ -10,85 +10,136 @@ import {
   SortDropdown,
   FloatingButton,
   PlusIcon,
+  CaptainHeader,
+  CaptainHeaderTitle,
+  CaptainNickname,
 } from "./ReviewList.styled";
 import { reviewApi } from "../../../utils/api";
 
-const ReviewList = () => {
-    const [reviews, setReviews] = useState([]);
-    const [hasNext, setHasNext] = useState(true);
-    const [cursor, setCursor] = useState(null);
+const ReviewList = ({
+  mode = "ALL",          // ALL | CAPTAIN | MY 로 구분 = 전체/미식대장/내 리뷰로 구분 해봤음.
+  captainNo,
+  captainNickname,
+}) => {
+  const [reviews, setReviews] = useState([]);
+  const [hasNext, setHasNext] = useState(true);
+  const [cursor, setCursor] = useState(null);
 
-    const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-    const elementRef = useRef(null);
+  const elementRef = useRef(null);
 
-    const onIntersection = (entries) => {
-        const firstEntry = entries[0];
+  const isCaptainMode = mode === "CAPTAIN";
 
-        if(firstEntry.isIntersecting && hasNext && !loading){
-            fetchNextReviews();
-        }
+  const onIntersection = (entries) => {
+    const firstEntry = entries[0];
+
+    if (firstEntry.isIntersecting && hasNext && !loading) {
+      fetchNextReviews();
+    }
+  };
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(onIntersection);
+
+    if (elementRef.current) {
+      observer.observe(elementRef.current);
+    }
+
+    return () => {
+      if (elementRef.current) {
+        observer.unobserve(elementRef.current);
+      }
     };
 
-    useEffect(() => {
-        const observer = new IntersectionObserver(onIntersection);
+  }, [hasNext, loading]);
 
-        if(elementRef.current) {
-            observer.observe(elementRef.current);
-        }
+  // (추가) 모드/대상(captainNo) 바뀌면 목록 초기화
+  useEffect(() => {
+    setReviews([]);
+    setHasNext(true);
+    setCursor(null);
+  }, [mode, captainNo]);
 
-        return () => {
-            if(elementRef.current) {
-                observer.unobserve(elementRef.current);
-            }
-        };
-
-    }, [hasNext, loading]);
-
-    const fetchNextReviews = async() => {
-        if(loading || !hasNext) return;
-        setLoading(true);
-
-        try {
-            const response = await reviewApi.getReviewList({
-                cursor: cursor,
-                sort: 'latest',
-            });
-            const data = response.data;
-            console.log(data);
+  const fetchNextReviews = async () => {
+    if (loading || !hasNext) return;
     
-            setReviews((prevReviews) => [...prevReviews, ...data]);
+    // (추가) CAPTAIN 모드인데 captainNo 없으면 호출 중단
+    if (isCaptainMode && !captainNo) return;
     
-            if(data.length === 0){
-                setHasNext(false);
-                return;
-            } else {
-                setCursor(data[data.length - 1].reviewNo);
-            }
-        } catch (error) {
-            console.log("?", error);
-        } finally {
-            setLoading(false)
-        }
+    setLoading(true);
 
-    };
+    try {
+      let response;
+
+      if (isCaptainMode) {
+        // 미식대장 리뷰 목록 호출
+        response = await reviewApi.getCaptainReviewList(captainNo, {
+          cursor,
+          sort: "latest",
+        });
+      } else {
+        // 기존 전체조회 호출 그대로 유지
+        response = await reviewApi.getReviewList({
+          cursor,
+          sort: "latest",
+        });
+      }
+
+      // apiClient가 response.data를 "unwrap"하므로, 여기 response는 {status, success, message, data, ...}
+      const payload = response?.data ?? [];
+      console.log("[ReviewList API Response]", payload);
+
+      // 중복 key 경고 방지(같은 reviewNo가 들어오면 제거)
+      const next = Array.isArray(payload) ? payload : [];
+
+      setReviews((prev) => {
+        const map = new Map(prev.map((r) => [r.reviewNo, r]));
+        next.forEach((r) => map.set(r.reviewNo, r));
+        return Array.from(map.values());
+      });
+
+      if (next.length === 0) {
+        setHasNext(false);
+        return;
+      }
+
+      setCursor(next[next.length - 1].reviewNo);
+    } catch (error) {
+      console.error("[ReviewList API Error]", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
 
 
 
   return (
     <Container>
-      <SearchSection>
-        <SearchBar>
-          <SearchInput type="text" placeholder="Search" />
-          <SearchIcon>🔍</SearchIcon>
-        </SearchBar>
-        <SortDropdown>
-          <select defaultValue="최신순" disabled>
-            <option>최신순</option>
-          </select>
-        </SortDropdown>
-      </SearchSection>
+      {/* CAPTAIN 모드일 때: 상단 검색/정렬 대신 타이틀 */}
+      {isCaptainMode ? (
+        <CaptainHeader>
+          <CaptainHeaderTitle>
+            미식대장 
+            <CaptainNickname>{captainNickname ?? ""}</CaptainNickname>
+            님의 리뷰
+          </CaptainHeaderTitle>
+        </CaptainHeader>
+      ) : (
+        <SearchSection>
+          <SearchBar>
+            <SearchInput type="text" placeholder="Search" />
+            <SearchIcon>🔍</SearchIcon>
+          </SearchBar>
+          <SortDropdown>
+            <select defaultValue="최신순" disabled>
+              <option>최신순</option>
+            </select>
+          </SortDropdown>
+        </SearchSection>
+      )}
 
       <ReviewGrid>
         {reviews.map((review) => (
@@ -97,8 +148,8 @@ const ReviewList = () => {
       </ReviewGrid>
 
       {hasNext && !loading && (
-        <div ref={elementRef} style={{textAlign: 'center'}}>
-            로딩중
+        <div ref={elementRef} style={{ textAlign: 'center' }}>
+          로딩중
         </div>
       )}
 

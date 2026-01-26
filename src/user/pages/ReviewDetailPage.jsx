@@ -3,6 +3,7 @@ import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
 import Nav from '../components/common/Nav';
 import ReviewDetail from '../components/ReviewList/ReviewDetail/ReviewDetail.jsx'
+import CommentList from '../components/Comment/CommentList.jsx';
 import { ReviewDetailContainer } from './styles';
 import { useParams } from 'react-router';
 
@@ -14,9 +15,9 @@ const ReviewDetailPage = () => {
         <ReviewDetailContainer>
             <Header />
             <Nav />
-            <ReviewDetail reviewNo={reviewNo}/>
+            <ReviewDetail reviewNo={reviewNo} />
             {/* KakaoMap */}
-            {/* Comment */}
+            <CommentList reviewNo={reviewNo} />
             <Footer />
         </ReviewDetailContainer>
     );

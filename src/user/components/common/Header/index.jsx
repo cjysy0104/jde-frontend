@@ -12,6 +12,7 @@ import {
   LogoText,
   AuthButtons,
   AuthButton,
+  NickNameText,
 } from './styles';
 
 
@@ -20,6 +21,12 @@ const Header = () => {
 
   // 인증 상태 가져오기
   const { auth, logout } = useContext(AuthContext);
+
+  const handleLogout = async () => {
+    await logout();        // AuthContext에서 스토리지 + 상태 초기화
+    navigate("/");         // 메인 화면으로 이동
+  };
+
   const readNickname = () => {
     try {
       const info = authStorage.getMemberInfo();
@@ -62,11 +69,13 @@ const Header = () => {
             </>
           ) : (
             <>
-              <LogoText>“{nickname}”님 환영합니다.</LogoText>
+              
+              <NickNameText>{nickname}</NickNameText>
+              <LogoText>님 환영합니다.</LogoText>
               <AuthButton onClick={() => navigate('/my')}>
                 마이페이지
               </AuthButton>
-              <AuthButton onClick={logout}>
+              <AuthButton onClick={handleLogout}>
                 로그아웃
               </AuthButton>
             </>

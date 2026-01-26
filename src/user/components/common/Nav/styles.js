@@ -1,5 +1,7 @@
 import styled from "styled-components";
 
+import { NavLink as RouterNavLink } from "react-router-dom";
+
 export const NavContainer = styled.nav`
   display: flex;
   align-items: center;
@@ -11,7 +13,7 @@ export const NavItem = styled.div`
   position: relative;
 `;
 
-export const NavLink = styled.a`
+export const NavLink = styled(RouterNavLink)`
   font-size: 22px;
   font-weight: 600;
   color: #111827;
@@ -28,6 +30,7 @@ export const NavLink = styled.a`
   &:hover div {
     transform: scaleX(1);
   }
+
 `;
 
 export const ActiveIndicator = styled.div`

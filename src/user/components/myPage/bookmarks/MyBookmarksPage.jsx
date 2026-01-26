@@ -91,7 +91,6 @@ export default function MyBookmarksPage() {
 
   useEffect(() => {
     resetAndLoadFirst();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -118,6 +117,8 @@ export default function MyBookmarksPage() {
 
   const toggleBookmark = async (reviewNo) => {
     if (!reviewNo || loading) return;
+    const ok = window.confirm("정말 해제하시겠습니까?");
+    if (!ok) return;
     try {
       await bookmarkApi.toggle(reviewNo);
       setItems((prev) => prev.filter((x) => x.reviewNo !== reviewNo));
@@ -165,9 +166,6 @@ export default function MyBookmarksPage() {
                     style={styles.media}
                     loading="lazy"
                   />
-                  <button type="button" style={styles.kebabBtn} onClick={() => {}}>
-                    <FaEllipsisH />
-                  </button>
                 </div>
 
                 <div style={styles.meta}>

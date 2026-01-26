@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   NavContainer,
   NavItem,
@@ -7,10 +8,12 @@ import {
 } from "./styles";
 
 const Nav = () => {
+  const navigate = useNavigate();
+
   return (
     <NavContainer>
       <NavItem>
-        <NavLink>
+        <NavLink onClick={() => navigate("/")}>
           Home
           <ActiveIndicator />
         </NavLink>

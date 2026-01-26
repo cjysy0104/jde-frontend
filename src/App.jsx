@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "./user/components/context/AuthContext";
 
 import './App.css';
 import UserPage from "./user/pages/UserPage";
@@ -14,7 +16,6 @@ import MyProfileViewPage from "./user/components/myPage/profiles/MyProfileViewPa
 import MyProfilePage from "./user/components/myPage/profiles/MyProfilePage.jsx";
 import MyListPage from "./user/components/myPage/lists/MyListPage.jsx";
 import MyBookmarksPage from "./user/components/myPage/bookmarks/MyBookmarksPage.jsx";
-
 import CaptainsPage from "./user/pages/CaptainPage.jsx";
 
 import NotFoundPage from "./user/pages/NotFoundPage.jsx";

@@ -24,6 +24,7 @@ import {
 const Dashboard = () => {
   const [totalMemberCount, setTotalMemberCount] = useState(0);
   const [newMemberCount, setNewMemberCount] = useState(0);
+  const [previousMonthNewMemberCount, setPreviousMonthNewMemberCount] = useState(0);
   const [monthlyReviewData, setMonthlyReviewData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,6 +45,12 @@ const Dashboard = () => {
           setNewMemberCount(newMemberResponse.data);
         }
         
+        // 이전 달 신규 가입자 수 조회
+        const previousMonthResponse = await adminApi.getNewMemberCountPreviousMonth();
+        if (previousMonthResponse?.data !== undefined) {
+          setPreviousMonthNewMemberCount(previousMonthResponse.data);
+        }
+        
         // 월별 리뷰 수 조회
         const monthlyReviewResponse = await adminApi.getMonthlyReviewCount();
         if (monthlyReviewResponse?.data && Array.isArray(monthlyReviewResponse.data)) {
@@ -59,12 +66,24 @@ const Dashboard = () => {
     fetchDashboardData();
   }, []);
 
-  // 이전 달 대비 증가율 계산 (간단한 예시)
+  // 이전 달 대비 증가율 계산
   const calculateChange = (current, previous) => {
-    if (!previous || previous === 0) return '0%';
+    if (!previous || previous === 0) {
+      if (current > 0) return '+100%'; // 이전 달이 0이고 현재가 있으면 100% 증가
+      return '0%';
+    }
     const change = ((current - previous) / previous) * 100;
     return `${change > 0 ? '+' : ''}${change.toFixed(1)}%`;
   };
+
+  // 신규 가입자 증가율 계산
+  const getNewMemberChange = () => {
+    const change = calculateChange(newMemberCount, previousMonthNewMemberCount);
+    const isPositive = newMemberCount >= previousMonthNewMemberCount;
+    return { change, positive: isPositive };
+  };
+
+  const memberChange = getNewMemberChange();
 
   return (
     <DashboardContainer>
@@ -91,8 +110,8 @@ const Dashboard = () => {
           <OverviewCard
             title="신규 가입자"
             value={loading ? '로딩 중...' : newMemberCount.toLocaleString()}
-            change=""
-            positive
+            change={memberChange.change}
+            positive={memberChange.positive}
             showArrow
           />
         </OverviewCards>

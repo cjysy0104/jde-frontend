@@ -68,6 +68,11 @@ export const memberApi = {
     });
   },
 
+  getDefaultProfiles: async () => {
+    const res = await apiClient.get("/api/members/profile-image/default");
+    return res.data ?? res;
+  },
+
   uploadProfileImage: async (password, file) => {
     const form = new FormData();
     form.append("password", password);

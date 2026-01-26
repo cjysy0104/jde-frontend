@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import ReviewCard from "./ReviewCard";
 import {
   Container,
@@ -11,7 +11,8 @@ import {
   FloatingButton,
   PlusIcon,
 } from "./ReviewList.styled";
-import { reviewApi } from "../../../utils/api";
+import { reviewApi, bookmarkApi  } from "../../../utils/api";
+
 /* =========================================================
  * 무한 스크롤 구현
  * - Intersection Observer 사용한 스크롤 감지
@@ -36,56 +37,151 @@ const ReviewList = () => {
     const elementRef = useRef(null);
 
     const onIntersection = (entries) => {
-        const firstEntry = entries[0];
+    const firstEntry = entries[0];
 
-        if(firstEntry.isIntersecting && hasNext && !loading){
-            fetchNextReviews();
-        }
+    if (firstEntry.isIntersecting && hasNext && !loading) {
+      fetchNextReviews();
+    }
+  };
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(onIntersection);
+
+    if (elementRef.current) {
+      observer.observe(elementRef.current);
+    }
+
+    return () => {
+      if (elementRef.current) {
+        observer.unobserve(elementRef.current);
+      }
     };
+  }, [hasNext, loading]);
 
-    useEffect(() => {
-        const observer = new IntersectionObserver(onIntersection);
+  const fetchNextReviews = async () => {
+    if (loading || !hasNext) return;
+    setLoading(true);
 
-        if(elementRef.current) {
-            observer.observe(elementRef.current);
+    try {
+      const response = await reviewApi.getReviewList({
+        cursor,
+        sort: "latest",
+      });
+      const data = response.data ?? [];
+
+      // 좋아요 토글X + 채움/비움 위해 로컬 상태 uiLiked 기본값 세팅
+      const normalized = data.map((r) => ({
+        ...r,
+        likeCount: Number(r.likeCount ?? 0),
+        isLiked: r.isLiked ?? "N",
+      }));
+
+      setReviews((prev) => {
+        const seen = new Set(prev.map((x) => x.reviewNo));
+        const merged = [...prev];
+        for (const item of normalized) {
+          if (!seen.has(item.reviewNo)) {
+            seen.add(item.reviewNo);
+            merged.push(item);
+          }
         }
+        return merged;
+      });
 
-        return () => {
-            if(elementRef.current) {
-                observer.unobserve(elementRef.current);
-            }
-        };
+      if (normalized.length === 0) setHasNext(false);
+      else setCursor(normalized[normalized.length - 1].reviewNo);
+    } catch (error) {
+      console.log("?", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    }, [hasNext, loading]);
+  // 북마크: 토글
+  const handleBookmark = useCallback(async (reviewNo) => {
+    if (!reviewNo) return;
+    setReviews((prev) => 
+      prev.map((r) => {
+        if (r.reviewNo !== reviewNo) return r;
+        const nextMarked = r.isMarked === "Y" ? "N" : "Y";
+        return { ...r, isMarked: nextMarked };
+      })
+    );
 
-    const fetchNextReviews = async() => {
-        if(loading || !hasNext) return;
-        setLoading(true);
+    try {
+      await bookmarkApi.toggle(reviewNo);
+    } catch (e) {
+      console.error(e);
+      setReviews((prev) =>
+        prev.map((r) => {
+          if (r.reviewNo !== reviewNo) return r;
+          const rollback = r.isMarked === "Y" ? "N" : "Y";
+          return { ...r, isMarked: rollback };
+        })
+      );
+      alert("북마크 처리에 실패했습니다.");
+    }
+  }, []);
 
-        try {
-            const response = await reviewApi.getReviewList({
-                cursor: cursor,
-                sort: 'latest',
-            });
-            const data = response.data;
-            console.log(data);
-    
-            setReviews((prevReviews) => [...prevReviews, ...data]);
-    
-            if(data.length === 0){
-                setHasNext(false);
-                return;
-            } else {
-                setCursor(data[data.length - 1].reviewNo);
-            }
-        } catch (error) {
-            console.log("?", error);
-        } finally {
-            setLoading(false)
-        }
+  const handleLike = useCallback(async (reviewNo) => {
+    if (!reviewNo) return;
 
-    };
+    const target = reviews.find((r) => r.reviewNo === reviewNo);
+    const prevLiked = target?.isLiked === "Y";
+    const prevCount = Number(target?.likeCount ?? 0);
 
+    const nextLiked = !prevLiked;
+    const nextCount = nextLiked ? prevCount + 1 : Math.max(0, prevCount - 1);
+
+    // 2) 낙관적 업데이트
+    setReviews((prev) =>
+      prev.map((r) =>
+        r.reviewNo === reviewNo
+          ? { ...r, isLiked: nextLiked ? "Y" : "N", likeCount: nextCount }
+          : r
+      )
+    );
+
+
+    try {
+      if (nextLiked) {
+        await reviewApi.likeReview(reviewNo);
+      } else {
+        await reviewApi.unlikeReview(reviewNo);
+      }
+    } catch (e) {
+      const msg = e?.message || "";
+
+      if (msg.includes("이미 좋아요")) {
+        setReviews((prev) =>
+          prev.map((r) =>
+            r.reviewNo === reviewNo ? { ...r, isLiked: "Y" } : r
+          )
+        );
+        return;
+      }
+
+      if (msg.includes("좋아요를 누르지 않은")) {
+        setReviews((prev) =>
+          prev.map((r) =>
+            r.reviewNo === reviewNo ? { ...r, isLiked: "N" } : r
+          )
+        );
+        return;
+      }
+
+      // 3) 실패 롤백
+      setReviews((prev) =>
+        prev.map((r) =>
+          r.reviewNo === reviewNo
+            ? { ...r, isLiked: prevLiked ? "Y" : "N", likeCount: prevCount }
+            : r
+        )
+      );
+
+      alert(msg || "좋아요 처리에 실패했습니다.");
+    }
+  }, [reviews]);
 
 
 
@@ -105,7 +201,12 @@ const ReviewList = () => {
 
       <ReviewGrid>
         {reviews.map((review) => (
-          <ReviewCard key={review.reviewNo} review={review} />
+          <ReviewCard
+            key={review.reviewNo}
+            review={review}
+            onBookmark={handleBookmark}
+            onLike={handleLike}
+          />
         ))}
       </ReviewGrid>
 

@@ -59,10 +59,13 @@ export default function MyBookmarksPage() {
     return { preview: t.slice(0, max), clipped: true };
   };
 
+  const fetchingRef = useRef(false);
+
   const loadPage = async (p, { append } = { append: true }) => {
-    if (loading) return;
+    if (fetchingRef.current) return;
     if (!hasNext && append) return;
 
+    fetchingRef.current = true;
     setLoading(true);
     try {
       const payload = await bookmarkApi.getMyBookmarks(p, size);
@@ -77,6 +80,7 @@ export default function MyBookmarksPage() {
       if (!append) setItems([]);
       setHasNext(false);
     } finally {
+      fetchingRef.current = false;
       setLoading(false);
     }
   };
@@ -117,8 +121,14 @@ export default function MyBookmarksPage() {
 
   const toggleBookmark = async (reviewNo) => {
     if (!reviewNo || loading) return;
-    const ok = window.confirm("정말 해제하시겠습니까?");
-    if (!ok) return;
+
+    const target = items.find((x) => x.reviewNo === reviewNo);
+    const isBookmarked = target?.bookmarked !== false;
+  
+    if (isBookmarked) {
+      const ok = window.confirm("정말 해제하시겠습니까?");
+      if (!ok) return;
+    }
     try {
       await bookmarkApi.toggle(reviewNo);
       setItems((prev) => prev.filter((x) => x.reviewNo !== reviewNo));

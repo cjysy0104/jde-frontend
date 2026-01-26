@@ -96,6 +96,33 @@ const CommentList = ({ reviewNo }) => {
   const maxPage = pageInfo?.maxPage ?? 1;
   const totalCount = pageInfo?.listCount ?? comments.length;
 
+    const handleDeleteComment = async (commentNo) => {
+    if (!window.confirm('댓글을 삭제할까요?')) return;
+
+    try {
+        await commentApi.deleteCommentById({ commentNo });
+        setComments(prev => prev.filter(c => c.commentNo !== commentNo));
+
+        // totalCount도 pageInfo 기반이면 재조회가 더 안전하지만 일단 UI만 줄이려면:
+        setPageInfo(prev => prev ? { ...prev, listCount: Math.max(0, prev.listCount - 1) } : prev);
+    } catch (e) {
+        console.error(e);
+    }
+    };
+
+    const handleUpdateComment = async (commentNo, content) => {
+    try {
+        await commentApi.updateComment({ commentNo, content });
+
+        setComments(prev =>
+        prev.map(c => (c.commentNo === commentNo ? { ...c, content } : c))
+        );
+    } catch (e) {
+        console.error(e);
+    }
+    };
+
+
   return (
     <CommentSection>
       <CommentHeader>
@@ -113,6 +140,8 @@ const CommentList = ({ reviewNo }) => {
               key={comment.commentNo}
               comment={comment}
               onLike={handleLikeComment}
+              onDelete={handleDeleteComment}
+              onUpdate={handleUpdateComment}
             />
           ))
         )}

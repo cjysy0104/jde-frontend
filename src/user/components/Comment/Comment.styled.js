@@ -134,3 +134,48 @@ export const UpdateButton = styled.button`
     color: #666;
   }
 `;
+
+export const EditTextarea = styled.textarea`
+  width: 100%;
+  min-height: 70px;
+  resize: vertical;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  outline: none;
+
+  &:focus {
+    border-color: #ddd;
+  }
+`;
+
+export const EditActions = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+`;
+
+export const SaveButton = styled.button`
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+`;
+
+export const CancelButton = styled.button`
+  background: none;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+`;
+

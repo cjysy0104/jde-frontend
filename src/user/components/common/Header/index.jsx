@@ -1,7 +1,8 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState  } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Logo1 from '../../../../assets/logo.png';
+import Logo1 from '../../../../assets/logo1.png';
 import { AuthContext } from '../../context/AuthContext';
+import { authStorage } from "../../../../utils/apiClient";
 
 import {
   HeaderContainer,
@@ -19,6 +20,26 @@ const Header = () => {
 
   // 인증 상태 가져오기
   const { auth, logout } = useContext(AuthContext);
+  const readNickname = () => {
+    try {
+      const info = authStorage.getMemberInfo();
+      return info?.nickname || "회원";
+    } catch {
+      return "회원";
+    }
+  };
+
+  const [nickname, setNickname] = useState(readNickname());
+
+  useEffect(() => {
+    const sync = () => setNickname(readNickname());
+    window.addEventListener("storage", sync);
+    window.addEventListener("authChanged", sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener("authChanged", sync);
+    };
+  }, []);
 
   return (
     <HeaderContainer>
@@ -30,7 +51,7 @@ const Header = () => {
 
         <AuthButtons>
           {/* 비로그인 상태 */}
-          {!auth.isAuthenticated && (
+          {!auth.isAuthenticated ? (
             <>
               <AuthButton onClick={() => navigate('/login')}>
                 로그인
@@ -39,11 +60,9 @@ const Header = () => {
                 회원가입
               </AuthButton>
             </>
-          )}
-
-          {/* 로그인 상태 */}
-          {auth.isAuthenticated && (
+          ) : (
             <>
+              <LogoText>“{nickname}”님 환영합니다.</LogoText>
               <AuthButton onClick={() => navigate('/my')}>
                 마이페이지
               </AuthButton>

@@ -5,6 +5,7 @@ export const HeaderContainer = styled.header`
   background-color: white;
   border-bottom: 1px solid #e5e7eb;
   padding: 20px 0;
+  overflow: hidden;
 `;
 
 export const HeaderContent = styled.div`
@@ -24,16 +25,19 @@ export const LogoSection = styled.div`
 
   cursor: pointer;          
   user-select: none;
-
+  flex: 0 0 auto;
+  overflow: hidden;
 `;
 
 
 export const LogoImage = styled.img`
-  width: 60px;
-  height: 60px;
+  width: 100px;
+  height: 70px;
   object-fit: contain;
 
-  transform: scale(4.0);   /* 시각적으로만 확대 */
+  display: block;
+  transform: none;
+  // transform: scale(4.0);   /* 시각적으로만 확대 */
   transform-origin: left center;
 `;
 

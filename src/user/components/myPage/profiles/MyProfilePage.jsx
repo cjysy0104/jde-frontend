@@ -34,48 +34,12 @@ import {
   ThumbMeta,
 } from "./MyprofileStyles";
 
-const DEFAULT_IMAGES = [
-  {
-    fileNo: 14,
-    fileName: "rabbit",
-    fileUrl:
-      "https://kh-yogurt.s3.ap-southeast-2.amazonaws.com/DefaultImage/JDE_20260119163533_9ba8d90f56e34900b9bf187f51edcf8e.png",
-  },
-  {
-    fileNo: 11,
-    fileName: "bear",
-    fileUrl:
-      "https://kh-yogurt.s3.ap-southeast-2.amazonaws.com/DefaultImage/JDE_20260119141936_3505be05ec8044db8eb62c4de9bed572.png",
-  },
-  {
-    fileNo: 12,
-    fileName: "deer",
-    fileUrl:
-      "https://kh-yogurt.s3.ap-southeast-2.amazonaws.com/DefaultImage/JDE_20260119141957_0d50a96a08f347b49bd2de69bde73f77.png",
-  },
-  {
-    fileNo: 13,
-    fileName: "frog",
-    fileUrl:
-      "https://kh-yogurt.s3.ap-southeast-2.amazonaws.com/DefaultImage/JDE_20260119142015_ce8fa8d1caba46b685459b6a6a5b5c31.png",
-  },
-  {
-    fileNo: 9,
-    fileName: "tiger",
-    fileUrl:
-      "https://kh-yogurt.s3.ap-southeast-2.amazonaws.com/DefaultImage/JDE_20260119123107_8bac6834252e4558b974499fa6a4107c.png",
-  },
-  {
-    fileNo: 10,
-    fileName: "penguin",
-    fileUrl:
-      "https://kh-yogurt.s3.ap-southeast-2.amazonaws.com/DefaultImage/JDE_20260119141150_f6a198feb4f84adeb1806938cce9ddc7.png",
-  },
-];
-
 export default function MyProfilePage() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+
+  const [defaultImages, setDefaultImages] = useState([]);
+  const [defaultLoading, setDefaultLoading] = useState(false);
 
   const readMemberInfo = () => {
     try {
@@ -116,7 +80,7 @@ export default function MyProfilePage() {
   const [newPassword2, setNewPassword2] = useState("");
 
   const [viewModalOpen, setViewModalOpen] = useState(false);
-  
+
   const fieldLabel = useMemo(() => {
     if (pendingField === "name") return "이름";
     if (pendingField === "nickname") return "닉네임";
@@ -151,6 +115,24 @@ export default function MyProfilePage() {
     setUploadPreviewUrl(url);
     return () => URL.revokeObjectURL(url);
   }, [selectedFile]);
+
+  const fetchDefaultImages = async () => {
+    setDefaultLoading(true);
+    try {
+      const res = await memberApi.getDefaultProfiles();
+      const list = res?.result ?? res?.data?.result ?? res?.data ?? res ?? [];
+      setDefaultImages(Array.isArray(list) ? list : []);
+    } catch (e) {
+      console.error(e);
+      setDefaultImages([]);
+    } finally {
+      setDefaultLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDefaultImages();
+  }, []);
 
   if (!me) {
     return (
@@ -187,22 +169,6 @@ export default function MyProfilePage() {
     setNewPassword2("");
   };
 
-  const openEdit = (field) => {
-    setPendingField(field);
-    setCurrentPassword("");
-    setVerifiedPassword("");
-
-    const preset =
-      field === "name"
-        ? me.memberName || ""
-        : field === "nickname"
-        ? me.nickname || ""
-        : me.phone || "";
-    setNewValue(preset);
-
-    setPwModalOpen(true);
-  };
-
   const ensureAuth = () => {
     const token = readToken();
     if (!token) {
@@ -220,6 +186,22 @@ export default function MyProfilePage() {
     if (!ensureAuth()) throw new Error("AUTH_REQUIRED");
     if (!password?.trim()) throw new Error("비밀번호를 입력하세요.");
     await memberApi.verifyPassword(password);
+  };
+
+  const openEdit = (field) => {
+    setPendingField(field);
+    setCurrentPassword("");
+    setVerifiedPassword("");
+
+    const preset =
+      field === "name"
+        ? me.memberName || ""
+        : field === "nickname"
+        ? me.nickname || ""
+        : me.phone || "";
+
+    setNewValue(preset);
+    setPwModalOpen(true);
   };
 
   const afterPwConfirm = async () => {
@@ -295,8 +277,7 @@ export default function MyProfilePage() {
       if (!ensureAuth()) return;
       if (!passCurrentPassword?.trim()) return alert("현재 비밀번호를 입력하세요.");
       if (!newPassword1?.trim()) return alert("새 비밀번호를 입력하세요.");
-      if (!newPassword2?.trim())
-        return alert("새 비밀번호 확인을 입력하세요.");
+      if (!newPassword2?.trim()) return alert("새 비밀번호 확인을 입력하세요.");
       if (newPassword1 !== newPassword2)
         return alert("새 비밀번호와 확인이 일치하지 않습니다.");
 
@@ -418,7 +399,7 @@ export default function MyProfilePage() {
           onError={(e) => (e.currentTarget.src = fallbackImg)}
           onClick={() => setViewModalOpen(true)}
           title="클릭해서 크게 보기"
-          style={{ cursor: 'zoom-in' }}
+          style={{ cursor: "zoom-in" }}
         />
       </BigAvatarWrap>
 
@@ -621,10 +602,17 @@ export default function MyProfilePage() {
             </Card>
 
             <Card>
-              <CardTitle>기본 이미지로 변경</CardTitle>
+              <CardTitle>
+                기본 이미지로 변경
+                {defaultLoading ? (
+                  <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.7 }}>
+                    불러오는 중...
+                  </span>
+                ) : null}
+              </CardTitle>
 
               <Grid>
-                {DEFAULT_IMAGES.map((img) => {
+                {defaultImages.map((img) => {
                   const isSelected = selectedDefault?.fileNo === img.fileNo;
                   return (
                     <Thumb
@@ -682,11 +670,22 @@ export default function MyProfilePage() {
           cancelText={null}
           maxWidth={700}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <img 
-              src={me.profileUrl || me.fileUrl || fallbackImg} 
-              alt="원본" 
-              style={{ width: '100%', borderRadius: '8px', objectFit: 'contain', maxHeight: '70vh' }}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <img
+              src={me.profileUrl || me.fileUrl || fallbackImg}
+              alt="원본"
+              style={{
+                width: "100%",
+                borderRadius: "8px",
+                objectFit: "contain",
+                maxHeight: "70vh",
+              }}
               onClick={() => setViewModalOpen(false)}
             />
           </div>

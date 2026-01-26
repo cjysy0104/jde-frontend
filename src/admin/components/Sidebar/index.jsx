@@ -15,7 +15,13 @@ import {
   BottomMenu,
 } from './styles';
 
-const Sidebar = ({ currentPage, onMenuClick }) => {
+const Sidebar = ({ currentPage, onMenuClick, onLogout }) => {
+  const handleLogout = () => {
+    if (window.confirm('로그아웃 하시겠습니까?')) {
+      onLogout?.();
+    }
+  };
+
   return (
     <SidebarContainer>
       <LogoSection>
@@ -32,19 +38,25 @@ const Sidebar = ({ currentPage, onMenuClick }) => {
           <MenuText>Home</MenuText>
         </MenuItem>
         
-        <MenuItem onClick={() => onMenuClick('reviews')}>
+        <MenuItem 
+        $active={currentPage === 'reviews'}
+        onClick={() => onMenuClick('reviews')}>
           <MenuIcon><FaFileAlt /></MenuIcon>
           <MenuText>리뷰 관리</MenuText>
           <MenuChevron><FaChevronDown /></MenuChevron>
         </MenuItem>
         
-        <MenuItem onClick={() => onMenuClick('members')}>
+        <MenuItem 
+        $active={currentPage === 'members'}
+        onClick={() => onMenuClick('members')}>
           <MenuIcon><FaUsers /></MenuIcon>
           <MenuText>회원 관리</MenuText>
           <MenuChevron><FaChevronDown /></MenuChevron>
         </MenuItem>
         
-        <MenuItem onClick={() => onMenuClick('comments')}>
+        <MenuItem 
+        $active={currentPage === 'comments'}
+        onClick={() => onMenuClick('comments')}>
           <MenuIcon><FaComments /></MenuIcon>
           <MenuText>댓글관리</MenuText>
           <MenuChevron><FaChevronDown /></MenuChevron>
@@ -67,7 +79,7 @@ const Sidebar = ({ currentPage, onMenuClick }) => {
           <HelpBadge>8</HelpBadge>
         </MenuItem>
         
-        <MenuItem>
+        <MenuItem onClick={handleLogout}>
           <MenuIcon><FaSignOutAlt /></MenuIcon>
           <MenuText>Logout</MenuText>
         </MenuItem>

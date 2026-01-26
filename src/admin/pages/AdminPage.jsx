@@ -12,13 +12,11 @@ import { AuthContext } from '../../user/components/context/AuthContext';
 import { Navigate } from 'react-router';
 
 const AdminPage = () => {
-  const {auth} = useContext(AuthContext);
-  const role = authStorage.getMemberInfo().role;
+  const {auth, logout} = useContext(AuthContext);
+  const role = authStorage.getMemberInfo()?.role;
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [searchKeyword, setSearchKeyword] = useState('');
 
-  console.log(auth.isAuthenticated);
-  console.log(role);
 
   if(!auth.isInitialized){
     return <h3>Loading..</h3>;
@@ -37,6 +35,11 @@ const AdminPage = () => {
   // 검색 실행 시: 검색어만 업데이트
   const handleSearch = (keyword) => {
     setSearchKeyword(keyword);
+  };
+
+  // 로그아웃 핸들러
+  const handleLogout = () => {
+    logout({ redirectTo: '/login' });
   };
 
   const getSearchPlaceholder = () => {
@@ -73,7 +76,11 @@ const AdminPage = () => {
 
   return (
     <AdminPageContainer>
-      <Sidebar currentPage={currentPage} onMenuClick={handleMenuClick} />
+      <Sidebar 
+        currentPage={currentPage} 
+        onMenuClick={handleMenuClick}
+        onLogout={handleLogout}
+      />
       <MainContent>
         <Header
           searchPlaceholder={getSearchPlaceholder()}

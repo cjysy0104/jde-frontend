@@ -153,3 +153,13 @@ export const myActivityApi = {
   }
 };
 
+export const commentApi = {
+  likeComment: async (commentNo) => {
+    return apiClient.post(`/api/comments/${commentNo}/likes`);
+  },
+
+  unlikeComment: async (commentNo) => {
+    return apiClient.delete(`/api/comments/${commentNo}/likes`);
+  },
+};
+

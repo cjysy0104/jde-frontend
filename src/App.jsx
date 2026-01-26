@@ -16,19 +16,8 @@ import MyProfileViewPage from "./user/components/myPage/profiles/MyProfileViewPa
 import MyProfilePage from "./user/components/myPage/profiles/MyProfilePage.jsx";
 import MyListPage from "./user/components/myPage/lists/MyListPage.jsx";
 import MyBookmarksPage from "./user/components/myPage/bookmarks/MyBookmarksPage.jsx";
-import { AuthContext } from "./user/components/context/AuthContext.jsx";
-import { useContext } from "react";
 import "./App.css";
 import NotFoundPage from "./user/pages/NotFoundPage.jsx";
-import { authStorage } from "./utils/apiClient.js";
-
-// 관리자 페이지 접근 권한 체크 컴포넌트
-const AdminRoute = () => {  
-  const { auth } = useContext(AuthContext);
-  // 로그인하지 않았거나 role이 ADMIN이 아닌 경우 
- if (!auth.isAuthenticated || (auth.role !== 'ROLE_ADMIN' && auth.role !== 'ADMIN'))
-   {    return <Navigate to="/" replace />;  }  return <AdminPage />;
-};
 
 
 
@@ -38,7 +27,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/admin" element={<AdminRoute />} />
+        <Route path="/admin" element={<AdminPage />} />
 
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />

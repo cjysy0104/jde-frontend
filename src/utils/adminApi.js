@@ -211,6 +211,14 @@ export const adminApi = {
       throw error;
     }
   },
+  getNewMemberCountPreviousMonth: async () => {
+    try {
+      return await apiClient.get(`/api/admin/members/previous`);
+    } catch (error) {
+      console.error("getNewMemberCountPreviousMonth error:", error);
+      throw error;
+    }
+  },
   getTotalMemberCount: async () => {
     try {
       return await apiClient.get(`/api/admin/members/total`);

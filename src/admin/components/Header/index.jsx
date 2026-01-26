@@ -41,7 +41,7 @@ const Header = ({ searchPlaceholder, onSearch, searchKeyword = '' }) => {
           placeholder={searchPlaceholder || "Search or type a command"}
           value={searchValue}
           onChange={handleChange}
-          onKeyPress={handleSearch}
+          onKeyDown={handleSearch}
         />
       </SearchInput>
       

@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   NavContainer,
   NavItem,
@@ -7,31 +8,33 @@ import {
 } from "./styles";
 
 const Nav = () => {
+  const navigate = useNavigate();
+
   return (
     <NavContainer>
       <NavItem>
-        <NavLink>
+        <NavLink to="/" end>
           Home
           <ActiveIndicator />
         </NavLink>
       </NavItem>
 
       <NavItem>
-        <NavLink>
+        <NavLink to="/reviews">
           리뷰조회
           <ActiveIndicator />
         </NavLink>
       </NavItem>
 
       <NavItem>
-        <NavLink>
+        <NavLink to="/">
           지도검색
           <ActiveIndicator />
         </NavLink>
       </NavItem>
 
       <NavItem>
-        <NavLink>
+        <NavLink to="/">
           미식대장
           <ActiveIndicator />
         </NavLink>

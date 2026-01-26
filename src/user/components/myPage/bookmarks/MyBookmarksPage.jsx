@@ -197,7 +197,6 @@ export default function MyBookmarksPage() {
                 </div>
 
                 <div style={styles.meta}>
-                  {/* ✅ 팀원 카드처럼 한 줄로 */}
                   <div style={styles.actionBar}>
                     <button type="button" style={styles.actionBtn} disabled>
                       <FaHeart color="#ff6b6b" />

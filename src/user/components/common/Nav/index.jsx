@@ -24,6 +24,7 @@ const Nav = () => {
       </NavItem>
 
       <NavItem>
+
         <NavLink to="/map">
           지도검색
           <ActiveIndicator />

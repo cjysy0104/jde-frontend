@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import './App.css';
-import AdminPage from "./admin/pages/AdminPage";
 import UserPage from "./user/pages/UserPage";
 import LoginPage from "./user/pages/LoginPage";
 import SignUpPage from "./user/pages/SignUpPage";
@@ -17,11 +16,9 @@ import MyBookmarksPage from "./user/components/myPage/bookmarks/MyBookmarksPage.
 
 import CaptainsPage from "./user/pages/CaptainPage.jsx";
 
-import "./App.css";
-
 import NotFoundPage from "./user/pages/NotFoundPage.jsx";
 import CaptainReviewPage from "./user/pages/CaptainReviewPage.jsx";
-
+import AdminPage from "./admin/pages/AdminPage.jsx";
 
 
 export default function App() {

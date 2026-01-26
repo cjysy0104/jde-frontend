@@ -103,3 +103,9 @@ export const ErrorContainer = styled.div`
   font-size: 18px;
   color: #e74c3c;
 `;
+
+export const MapSection = styled.div`
+  margin-top: 24px;
+  background: white;
+  border-radius: 8px;
+`;

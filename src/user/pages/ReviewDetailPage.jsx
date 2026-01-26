@@ -16,7 +16,6 @@ const ReviewDetailPage = () => {
             <Header />
             <Nav />
             <ReviewDetail reviewNo={reviewNo} />
-            {/* KakaoMap */}
             <CommentList reviewNo={reviewNo} />
             <Footer />
         </ReviewDetailContainer>

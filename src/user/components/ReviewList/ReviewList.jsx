@@ -15,6 +15,8 @@ import {
   CaptainNickname,
 } from "./ReviewList.styled";
 import { reviewApi } from "../../../utils/api";
+import { useBookmarkToggle } from "../../../utils/toggles/BookmarkToggle";
+import { useLikeToggle } from "../../../utils/toggles/LikeToggle"
 
 const ReviewList = ({
   mode = "ALL",          // ALL | CAPTAIN | MY 로 구분 = 전체/미식대장/내 리뷰로 구분 해봤음.

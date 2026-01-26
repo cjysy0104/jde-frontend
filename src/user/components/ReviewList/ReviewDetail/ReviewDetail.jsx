@@ -4,6 +4,7 @@ import * as S from "./ReviewDetail.styled"
 import ImageSlider from "../../common/Image/ImageSlider"
 
 import { reviewApi } from '../../../../utils/reviewApi';
+import ReviewMapSection from '../../ReviewMapSection/ReviewMapSection';
 
 const ReviewDetail = ({ reviewNo }) => {
   const [review, setReview] = useState(null);
@@ -68,8 +69,19 @@ const ReviewDetail = ({ reviewNo }) => {
         <S.RightSection>
           <ImageSlider files={review.files} height={360} />
         </S.RightSection>
-
       </S.ContentWrapper>
+      <S.MapSection>
+        <ReviewMapSection
+          restaurant={{
+            normalName: review.restaurant.normalName,
+            address: review.restaurant.address,
+            latitude: review.restaurant.latitude,
+            longitude: review.restaurant.longitude,
+            thumbnailUrl: review.files?.[0]?.fileUrl ?? null,
+          }}
+        />
+      </S.MapSection>
+
     </S.Container>
   );
 };

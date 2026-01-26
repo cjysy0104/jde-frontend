@@ -38,6 +38,7 @@ export const AuthProvider = ({ children }) => {
       memberName: null,
       role: null,
       isAuthenticated: false,
+      isInitialized: false,
     });
 
     window.location.href = redirectTo;
@@ -55,6 +56,7 @@ export const AuthProvider = ({ children }) => {
         memberName: memberInfo.memberName,
         role: memberInfo.role,
         isAuthenticated: true,
+        isInitialized: true,
       });
     }
   }, []);
@@ -90,6 +92,7 @@ export const AuthProvider = ({ children }) => {
       memberName: loginData.memberName,
       role: loginData.role,
       isAuthenticated: true,
+      isInitialized: true,
     });
   };
 

@@ -47,8 +47,8 @@ export const MenuItem = styled.div`
   padding: 12px 20px;
   cursor: pointer;
   transition: background-color 0.2s;
-  background-color: ${props => props.active ? '#f3f4f6' : 'transparent'};
-  color: ${props => props.active ? '#111827' : '#6b7280'};
+  background-color: ${props => props.$active ? '#f3f4f6' : 'transparent'};
+  color: ${props => props.$active ? '#111827' : '#6b7280'};
   
   &:hover {
     background-color: #f3f4f6;

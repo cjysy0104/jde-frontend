@@ -32,6 +32,7 @@ export const CaptainSubTitle = styled.p`
   margin: 0 0 16px;
   font-size: 13px;
   color: #666;
+  text-align: center;  
 `;
 
 export const CaptainErrorBox = styled.div`

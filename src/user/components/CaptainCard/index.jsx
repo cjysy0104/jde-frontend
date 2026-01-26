@@ -9,15 +9,27 @@ import {
   Grid,
   SkeletonCard,
 } from "./styles";
-
 import { Heart, FileText } from "lucide-react";
 
-const FALLBACK =
-  "https://dummyimage.com/160x160/e9ecef/6c757d&text=USER";
+const FALLBACK = "https://dummyimage.com/160x160/e9ecef/6c757d&text=USER";
 
-const CaptainCard = ({ nickname, fileUrl, reviewCount, likeCount }) => {
+const CaptainCard = ({
+  memberNo,
+  nickname,
+  fileUrl,
+  reviewCount,
+  likeCount,
+  onClick,
+}) => {
   return (
-    <Card>
+    <Card
+      role="button"
+      tabIndex={0}
+      onClick={() => onClick?.(memberNo)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onClick?.(memberNo);
+      }}
+    >
       <Avatar
         src={fileUrl || FALLBACK}
         alt={nickname}

@@ -20,6 +20,7 @@ import CaptainsPage from "./user/pages/CaptainPage.jsx";
 import "./App.css";
 
 import NotFoundPage from "./user/pages/NotFoundPage.jsx";
+import CaptainReviewPage from "./user/pages/CaptainReviewPage.jsx";
 
 
 
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/" element={<UserPage />}>
           <Route index element={<UserHome />} />
           <Route path="captains" element={<CaptainsPage />} />
+          <Route path="reviews/captain/:captainNo" element={<CaptainReviewPage />} />
 
           <Route path="my" element={<MyLayout />}>
             <Route index element={<MyProfileViewPage />} />

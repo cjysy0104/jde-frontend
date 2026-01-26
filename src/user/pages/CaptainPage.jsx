@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   UserPageContainer,
   CaptainPageBody,
@@ -12,6 +13,8 @@ import CaptainCard from "../components/CaptainCard";
 import { getCaptains } from "../../utils/captain";
 
 const CaptainsPage = () => {
+  const navigate = useNavigate();
+
   const [captains, setCaptains] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
@@ -25,7 +28,6 @@ const CaptainsPage = () => {
         setErrorMsg("");
 
         const result = await getCaptains();
-
         console.log("[Captains API Response]", result);
 
         if (!result?.success) {
@@ -51,11 +53,17 @@ const CaptainsPage = () => {
     };
   }, []);
 
+  
+  const handleCaptainClick = (captainNo, nickname) => {
+    if (!captainNo) return;
+    navigate(`/reviews/captain/${captainNo}`, { state: { nickname } });
+  };
+
   return (
     <UserPageContainer>
       <CaptainPageBody>
         <CaptainTitle>미식대장</CaptainTitle>
-        
+        <CaptainSubTitle>미식대장들의 리뷰를 확인해보세요.</CaptainSubTitle>
 
         {errorMsg && <CaptainErrorBox>{errorMsg}</CaptainErrorBox>}
 
@@ -68,10 +76,13 @@ const CaptainsPage = () => {
             {captains.map((c) => (
               <CaptainCard
                 key={c.memberNo}
+                memberNo={c.memberNo}
                 nickname={c.nickname}
                 fileUrl={c.fileUrl}
                 reviewCount={c.reviewCount}
                 likeCount={c.likeCount}
+                
+                onClick={(memberNo) => handleCaptainClick(memberNo, c.nickname)}
               />
             ))}
           </CaptainCard.Grid>

@@ -3,7 +3,6 @@ import { bookmarkApi } from "../api";
 
 /**
  * 공통 북마크 토글 훅
- * - items(setter)만 넘기면, 리스트/상세/북마크페이지 어디서든 재사용 가능
  */
 export function useBookmarkToggle({
   items,
@@ -12,7 +11,7 @@ export function useBookmarkToggle({
   flagField = "isMarked",
   onValue = "Y",
   offValue = "N",
-  removeWhenOff = false, // 북마크 페이지처럼 "해제하면 목록에서 제거"할 때 true
+  removeWhenOff = false,
   confirmWhenOff = false,
   confirmMessage = "정말 해제하시겠습니까?",
   apiToggle = (id) => bookmarkApi.toggle(id),
@@ -44,7 +43,6 @@ export function useBookmarkToggle({
         if (!ok) return;
       }
 
-      // optimistic update
       if (removeWhenOff && prevOn) {
         setItems((prev) => prev.filter((x) => x?.[keyField] !== id));
       } else {

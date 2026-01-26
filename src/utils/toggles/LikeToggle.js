@@ -3,7 +3,7 @@ import { reviewApi } from "../api";
 
 /**
  * 공통 좋아요 토글 훅
- * - 낙관적 업데이트 + 실패 롤백 포함
+ * 실패 롤백 포함
  */
 export function useLikeToggle({
   items,
@@ -57,7 +57,6 @@ export function useLikeToggle({
           e?.message ||
           "";
 
-        // 서버 메시지에 따라 상태 고정(선택)
         if (msg.includes("이미 좋아요")) {
           setItems((prev) =>
             prev.map((x) =>

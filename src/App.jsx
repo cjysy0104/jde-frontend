@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
+import './App.css';
 import AdminPage from "./admin/pages/AdminPage";
 import UserPage from "./user/pages/UserPage";
 import LoginPage from "./user/pages/LoginPage";
 import SignUpPage from "./user/pages/SignUpPage";
 
 import UserHome from "./user/UserHome";
+import ReviewPage from './user/pages/ReviewPage';
 
 import MyLayout from "./user/components/myPage/MyLayout.jsx";
 import MyProfileViewPage from "./user/components/myPage/profiles/MyProfileViewPage.jsx";
@@ -26,6 +28,8 @@ const AdminRoute = () => {  
    {    return <Navigate to="/" replace />;  }  return <AdminPage />;
 };
 
+
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -45,6 +49,8 @@ export default function App() {
             <Route path="bookmarks" element={<MyBookmarksPage />} />
           </Route>
         </Route>
+
+        <Route path='/reviews' element={<ReviewPage />} />
 
         <Route path="/user/*" element={<Navigate to="/" replace />} />
 

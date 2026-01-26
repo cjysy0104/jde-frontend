@@ -4,10 +4,10 @@ import {
   FaRegCommentDots,
   FaRegBookmark,
   FaBookmark,
-  FaEllipsisH,
 } from "react-icons/fa";
 import { bookmarkApi } from "../../../../utils/api";
-import { styles } from "./myBookmarksStyles";
+import { useBookmarkToggle } from "../../../../utils/toggles/BookmarkToggle";
+import { styles } from "./MyBookmarksStyles";
 
 export default function MyBookmarksPage() {
   const size = 20;
@@ -19,6 +19,7 @@ export default function MyBookmarksPage() {
   const [expanded, setExpanded] = useState({});
 
   const sentinelRef = useRef(null);
+  const fetchingRef = useRef(false);
 
   const pickList = (payload) => {
     if (Array.isArray(payload?.result)) return payload.result;
@@ -58,8 +59,6 @@ export default function MyBookmarksPage() {
     if (t.length <= max) return { preview: t, clipped: false };
     return { preview: t.slice(0, max), clipped: true };
   };
-
-  const fetchingRef = useRef(false);
 
   const loadPage = async (p, { append } = { append: true }) => {
     if (fetchingRef.current) return;
@@ -119,32 +118,32 @@ export default function MyBookmarksPage() {
     setExpanded((prev) => ({ ...prev, [reviewNo]: !prev[reviewNo] }));
   };
 
-  const toggleBookmark = async (reviewNo) => {
-    if (!reviewNo || loading) return;
+  const toggleBookmark = useBookmarkToggle({
+    items,
+    setItems,
+    flagField: "bookmarked",
+    onValue: true,
+    offValue: false,
+    removeWhenOff: true,
+    confirmWhenOff: true,
+    confirmMessage: "정말 해제하시겠습니까?",
+    errorMessage: "즐겨찾기 토글 실패",
+  });
 
-    const target = items.find((x) => x.reviewNo === reviewNo);
-    const isBookmarked = target?.bookmarked !== false;
-  
-    if (isBookmarked) {
-      const ok = window.confirm("정말 해제하시겠습니까?");
-      if (!ok) return;
-    }
-    try {
-      await bookmarkApi.toggle(reviewNo);
-      setItems((prev) => prev.filter((x) => x.reviewNo !== reviewNo));
-    } catch (e) {
-      console.error(e);
-      alert("즐겨찾기 토글 실패");
-    }
-  };
-
-  const pagesForSkeleton = useMemo(() => Array.from({ length: 6 }, (_, i) => i), []);
+  const pagesForSkeleton = useMemo(
+    () => Array.from({ length: 6 }, (_, i) => i),
+    []
+  );
 
   return (
     <div style={styles.page}>
       <div style={styles.headerRow}>
         <h2 style={styles.title}>내 즐겨찾기</h2>
-        <button onClick={resetAndLoadFirst} disabled={loading} style={styles.refreshBtn(loading)}>
+        <button
+          onClick={resetAndLoadFirst}
+          disabled={loading}
+          style={styles.refreshBtn(loading)}
+        >
           새로고침
         </button>
       </div>
@@ -171,7 +170,9 @@ export default function MyBookmarksPage() {
               <div key={b.reviewNo} style={styles.card}>
                 <div style={styles.mediaWrap}>
                   <img
-                    src={b.thumbnailUrl || "https://via.placeholder.com/900x700?text=IMG"}
+                    src={
+                      b.thumbnailUrl || "https://via.placeholder.com/900x700?text=IMG"
+                    }
                     alt=""
                     style={styles.media}
                     loading="lazy"
@@ -228,8 +229,12 @@ export default function MyBookmarksPage() {
       <div ref={sentinelRef} style={{ height: 1 }} />
 
       <div style={styles.bottomStatus}>
-        {loading && items.length > 0 && <div style={styles.bottomText}>불러오는 중...</div>}
-        {!loading && !hasNext && items.length > 0 && <div style={styles.bottomText}>마지막입니다.</div>}
+        {loading && items.length > 0 && (
+          <div style={styles.bottomText}>불러오는 중...</div>
+        )}
+        {!loading && !hasNext && items.length > 0 && (
+          <div style={styles.bottomText}>마지막입니다.</div>
+        )}
       </div>
     </div>
   );

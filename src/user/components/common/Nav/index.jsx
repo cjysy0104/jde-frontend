@@ -27,14 +27,15 @@ const Nav = () => {
       </NavItem>
 
       <NavItem>
-        <NavLink to="/">
+
+        <NavLink to="/map">
           지도검색
           <ActiveIndicator />
         </NavLink>
       </NavItem>
 
       <NavItem>
-        <NavLink to="/">
+        <NavLink to="/captains">
           미식대장
           <ActiveIndicator />
         </NavLink>

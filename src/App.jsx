@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import './App.css';
-import AdminPage from "./admin/pages/AdminPage";
 import UserPage from "./user/pages/UserPage";
 import LoginPage from "./user/pages/LoginPage";
 import SignUpPage from "./user/pages/SignUpPage";
@@ -14,8 +13,11 @@ import MyProfileViewPage from "./user/components/myPage/profiles/MyProfileViewPa
 import MyProfilePage from "./user/components/myPage/profiles/MyProfilePage.jsx";
 import MyListPage from "./user/components/myPage/lists/MyListPage.jsx";
 import MyBookmarksPage from "./user/components/myPage/bookmarks/MyBookmarksPage.jsx";
-import "./App.css";
+import CaptainsPage from "./user/pages/CaptainPage.jsx";
+
 import NotFoundPage from "./user/pages/NotFoundPage.jsx";
+import CaptainReviewPage from "./user/pages/CaptainReviewPage.jsx";
+import AdminPage from "./admin/pages/AdminPage.jsx";
 
 export default function App() {
   return (
@@ -28,6 +30,8 @@ export default function App() {
 
         <Route path="/" element={<UserPage />}>
           <Route index element={<UserHome />} />
+          <Route path="captains" element={<CaptainsPage />} />
+          <Route path="reviews/captain/:captainNo" element={<CaptainReviewPage />} />
 
           <Route path="my" element={<MyLayout />}>
             <Route index element={<MyProfileViewPage />} />

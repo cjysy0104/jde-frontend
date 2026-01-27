@@ -54,6 +54,13 @@ export const memberApi = {
     });
   },
 
+  // 회원 탈퇴
+  withdraw: async (password) => {
+    return await apiClient.delete(`/api/members`, {
+      data: {password},
+    });
+  },
+
   changeNickname: async (currentPassword, nickname) => {
     return await apiClient.patch(`/api/members/nickname`, {
       currentPassword,

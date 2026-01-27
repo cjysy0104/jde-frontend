@@ -22,12 +22,19 @@ import {
   StatItem,
   ViewCount
 } from './ReviewCard.styled';
+import { useNavigate } from 'react-router';
 
 const ReviewCard = ({ review, onLike, onBookmark }) => {
   const liked = review.uiLiked;
   const marked = review.isMarked === "Y";
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(`/reviews/${review.reviewNo}`);
+  }
+
   return (
-    <Card>
+    <Card onClick={handleClick}>
       <FoodImageContainer>
         <FoodImage 
           {...getImageProps(review.thumbnailUrl)}

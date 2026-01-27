@@ -59,3 +59,9 @@ export const ReviewListContainer = styled.div`
   flex-direction: column;
 `;
 
+export const ReviewDetailContainer = styled.div`
+  min-height: 100vh;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+`;

@@ -14,30 +14,36 @@ export const reviewApi = {
   },
 
   // 리뷰전체조회
-  getReviewList: async (
-    {
-      query,
-      keyword,
-      minRating,
-      maxRating,
-      sort,
-      cursor,
-      cursorRating,
-      cursorLikedCount,
-    } = {}
-  ) => {
-    return apiClient.get("/api/reviews", {
-      params: {
-        query,
-        keyword,
-        minRating,
-        maxRating,
-        sort,
-        cursor,
-        cursorRating,
-        cursorLikedCount,
-      },
-    });
+  getReviewList: async ({
+    query,
+    keyword,
+    minRating,
+    maxRating,
+    sort,
+    cursor,
+    cursorRating,
+    cursorLikedCount,} = {}) => {
+    return apiClient.get('/api/reviews', {
+        params: {
+          query,
+          keyword,
+          minRating,
+          maxRating,
+          sort,
+          cursor,
+          cursorRating,
+          cursorLikedCount,
+        },
+      });
+  },
+
+  getDetailReview: async (reviewNo) => {
+    try {
+      return await apiClient.get(`/api/reviews/${reviewNo}`);
+    } catch (error) {
+        console.error('getDetailReview error:', error);
+        throw error;
+    }
   },
 
   // 미식대장 리뷰 조회 (추가)

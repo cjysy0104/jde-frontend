@@ -9,6 +9,7 @@ import SignUpPage from "./user/pages/SignUpPage";
 
 import UserHome from "./user/UserHome";
 import ReviewPage from './user/pages/ReviewPage';
+import ReviewDetailPage from './user/pages/ReviewDetailPage.jsx';
 
 import MyLayout from "./user/components/myPage/MyLayout.jsx";
 import MyProfileViewPage from "./user/components/myPage/profiles/MyProfileViewPage.jsx";
@@ -44,6 +45,7 @@ export default function App() {
         </Route>
 
         <Route path='/reviews' element={<ReviewPage />} />
+        <Route path="/reviews/:reviewNo" element={<ReviewDetailPage />} />
 
         <Route path="/user/*" element={<Navigate to="/" replace />} />
 

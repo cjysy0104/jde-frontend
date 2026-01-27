@@ -17,6 +17,7 @@ import {
 import { reviewApi } from "../../../utils/api";
 import { useBookmarkToggle } from "../../../utils/toggles/BookmarkToggle";
 import { useLikeToggle } from "../../../utils/toggles/LikeToggle"
+import { useNavigate } from "react-router";
 
 const ReviewList = ({
   mode = "ALL",          // ALL | CAPTAIN | MY 로 구분 = 전체/미식대장/내 리뷰로 구분 해봤음.
@@ -28,6 +29,8 @@ const ReviewList = ({
   const [cursor, setCursor] = useState(null);
 
   const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   const elementRef = useRef(null);
 
@@ -142,6 +145,10 @@ const ReviewList = ({
     errorMessage: "좋아요 처리에 실패했습니다.",
   });
 
+  const handleEnrollBtn = () => {
+    navigate(`/reviews/enroll`);
+  }
+
   return (
     <Container>
       {/* CAPTAIN 모드일 때: 상단 검색/정렬 대신 타이틀 */}
@@ -184,7 +191,7 @@ const ReviewList = ({
         </div>
       )}
 
-      <FloatingButton>
+      <FloatingButton onClick={handleEnrollBtn}>
         <PlusIcon>+</PlusIcon>
       </FloatingButton>
     </Container>

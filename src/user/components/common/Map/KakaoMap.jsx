@@ -1,80 +1,64 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { MapWrapper } from './KakaoMap.styled';
 
-const KakaoMap = ({ center, level, markers = [], onMapCreated }) => {
+const KakaoMap = ({ center, level = 3, markers = [], onMapCreated }) => {
+  const mapElRef = useRef(null);
   const mapRef = useRef(null);
-  const [map, setMap] = useState(null);
-  const [mapMarkers, setMapMarkers] = useState([]);
+  const markerRefs = useRef([]);
 
-  // 지도 초기화
+  // 1) 지도 최초 생성 (딱 1번)
   useEffect(() => {
-    if (!mapRef.current || !window.kakao || !window.kakao.maps) return;
+    if (!mapElRef.current || !window.kakao?.maps) return;
 
-    const options = {
+    const map = new window.kakao.maps.Map(mapElRef.current, {
       center: new window.kakao.maps.LatLng(center.lat, center.lng),
-      level: level || 3
-    };
+      level,
+    });
 
-    const kakaoMap = new window.kakao.maps.Map(mapRef.current, options);
-    setMap(kakaoMap);
+    mapRef.current = map;
+    onMapCreated?.(map);
 
-    if (onMapCreated) {
-      onMapCreated(kakaoMap);
-    }
-  }, []);
+    requestAnimationFrame(() => {
+      map.relayout();
+      map.setCenter(new window.kakao.maps.LatLng(center.lat, center.lng));
+    });
+  }, []); 
 
-  // 중심 좌표 변경
+  // 2) center/level 반영
   useEffect(() => {
-    if (!map || !center) return;
-    
-    const moveLatLng = new window.kakao.maps.LatLng(center.lat, center.lng);
-    map.setCenter(moveLatLng);
-  }, [map, center]);
+    const map = mapRef.current;
+    if (!map) return;
 
-  // 레벨 변경
-  useEffect(() => {
-    if (!map || !level) return;
-    
+    map.relayout();
     map.setLevel(level);
-  }, [map, level]);
+    map.setCenter(new window.kakao.maps.LatLng(center.lat, center.lng));
+  }, [center?.lat, center?.lng, level]);
 
-  // 마커 업데이트
+  // 3) markers 반영
   useEffect(() => {
+    const map = mapRef.current;
     if (!map) return;
 
     // 기존 마커 제거
-    mapMarkers.forEach(marker => marker.setMap(null));
+    markerRefs.current.forEach((m) => m.setMap(null));
+    markerRefs.current = [];
 
     // 새 마커 생성
-    const newMarkers = markers.map(markerData => {
-      const markerPosition = new window.kakao.maps.LatLng(
-        markerData.lat,
-        markerData.lng
-      );
-      
+    markers.forEach((mk) => {
       const marker = new window.kakao.maps.Marker({
-        position: markerPosition,
-        map: map
+        map,
+        position: new window.kakao.maps.LatLng(mk.lat, mk.lng),
       });
 
-      // 마커 클릭 이벤트
-      if (markerData.onClick) {
-        window.kakao.maps.event.addListener(marker, 'click', () => {
-          markerData.onClick(markerData);
-        });
+      if (mk.onClick) {
+        window.kakao.maps.event.addListener(marker, 'click', () => mk.onClick(mk));
       }
 
-      return marker;
+      markerRefs.current.push(marker);
     });
+  }, [markers]);
 
-    setMapMarkers(newMarkers);
-
-    return () => {
-      newMarkers.forEach(marker => marker.setMap(null));
-    };
-  }, [map, markers]);
-
-  return <MapWrapper ref={mapRef} />;
+  return <MapWrapper ref={mapElRef} />;
 };
 
 export default KakaoMap;

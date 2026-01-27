@@ -45,8 +45,11 @@ const ReviewCard = ({ review, onLike, onBookmark }) => {
       </FoodImageContainer>
 
       <CardContent>
-        <ActionBar>
-          <ActionButton onClick={() => onLike(review.reviewNo)}>
+        <ActionBar onClick={(event) => event.stopPropagation()}>
+          <ActionButton onClick={(event) => {
+            event.stopPropagation();
+            onLike(review.reviewNo);
+          }}>
             <Heart 
               size={20} 
               fill={review.isLiked === 'Y' ? "#ff6b6b" : "none"} 
@@ -54,11 +57,16 @@ const ReviewCard = ({ review, onLike, onBookmark }) => {
             />
             {review.likeCount}
           </ActionButton>
-          <ActionButton>
+          <ActionButton onClick={(event) => {
+             event.stopPropagation();}}
+          >
             <MessageCircle size={20} color="#666" />
             {review.commentCount}
           </ActionButton>
-          <ActionButton onClick={() => onBookmark(review.reviewNo)}>
+          <ActionButton onClick={(event) => {
+            event.stopPropagation();
+            onBookmark(review.reviewNo);
+          }}>
             <Bookmark 
               size={20} 
               fill={review.isMarked === 'Y' ? "#333" : "none"} 

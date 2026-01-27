@@ -42,9 +42,16 @@ export const LogoImage = styled.img`
 `;
 
 export const LogoText = styled.h1`
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 400;
   color: #111827;
+  margin: 0;
+`;
+
+export const NickNameText = styled.h1`
+  font-size: 17px;
+  font-weight: 600;
+  color: #f97316;
   margin: 0;
 `;
 

@@ -9,6 +9,7 @@ import SignUpPage from "./user/pages/SignUpPage";
 import UserHome from "./user/UserHome";
 import ReviewPage from './user/pages/ReviewPage';
 import ReviewDetailPage from './user/pages/ReviewDetailPage.jsx';
+import MapSearchPage from './user/pages/MapSearchPage';
 
 import MyLayout from "./user/components/myPage/MyLayout.jsx";
 import MyProfileViewPage from "./user/components/myPage/profiles/MyProfileViewPage.jsx";
@@ -34,6 +35,7 @@ export default function App() {
           <Route index element={<UserHome />} />
           <Route path="captains" element={<CaptainsPage />} />
           <Route path="reviews/captain/:captainNo" element={<CaptainReviewPage />} />
+          <Route path="map" element={<MapSearchPage />} />
 
           <Route path="my" element={<MyLayout />}>
             <Route index element={<MyProfileViewPage />} />

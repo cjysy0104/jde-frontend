@@ -1,18 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import { MapWrapper } from './KakaoMap.styled';
 
-<<<<<<< HEAD
-const KakaoMap = ({ center, level, markers = [], circle = null, onMapCreated }) => {
-  const mapRef = useRef(null);
-  const [map, setMap] = useState(null);
-  const [mapMarkers, setMapMarkers] = useState([]);
-  const [circleOverlay, setCircleOverlay] = useState(null);
-=======
-const KakaoMap = ({ center, level = 3, markers = [], onMapCreated }) => {
+const KakaoMap = ({ center, level = 3, markers = [], circle = null, onMapCreated }) => {
   const mapElRef = useRef(null);
   const mapRef = useRef(null);
   const markerRefs = useRef([]);
->>>>>>> 4fdd2cf80e33ad6e78e0759bb5aad42399180bfe
+  const circleRef = useRef(null);
 
   // 1) 지도 최초 생성 (딱 1번)
   useEffect(() => {
@@ -48,19 +41,23 @@ const KakaoMap = ({ center, level = 3, markers = [], onMapCreated }) => {
     if (!map) return;
 
     // 기존 마커 제거
-    markerRefs.current.forEach((m) => m.setMap(null));
+    markerRefs.current.forEach((m) => {
+      if (m.setMap) {
+        m.setMap(null);
+      }
+    });
     markerRefs.current = [];
 
     // 새 마커 생성
-<<<<<<< HEAD
-    const newMarkers = markers.map(markerData => {
+    markers.forEach((markerData) => {
       const markerPosition = new window.kakao.maps.LatLng(
         markerData.lat,
         markerData.lng
       );
       
-      // 내 위치 마커는 커스텀 HTML 마커 사용
       let marker;
+      
+      // 내 위치 마커는 커스텀 HTML 마커 사용
       if (markerData.isMyLocation) {
         // 내 위치 마커 (커스텀 HTML)
         const markerContent = document.createElement('div');
@@ -116,37 +113,21 @@ const KakaoMap = ({ center, level = 3, markers = [], onMapCreated }) => {
             markerData.onClick(markerData);
           });
         }
-=======
-    markers.forEach((mk) => {
-      const marker = new window.kakao.maps.Marker({
-        map,
-        position: new window.kakao.maps.LatLng(mk.lat, mk.lng),
-      });
-
-      if (mk.onClick) {
-        window.kakao.maps.event.addListener(marker, 'click', () => mk.onClick(mk));
->>>>>>> 4fdd2cf80e33ad6e78e0759bb5aad42399180bfe
       }
 
       markerRefs.current.push(marker);
     });
   }, [markers]);
 
-<<<<<<< HEAD
-    setMapMarkers(newMarkers);
-
-    return () => {
-      newMarkers.forEach(marker => marker.setMap(null));
-    };
-  }, [map, markers]);
-
-  // 반경 원 표시
+  // 4) 반경 원 표시
   useEffect(() => {
+    const map = mapRef.current;
     if (!map) return;
 
     // 기존 원 제거
-    if (circleOverlay) {
-      circleOverlay.setMap(null);
+    if (circleRef.current) {
+      circleRef.current.setMap(null);
+      circleRef.current = null;
     }
 
     // 새 원 생성
@@ -163,22 +144,11 @@ const KakaoMap = ({ center, level = 3, markers = [], onMapCreated }) => {
       });
 
       circleObj.setMap(map);
-      setCircleOverlay(circleObj);
-    } else {
-      setCircleOverlay(null);
+      circleRef.current = circleObj;
     }
+  }, [circle]);
 
-    return () => {
-      if (circleOverlay) {
-        circleOverlay.setMap(null);
-      }
-    };
-  }, [map, circle]);
-
-  return <MapWrapper ref={mapRef} />;
-=======
   return <MapWrapper ref={mapElRef} />;
->>>>>>> 4fdd2cf80e33ad6e78e0759bb5aad42399180bfe
 };
 
 export default KakaoMap;

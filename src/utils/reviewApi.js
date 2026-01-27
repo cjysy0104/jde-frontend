@@ -1,11 +1,16 @@
 import apiClient from "./apiClient.js";
 
 export const reviewApi = {
-  // 베스트 리뷰 조회
-  getBestReviewList: async ({ cursor, cursorLikeCount }) => {
+  // 베스트 리뷰 조회 - 필터
+  getBestReviewList: async ({ cursor, cursorLikeCount, keywordNo, query }) => {
     try {
       return await apiClient.get(`/api/reviews/best`, {
-        params: { cursor, cursorLikeCount },
+        params: { 
+          cursor, 
+          cursorLikeCount,
+          keywordNo, 
+          query,
+        },
       });
     } catch (error) {
       console.error("getBestReviewList error:", error);

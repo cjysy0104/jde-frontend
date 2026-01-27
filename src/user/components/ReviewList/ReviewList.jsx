@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useContext } from "react";
 import ReviewCard from "./ReviewCard";
 import {
   Container,
@@ -18,12 +18,15 @@ import { reviewApi } from "../../../utils/api";
 import { useBookmarkToggle } from "../../../utils/toggles/BookmarkToggle";
 import { useLikeToggle } from "../../../utils/toggles/LikeToggle"
 import { useNavigate } from "react-router";
+import { AuthContext } from "../context/AuthContext";
 
 const ReviewList = ({
   mode = "ALL",          // ALL | CAPTAIN | MY 로 구분 = 전체/미식대장/내 리뷰로 구분 해봤음.
   captainNo,
   captainNickname,
 }) => {
+  const { auth } = useContext(AuthContext);
+
   const [reviews, setReviews] = useState([]);
   const [hasNext, setHasNext] = useState(true);
   const [cursor, setCursor] = useState(null);
@@ -110,6 +113,8 @@ const ReviewList = ({
       observer.observe(elementRef.current);
     }
 
+
+
     return () => {
       if (elementRef.current) {
         observer.unobserve(elementRef.current);
@@ -146,6 +151,10 @@ const ReviewList = ({
   });
 
   const handleEnrollBtn = () => {
+    if(!auth.isAuthenticated){
+      alert("로그인 후 이용 가능합니다.");
+      return;
+    }
     navigate(`/reviews/enroll`);
   }
 
@@ -191,9 +200,11 @@ const ReviewList = ({
         </div>
       )}
 
-      <FloatingButton onClick={handleEnrollBtn}>
-        <PlusIcon>+</PlusIcon>
-      </FloatingButton>
+      {auth.isAuthenticated && (
+        <FloatingButton onClick={handleEnrollBtn}>
+          <PlusIcon>+</PlusIcon>
+        </FloatingButton>
+      )}
     </Container>
   );
 };

@@ -96,20 +96,22 @@ export const FilterButton = styled.button`
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  background-color: ${props => props.active ? '#f97316' : 'white'};
-  color: ${props => props.active ? 'white' : '#111827'};
-  border: 1px solid ${props => props.active ? '#f97316' : '#e5e7eb'};
+
+  background-color: ${(props) => (props.$active ? "#f97316" : "white")};
+  color: ${(props) => (props.$active ? "white" : "#111827")};
+  border: 1px solid ${(props) => (props.$active ? "#f97316" : "#e5e7eb")};
+
   border-radius: 50px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  
+
   &:hover {
-    background-color: ${props => props.active ? '#ea580c' : '#f9fafb'};
-    border-color: ${props => props.active ? '#ea580c' : '#d1d5db'};
+    background-color: ${(props) => (props.$active ? "#ea580c" : "#f9fafb")};
+    border-color: ${(props) => (props.$active ? "#ea580c" : "#d1d5db")};
   }
-  
+
   svg {
     font-size: 14px;
   }

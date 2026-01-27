@@ -92,4 +92,28 @@ export const reviewApi = {
   unlikeReview: async (reviewNo) => {
     return apiClient.delete(`/api/reviewLikes/${reviewNo}`);
   },
+
+  // 키워드 리스트 조회
+  getKeywordList: async () => {
+    try {
+      return apiClient.get(`/api/reviews/keywords`);
+    } catch (error) {
+      console.error('getKeywordList error:', error);
+        throw error;
+    }
+  },
+
+  // 리뷰 등록
+  createReview: async (formData) => {
+    try {
+      return await apiClient.post(`/api/reviews`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        }
+      });
+    } catch (error) {
+      console.error("createReview error:", error);
+      throw error;
+    }
+  }
 };

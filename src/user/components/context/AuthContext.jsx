@@ -1,23 +1,50 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useCallback, useEffect, useState } from "react";
 import { authStorage } from "../../../utils/apiClient";
 import { authApi } from "../../../utils/authApi";
 
 export const AuthContext = createContext();
 
+const EMPTY_AUTH = {
+  memberNo: null,
+  memberName: null,
+  role: null,
+  isAuthenticated: false,
+  isInitialized: false,
+};
+
+// 로컬스토리지 기준으로 auth 상태를 재구성
+function buildAuthFromStorage() {
+  const token = authStorage.getToken?.();
+  const refreshToken = authStorage.getRefreshToken?.();
+  const memberInfo = authStorage.getMemberInfo?.();
+
+  if (token && refreshToken && memberInfo) {
+    return {
+      memberNo: memberInfo.memberNo ?? null,
+      memberName: memberInfo.memberName ?? null,
+      role: memberInfo.role ?? null,
+      isAuthenticated: true,
+      isInitialized: true,
+    };
+  }
+
+  return { ...EMPTY_AUTH, isInitialized: true };
+}
+
 export const AuthProvider = ({ children }) => {
-  const [auth, setAuth] = useState({
-    memberNo: null,
-    memberName: null,
-    role: null,
-    isAuthenticated: false,
-  });
+  const [auth, setAuth] = useState(EMPTY_AUTH);
 
-  // logout에 redirectTo 옵션을 받게(redirectTo ReferenceError 방지)
-  const logout = async (options = {}) => {
-    const { redirectTo = "/" } = options;
+  // 공통: 스토리지 기준으로 state 동기화
+  const syncAuth = useCallback(() => {
+    setAuth(buildAuthFromStorage());
+  }, []);
 
-    const memberInfo = authStorage.getMemberInfo();
-    const refreshToken = authStorage.getRefreshToken();
+  // 로그아웃 (API 호출은 시도하되 실패해도 클라이언트 로그아웃 진행)
+  // 주의: 여기서는 리다이렉트(강제 이동)를 하지 않음.
+  // 이동이 필요하면 호출하는 쪽에서 navigate 또는 location 변경을 수행.
+  const logout = useCallback(async () => {
+    const memberInfo = authStorage.getMemberInfo?.();
+    const refreshToken = authStorage.getRefreshToken?.();
 
     if (memberInfo?.email && refreshToken) {
       try {
@@ -26,52 +53,18 @@ export const AuthProvider = ({ children }) => {
           refreshToken,
         });
       } catch (e) {
-        // 로그아웃 API 실패해도 클라이언트 로그아웃은 진행
         console.warn("Logout API failed:", e);
       }
     }
 
     authStorage.clear();
+    setAuth({ ...EMPTY_AUTH, isInitialized: true });
 
-    setAuth({
-      memberNo: null,
-      memberName: null,
-      role: null,
-      isAuthenticated: false,
-      isInitialized: false,
-    });
-
-    window.location.href = redirectTo;
-  };
-
-  // 새로고침 시 자동 로그인
-  useEffect(() => {
-    const token = authStorage.getToken();
-    const refreshToken = authStorage.getRefreshToken();
-    const memberInfo = authStorage.getMemberInfo();
-
-    if (token && refreshToken && memberInfo) {
-      setAuth({
-        memberNo: memberInfo.memberNo,
-        memberName: memberInfo.memberName,
-        role: memberInfo.role,
-        isAuthenticated: true,
-        isInitialized: true,
-      });
-    }
+    // 헤더/전역 상태 즉시 갱신 트리거
+    window.dispatchEvent(new Event("authChanged"));
   }, []);
 
-  // forceLogout 이벤트 핸들러에서 navigate/state 제거(현재 구조에서 불필요 + 충돌 가능)
-  useEffect(() => {
-    const handler = () => {
-      logout({ redirectTo: "/login" });
-    };
-
-    window.addEventListener("auth:forceLogout", handler);
-    return () => window.removeEventListener("auth:forceLogout", handler);
-  }, []); // logout을 deps에 넣지 않음(필수 안정화)
-
-  const login = (loginData) => {
+  const login = useCallback((loginData) => {
     authStorage.setToken(loginData.accessToken);
     authStorage.setRefreshToken(loginData.refreshToken);
 
@@ -94,10 +87,48 @@ export const AuthProvider = ({ children }) => {
       isAuthenticated: true,
       isInitialized: true,
     });
-  };
+
+    // 헤더/전역 상태 갱신 트리거
+    window.dispatchEvent(new Event("authChanged"));
+  }, []);
+
+  // 새로고침 시 자동 로그인/초기화
+  useEffect(() => {
+    syncAuth();
+  }, [syncAuth]);
+
+  // authChanged / storage 이벤트를 구독해서 UI(헤더 포함)가 즉시 동기화되게 함
+  useEffect(() => {
+    const handler = () => syncAuth();
+
+    window.addEventListener("authChanged", handler);
+    window.addEventListener("storage", handler); // 다른 탭/창 동기화까지 원하면 유지
+
+    return () => {
+      window.removeEventListener("authChanged", handler);
+      window.removeEventListener("storage", handler);
+    };
+  }, [syncAuth]);
+
+  // 강제 로그아웃(토큰 만료 등): 상태 초기화 + 필요하면 리다이렉트
+  useEffect(() => {
+    const handler = (e) => {
+      const redirectTo = e?.detail?.redirectTo; // 선택
+      authStorage.clear();
+      setAuth({ ...EMPTY_AUTH, isInitialized: true });
+      window.dispatchEvent(new Event("authChanged"));
+
+      if (redirectTo) {
+        window.location.replace(redirectTo);
+      }
+    };
+
+    window.addEventListener("auth:forceLogout", handler);
+    return () => window.removeEventListener("auth:forceLogout", handler);
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ auth, login, logout }}>
+    <AuthContext.Provider value={{ auth, login, logout, syncAuth }}>
       {children}
     </AuthContext.Provider>
   );

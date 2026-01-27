@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FaHeart,
   FaRegCommentDots,
@@ -12,127 +12,153 @@ import { styles } from "./MyBookmarksStyles";
 import Modal from "../../../components/modal/Modal";
 
 export default function MyBookmarksPage() {
-  const size = 20;
+  const pageSize = 20;
 
-  const [items, setItems] = useState([]);
-  const [page, setPage] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [hasNext, setHasNext] = useState(true);
-  const [expanded, setExpanded] = useState({});
-  const [hovered, setHovered] = useState(null);
+  const [bookmarkItems, setBookmarkItems] = useState([]);
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasNextPage, setHasNextPage] = useState(true);
 
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [confirmLoading, setConfirmLoading] = useState(false);
-  const [pending, setPending] = useState(null);
+  const [expandedReviewMap, setExpandedReviewMap] = useState({});
+  const [hoveredReviewNo, setHoveredReviewNo] = useState(null);
 
-  const sentinelRef = useRef(null);
-  const fetchingRef = useRef(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isConfirmActionLoading, setIsConfirmActionLoading] = useState(false);
+  const [pendingUnbookmarkTarget, setPendingUnbookmarkTarget] = useState(null);
 
-  const pickList = (payload) => {
+  const sentinelElementRef = useRef(null);
+  const isFetchingRef = useRef(false);
+  const hasNextPageRef = useRef(true);
+  const isLoadingRef = useRef(false);
+
+  const setHasNextPageSafe = (value) => {
+    hasNextPageRef.current = value;
+    setHasNextPage(value);
+  };
+
+  const setIsLoadingSafe = (value) => {
+    isLoadingRef.current = value;
+    setIsLoading(value);
+  };
+
+  const extractBookmarkList = (payload) => {
     if (Array.isArray(payload?.result)) return payload.result;
     if (Array.isArray(payload?.data?.result)) return payload.data.result;
     if (Array.isArray(payload)) return payload;
     return [];
   };
 
-  const normalize = (b) => ({
-    reviewNo: b.reviewNo,
-    thumbnailUrl: b.thumbnailUrl || b.imageUrl,
-    restaurantName: b.restaurantName,
-    nickname: b.writerNickname || b.nickname || "작성자",
-    rating: typeof b.rating === "number" ? b.rating : null,
-    content: b.content || "",
-    likeCount: b.likeCount ?? 0,
-    commentCount: b.commentCount ?? 0,
-    keywords: b.keywords || [],
-    updateDate: b.bookmarkEnrollDate || b.reviewCreatedAt || b.updateDate,
-    viewCount: b.viewCount,
-    bookmarked: b.bookmarked ?? true,
+  const normalizeBookmarkItem = (bookmark) => ({
+    reviewNo: bookmark.reviewNo,
+    thumbnailUrl: bookmark.thumbnailUrl || bookmark.imageUrl,
+    restaurantName: bookmark.restaurantName,
+    nickname: bookmark.writerNickname || bookmark.nickname || "작성자",
+    rating: typeof bookmark.rating === "number" ? bookmark.rating : null,
+    content: bookmark.content || "",
+    likeCount: bookmark.likeCount ?? 0,
+    commentCount: bookmark.commentCount ?? 0,
+    keywords: bookmark.keywords || [],
+    updateDate:
+      bookmark.bookmarkEnrollDate || bookmark.reviewCreatedAt || bookmark.updateDate,
+    viewCount: bookmark.viewCount,
+    bookmarked: bookmark.bookmarked ?? true,
   });
 
+  const formatDateToYmd = (value) => {
+    if (!value) return "";
+    if (typeof value === "string") return value.slice(0, 10);
 
-  const formatDate = (v) => {
-    if (!v) return "";
-    if (typeof v === "string") return v.slice(0, 10);
-    try {
-      const d = new Date(v);
-      if (Number.isNaN(d.getTime())) return String(v).slice(0, 10);
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${day}`;
-    } catch {
-      return String(v).slice(0, 10);
+    const dateObject = new Date(value);
+    if (Number.isNaN(dateObject.getTime())) return String(value).slice(0, 10);
+
+    const year = dateObject.getFullYear();
+    const month = String(dateObject.getMonth() + 1).padStart(2, "0");
+    const day = String(dateObject.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const getContentPreview = (text, maxLength = 60) => {
+    const normalizedText = (text ?? "").toString();
+    if (normalizedText.length <= maxLength) {
+      return { preview: normalizedText, clipped: false };
     }
+    return { preview: normalizedText.slice(0, maxLength), clipped: true };
   };
 
-  const getPreview = (text, max = 60) => {
-    const t = (text ?? "").toString();
-    if (t.length <= max) return { preview: t, clipped: false };
-    return { preview: t.slice(0, max), clipped: true };
-  };
+  const fetchBookmarkPage = useCallback(
+    async (pageIndex, { append } = { append: true }) => {
+      if (isFetchingRef.current) return;
+      if (!hasNextPageRef.current && append) return;
 
-  const loadPage = async (p, { append } = { append: true }) => {
-    if (fetchingRef.current) return;
-    if (!hasNext && append) return;
+      isFetchingRef.current = true;
+      setIsLoadingSafe(true);
 
-    fetchingRef.current = true;
-    setLoading(true);
-    try {
-      const payload = await bookmarkApi.getMyBookmarks(p, size);
-      const arr = pickList(payload).map(normalize);
+      try {
+        const payload = await bookmarkApi.getMyBookmarks(pageIndex, pageSize);
+        const bookmarkList = extractBookmarkList(payload).map(normalizeBookmarkItem);
 
-      setItems((prev) => (append ? [...prev, ...arr] : arr));
-      setPage(p);
-      setHasNext(arr.length === size);
-    } catch (e) {
-      console.error(e);
-      alert("즐겨찾기 조회 실패");
-      if (!append) setItems([]);
-      setHasNext(false);
-    } finally {
-      fetchingRef.current = false;
-      setLoading(false);
-    }
-  };
+        setBookmarkItems((previousItems) =>
+          append ? [...previousItems, ...bookmarkList] : bookmarkList
+        );
 
-  const resetAndLoadFirst = async () => {
-    setItems([]);
-    setExpanded({});
-    setPage(0);
-    setHasNext(true);
-    await loadPage(0, { append: false });
-  };
+        setCurrentPageIndex(pageIndex);
+        setHasNextPageSafe(bookmarkList.length === pageSize);
+      } catch (error) {
+        alert("즐겨찾기 조회 실패");
+        if (!append) setBookmarkItems([]);
+        setHasNextPageSafe(false);
+      } finally {
+        isFetchingRef.current = false;
+        setIsLoadingSafe(false);
+      }
+    },
+    [pageSize]
+  );
+
+  const resetAndFetchFirstPage = useCallback(async () => {
+    setBookmarkItems([]);
+    setExpandedReviewMap({});
+    setCurrentPageIndex(0);
+    setHasNextPageSafe(true);
+    await fetchBookmarkPage(0, { append: false });
+  }, [fetchBookmarkPage]);
 
   useEffect(() => {
-    resetAndLoadFirst();
+    resetAndFetchFirstPage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
+    const sentinelElement = sentinelElementRef.current;
+    if (!sentinelElement) return;
 
-    const io = new IntersectionObserver(
+    const intersectionObserver = new IntersectionObserver(
       (entries) => {
-        const first = entries[0];
-        if (!first?.isIntersecting) return;
-        if (loading || !hasNext) return;
-        loadPage(page + 1, { append: true });
+        const entry = entries[0];
+        if (!entry?.isIntersecting) return;
+        if (isFetchingRef.current) return;
+        if (isLoadingRef.current) return;
+        if (!hasNextPageRef.current) return;
+
+        fetchBookmarkPage(currentPageIndex + 1, { append: true });
       },
       { root: null, rootMargin: "350px 0px", threshold: 0 }
     );
 
-    io.observe(el);
-    return () => io.disconnect();
-  }, [page, hasNext, loading]);
+    intersectionObserver.observe(sentinelElement);
+    return () => intersectionObserver.disconnect();
+  }, [currentPageIndex, fetchBookmarkPage]);
 
-  const toggleExpand = (reviewNo) => {
-    setExpanded((prev) => ({ ...prev, [reviewNo]: !prev[reviewNo] }));
+  const toggleReviewExpanded = (reviewNo) => {
+    setExpandedReviewMap((previousMap) => ({
+      ...previousMap,
+      [reviewNo]: !previousMap[reviewNo],
+    }));
   };
 
   const toggleBookmark = useBookmarkToggle({
-    items,
-    setItems,
+    items: bookmarkItems,
+    setItems: setBookmarkItems,
     flagField: "bookmarked",
     onValue: true,
     offValue: false,
@@ -141,34 +167,38 @@ export default function MyBookmarksPage() {
     errorMessage: "즐겨찾기 토글 실패",
   });
 
-  const onClickBookmark = (b) => {
-    if (b.bookmarked) {
-      setPending({ reviewNo: b.reviewNo, restaurantName: b.restaurantName });
-      setConfirmOpen(true);
+  const handleBookmarkButtonClick = (bookmarkItem) => {
+    if (bookmarkItem.bookmarked) {
+      setPendingUnbookmarkTarget({
+        reviewNo: bookmarkItem.reviewNo,
+        restaurantName: bookmarkItem.restaurantName,
+      });
+      setIsConfirmModalOpen(true);
       return;
     }
-    toggleBookmark(b.reviewNo);
+    toggleBookmark(bookmarkItem.reviewNo);
   };
 
-  const closeConfirm = () => {
-    if (confirmLoading) return;
-    setConfirmOpen(false);
-    setPending(null);
+  const closeConfirmModal = () => {
+    if (isConfirmActionLoading) return;
+    setIsConfirmModalOpen(false);
+    setPendingUnbookmarkTarget(null);
   };
 
-  const confirmOff = async () => {
-    if (!pending?.reviewNo) return;
-    setConfirmLoading(true);
+  const confirmUnbookmark = async () => {
+    if (!pendingUnbookmarkTarget?.reviewNo) return;
+
+    setIsConfirmActionLoading(true);
     try {
-      await Promise.resolve(toggleBookmark(pending.reviewNo));
-      closeConfirm();
+      await Promise.resolve(toggleBookmark(pendingUnbookmarkTarget.reviewNo));
+      closeConfirmModal();
     } finally {
-      setConfirmLoading(false);
+      setIsConfirmActionLoading(false);
     }
   };
 
-  const pagesForSkeleton = useMemo(
-    () => Array.from({ length: 6 }, (_, i) => i),
+  const skeletonCardKeys = useMemo(
+    () => Array.from({ length: 6 }, (_, index) => index),
     []
   );
 
@@ -177,20 +207,20 @@ export default function MyBookmarksPage() {
       <div style={styles.headerRow}>
         <h2 style={styles.title}>내 즐겨찾기</h2>
         <button
-          onClick={resetAndLoadFirst}
-          disabled={loading}
-          style={styles.refreshBtn(loading)}
+          onClick={resetAndFetchFirstPage}
+          disabled={isLoading}
+          style={styles.refreshBtn(isLoading)}
         >
           새로고침
         </button>
       </div>
 
-      {items.length === 0 ? (
+      {bookmarkItems.length === 0 ? (
         <div style={styles.empty}>
-          {loading ? (
+          {isLoading ? (
             <div style={styles.skeletonGrid}>
-              {pagesForSkeleton.map((i) => (
-                <div key={i} style={styles.skeletonCard} />
+              {skeletonCardKeys.map((key) => (
+                <div key={key} style={styles.skeletonCard} />
               ))}
             </div>
           ) : (
@@ -199,27 +229,27 @@ export default function MyBookmarksPage() {
         </div>
       ) : (
         <div style={styles.grid3}>
-          {items.map((b) => {
-            const { preview, clipped } = getPreview(b.content, 60);
-            const isExpanded = !!expanded[b.reviewNo];
+          {bookmarkItems.map((bookmarkItem) => {
+            const { preview, clipped } = getContentPreview(bookmarkItem.content, 60);
+            const isExpanded = !!expandedReviewMap[bookmarkItem.reviewNo];
 
             return (
               <div
-                key={b.reviewNo}
+                key={bookmarkItem.reviewNo}
                 style={{
                   ...styles.card,
-                  ...(hovered === b.reviewNo ? styles.cardHover : {}),
+                  ...(hoveredReviewNo === bookmarkItem.reviewNo ? styles.cardHover : {}),
                 }}
-                onMouseEnter={() => setHovered(b.reviewNo)}
-                onMouseLeave={() => setHovered(null)}
+                onMouseEnter={() => setHoveredReviewNo(bookmarkItem.reviewNo)}
+                onMouseLeave={() => setHoveredReviewNo(null)}
               >
                 <div style={styles.mediaWrap}>
                   <img
                     src={
-                      b.thumbnailUrl ||
+                      bookmarkItem.thumbnailUrl ||
                       "https://via.placeholder.com/900x700?text=IMG"
                     }
-                    alt={b.restaurantName}
+                    alt={bookmarkItem.restaurantName}
                     style={styles.media}
                     loading="lazy"
                   />
@@ -237,22 +267,22 @@ export default function MyBookmarksPage() {
                   <div style={styles.actionBar}>
                     <button type="button" style={styles.actionBtn} disabled>
                       <FaHeart color="#ff6b6b" />
-                      {b.likeCount}
+                      {bookmarkItem.likeCount}
                     </button>
 
                     <button type="button" style={styles.actionBtn} disabled>
                       <FaRegCommentDots color="#666" />
-                      {b.commentCount}
+                      {bookmarkItem.commentCount}
                     </button>
 
                     <button
                       type="button"
                       style={styles.actionBtn}
-                      onClick={() => onClickBookmark(b)}
+                      onClick={() => handleBookmarkButtonClick(bookmarkItem)}
                       aria-label="bookmark-toggle"
                       title="즐겨찾기 토글"
                     >
-                      {b.bookmarked ? (
+                      {bookmarkItem.bookmarked ? (
                         <FaBookmark color="#333" />
                       ) : (
                         <FaRegBookmark color="#666" />
@@ -260,52 +290,56 @@ export default function MyBookmarksPage() {
                     </button>
                   </div>
 
-                  <h3 style={styles.restaurantName}>{b.restaurantName}</h3>
+                  <h3 style={styles.restaurantName}>{bookmarkItem.restaurantName}</h3>
 
                   <div style={styles.userInfo}>
-                    <span style={styles.nickname}>{b.nickname}</span>
-                    {typeof b.rating === "number" && (
-                      <span style={styles.rating}>⭐ {b.rating.toFixed(1)}</span>
+                    <span style={styles.nickname}>{bookmarkItem.nickname}</span>
+                    {typeof bookmarkItem.rating === "number" && (
+                      <span style={styles.rating}>
+                        ⭐ {bookmarkItem.rating.toFixed(1)}
+                      </span>
                     )}
                   </div>
 
                   <p style={styles.description}>
-                    {isExpanded ? b.content : preview}
+                    {isExpanded ? bookmarkItem.content : preview}
                     {clipped && (
                       <button
                         type="button"
                         style={styles.moreBtn}
-                        onClick={() => toggleExpand(b.reviewNo)}
+                        onClick={() => toggleReviewExpanded(bookmarkItem.reviewNo)}
                       >
                         {isExpanded ? "접기" : "...더보기"}
                       </button>
                     )}
                   </p>
 
-                  {Array.isArray(b.keywords) && b.keywords.length > 0 && (
-                    <div style={styles.keywordContainer}>
-                      {b.keywords.map((k) => (
-                        <span
-                          key={k.keywordNo ?? k.keywordName ?? k}
-                          style={styles.keywordBadge}
-                        >
-                          #{k.keywordName ?? k}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  {Array.isArray(bookmarkItem.keywords) &&
+                    bookmarkItem.keywords.length > 0 && (
+                      <div style={styles.keywordContainer}>
+                        {bookmarkItem.keywords.map((keyword) => (
+                          <span
+                            key={keyword.keywordNo ?? keyword.keywordName ?? keyword}
+                            style={styles.keywordBadge}
+                          >
+                            #{keyword.keywordName ?? keyword}
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
                   <div style={styles.footer}>
                     <span style={styles.dateLine}>
-                      {formatDate(b.updateDate)}
+                      {formatDateToYmd(bookmarkItem.updateDate)}
                     </span>
 
-                    {b.viewCount !== undefined && b.viewCount !== null && (
-                      <span style={styles.viewCount}>
-                        <FaEye />
-                        {b.viewCount}
-                      </span>
-                    )}
+                    {bookmarkItem.viewCount !== undefined &&
+                      bookmarkItem.viewCount !== null && (
+                        <span style={styles.viewCount}>
+                          <FaEye />
+                          {bookmarkItem.viewCount}
+                        </span>
+                      )}
                   </div>
                 </div>
               </div>
@@ -314,23 +348,23 @@ export default function MyBookmarksPage() {
         </div>
       )}
 
-      <div ref={sentinelRef} style={{ height: 1 }} />
+      <div ref={sentinelElementRef} style={{ height: 1 }} />
 
       <div style={styles.bottomStatus}>
-        {loading && items.length > 0 && (
+        {isLoading && bookmarkItems.length > 0 && (
           <div style={styles.bottomText}>불러오는 중...</div>
         )}
-        {!loading && !hasNext && items.length > 0 && (
+        {!isLoading && !hasNextPage && bookmarkItems.length > 0 && (
           <div style={styles.bottomText}>마지막입니다.</div>
         )}
       </div>
 
-      {confirmOpen && (
+      {isConfirmModalOpen && (
         <Modal
           title="즐겨찾기 해제"
-          onClose={closeConfirm}
-          onPrimary={confirmOff}
-          primaryText={confirmLoading ? "처리중..." : "해제"}
+          onClose={closeConfirmModal}
+          onPrimary={confirmUnbookmark}
+          primaryText={isConfirmActionLoading ? "처리중..." : "해제"}
           cancelText="취소"
           maxWidth={420}
         >

@@ -38,22 +38,18 @@ export default function MyBookmarksPage() {
   const normalize = (b) => ({
     reviewNo: b.reviewNo,
     thumbnailUrl: b.thumbnailUrl || b.imageUrl,
-    restaurantName: b.restaurantName || b.normalName || b.storeName || "식당명",
-    nickname: b.nickname || b.writerNickname || "작성자",
+    restaurantName: b.restaurantName,
+    nickname: b.writerNickname || b.nickname || "작성자",
     rating: typeof b.rating === "number" ? b.rating : null,
     content: b.content || "",
     likeCount: b.likeCount ?? 0,
     commentCount: b.commentCount ?? 0,
     keywords: b.keywords || [],
-    updateDate:
-      b.updateDate ||
-      b.reviewUpdatedAt ||
-      b.reviewCreatedAt ||
-      b.createdAt ||
-      b.bookmarkEnrollDate,
+    updateDate: b.bookmarkEnrollDate || b.reviewCreatedAt || b.updateDate,
     viewCount: b.viewCount,
     bookmarked: b.bookmarked ?? true,
   });
+
 
   const formatDate = (v) => {
     if (!v) return "";

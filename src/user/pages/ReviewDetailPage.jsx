@@ -5,12 +5,15 @@ import Nav from '../components/common/Nav';
 import ReviewDetail from '../components/ReviewList/ReviewDetail/ReviewDetail.jsx'
 import CommentList from '../components/Comment/CommentList.jsx';
 import { ReviewDetailContainer } from './styles';
-import { useParams } from 'react-router';
+import { useParams, useLocation } from 'react-router-dom';
 
 const ReviewDetailPage = () => {
 
     const  {reviewNo} = useParams();
+    const location = useLocation();
 
+    console.log("ReviewDetailPage location:", location);
+    console.log("navContext:", location.state?.navContext);
     return (
         <ReviewDetailContainer>
             <Header />

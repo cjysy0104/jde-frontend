@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import * as S from "./ImageSlider.styled";
+import { getImageProps } from "../../../../utils/image";
 
 const ImageSlider = ({ files = [], height = 360 }) => {
   const images = useMemo(() => files ?? [], [files]);
@@ -23,7 +24,7 @@ const ImageSlider = ({ files = [], height = 360 }) => {
         <S.Track $current={current}>
           {images.map((file) => (
             <S.Slide key={file.fileNo}>
-              <S.Image src={file.fileUrl} alt="음식 사진" style={{ height }} />
+              <S.Image {...getImageProps(file.fileUrl)} alt="음식 사진" style={{ height }} />
             </S.Slide>
           ))}
         </S.Track>

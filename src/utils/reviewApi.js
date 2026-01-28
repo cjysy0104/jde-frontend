@@ -120,5 +120,15 @@ export const reviewApi = {
       console.error("createReview error:", error);
       throw error;
     }
+  },
+
+  // 리뷰 삭제
+  deleteReview: async (reviewNo) => {
+    try {
+      return await apiClient.delete(`/api/reviews/${reviewNo}`);
+    } catch (error) {
+      console.error("deleteReview error:", error);
+      throw error;
+    }
   }
 };

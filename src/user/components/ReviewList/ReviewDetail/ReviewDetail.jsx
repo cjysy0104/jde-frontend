@@ -67,6 +67,9 @@ const ReviewDetail = ({ reviewNo }) => {
 
   const handleReport = () => {
     // 신고 기능 구현
+    /*
+    신고 기능 API 명시 해주세요
+    */
     if (window.confirm('이 리뷰를 신고하시겠습니까?')) {
       // 신고 API 호출
       alert('신고가 접수되었습니다.');

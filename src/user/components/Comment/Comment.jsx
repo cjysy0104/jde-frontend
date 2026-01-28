@@ -73,20 +73,24 @@ const Comment = ({ comment, onLike, onDelete, onUpdate }) => {
 
           <ActionGroup>
 
-            <ReportButton onClick={() => setReportOpen(true)}>신고</ReportButton>
-            {comment.isOwner === 'N' && (
-            <ReportButton onClick={() => setReportOpen(true)}>신고</ReportButton>
-            )}
-
-            {comment.isOwner === 'Y' && (
+            {isLoggedIn && (
               <>
-                {!isEditing ? (
-                  <UpdateButton onClick={startEdit}>수정</UpdateButton>
-                ) : null}
-
-                <DeleteButton onClick={() => onDelete(comment.commentNo)}>
-                  삭제
-                </DeleteButton>
+              {comment.isOwner === 'N' && (
+              <ReportButton onClick={() => setReportOpen(true)}>신고</ReportButton>
+              )}
+  
+              {comment.isOwner === 'Y' && (
+                <>
+                  {!isEditing ? (
+                    <UpdateButton onClick={startEdit}>수정</UpdateButton>
+                  ) : null}
+  
+                  <DeleteButton onClick={() => onDelete(comment.commentNo)}>
+                    삭제
+                  </DeleteButton>
+                </>
+              )}
+              
               </>
             )}
           </ActionGroup>

@@ -130,5 +130,18 @@ export const reviewApi = {
       console.error("deleteReview error:", error);
       throw error;
     }
+  },
+
+  updateReview: async (reviewNo, formData) => {
+    try {
+        return await apiClient.patch(`/api/reviews/${reviewNo}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        }
+      });
+    } catch (error) {
+      console.error("updateReview error:", error);
+      throw error;
+    }
   }
 };

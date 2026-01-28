@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Heart } from 'lucide-react';
 import ReportModal from "../report/ReportModal";
 import { reportApi } from "../../../utils/reportApi";
@@ -23,11 +23,20 @@ import {
   SaveButton,
   CancelButton,
 } from './Comment.styled';
+import { AuthContext } from '../context/AuthContext';
 
 const Comment = ({ comment, onLike, onDelete, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(comment.content);
   const [reportOpen, setReportOpen] = useState(false);
+
+
+  const { auth } = useContext(AuthContext);
+  const isLoggedIn = auth?.isAuthenticated;
+  const isAuthor =
+    auth?.isAuthenticated &&
+    comment &&
+    auth.memberNo === comment.memberNo;
 
   const startEdit = () => {
     setEditValue(comment.content);
@@ -63,7 +72,11 @@ const Comment = ({ comment, onLike, onDelete, onUpdate }) => {
           </UserInfo>
 
           <ActionGroup>
+
             <ReportButton onClick={() => setReportOpen(true)}>신고</ReportButton>
+            {comment.isOwner === 'N' && (
+            <ReportButton onClick={() => setReportOpen(true)}>신고</ReportButton>
+            )}
 
             {comment.isOwner === 'Y' && (
               <>

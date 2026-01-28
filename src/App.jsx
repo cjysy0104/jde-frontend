@@ -10,6 +10,7 @@ import UserHome from "./user/UserHome";
 import ReviewPage from './user/pages/ReviewPage';
 import ReviewDetailPage from './user/pages/ReviewDetailPage.jsx';
 import ReviewEnrollPage from './user/pages/ReviewEnrollPage.jsx';
+import ReviewUpdatePage from './user/pages/ReviewUpdatePage.jsx';
 
 import MyLayout from "./user/components/myPage/MyLayout.jsx";
 import MyProfileViewPage from "./user/components/myPage/profiles/MyProfileViewPage.jsx";
@@ -48,6 +49,7 @@ export default function App() {
         {/* ==========로그인이 필요한 페이지========== */}
         <Route element={<RequireAuth />}>
           <Route path="/reviews/enroll" element={<ReviewEnrollPage />} />
+          <Route path="/reviews/update/:reviewNo" element={<ReviewUpdatePage />} />
 
           <Route path="my" element={<MyLayout />}>
             <Route index element={<MyProfileViewPage />} />
@@ -55,7 +57,7 @@ export default function App() {
             <Route path="list" element={<MyListPage />} />
             <Route path="bookmarks" element={<MyBookmarksPage />} />
           </Route>
-          
+
           <Route path="/admin" element={<AdminPage />} />
         </Route>
         

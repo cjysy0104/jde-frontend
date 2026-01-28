@@ -31,6 +31,16 @@ const ReviewList = ({
   const [hasNext, setHasNext] = useState(true);
   const [cursor, setCursor] = useState(null);
 
+  const [searchText, setSearchText] = useState("");
+  const [filters, setFilters] = useState({
+    query: "",
+    keyword: "",
+    minRating: null,
+    maxRating: null,
+    sort: "latest",
+
+  })
+
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
@@ -59,8 +69,8 @@ const ReviewList = ({
       } else {
         // 기존 전체조회 호출 그대로 유지
         response = await reviewApi.getReviewList({
+          ...filters,
           cursor,
-          sort: "latest",
         });
       }
 
@@ -96,7 +106,7 @@ const ReviewList = ({
     } finally {
       setLoading(false);
     }
-  }, [loading, hasNext, isCaptainMode, captainNo, cursor]);
+  }, [loading, hasNext, isCaptainMode, captainNo, cursor, filters]);
 
   const onIntersection = (entries) => {
     const firstEntry = entries[0];
@@ -129,7 +139,7 @@ const ReviewList = ({
     setReviews([]);
     setHasNext(true);
     setCursor(null);
-  }, [mode, captainNo]);
+  }, [mode, captainNo, filters]);
 
   const handleBookmark = useBookmarkToggle({
     items: reviews,
@@ -158,6 +168,15 @@ const ReviewList = ({
     navigate(`/reviews/enroll`);
   }
 
+  const applySearch = () => {
+    setFilters((prev) => ({ ...prev, query: searchText.trim() }));
+  };
+
+  const onSearchKeyDown = (e) => {
+    if (e.key === "Enter") applySearch();
+  };
+
+
   return (
     <Container>
       {/* CAPTAIN 모드일 때: 상단 검색/정렬 대신 타이틀 */}
@@ -172,8 +191,13 @@ const ReviewList = ({
       ) : (
         <SearchSection>
           <SearchBar>
-            <SearchInput type="text" placeholder="Search" />
-            <SearchIcon>🔍</SearchIcon>
+            <SearchInput
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onKeyDown={onSearchKeyDown}
+              placeholder="Search"
+            />
+            <SearchIcon onClick={applySearch}>🔍</SearchIcon>
           </SearchBar>
           <SortDropdown>
             <select defaultValue="최신순" disabled>
@@ -194,11 +218,12 @@ const ReviewList = ({
         ))}
       </ReviewGrid>
 
-      {hasNext && !loading && (
-        <div ref={elementRef} style={{ textAlign: 'center' }}>
-          로딩중
+      {hasNext && (
+        <div ref={elementRef} style={{ textAlign: "center" }}>
+          {loading ? "로딩중..." : ""}
         </div>
       )}
+
 
       {auth.isAuthenticated && (
         <FloatingButton onClick={handleEnrollBtn}>

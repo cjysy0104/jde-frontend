@@ -8,6 +8,7 @@ import {
   ReviewGrid,
   MoreButton,
 } from "./styles";
+import { useNavigate } from "react-router";
 
 const TodaysReview = ({ keywordNo, query }) => {
   const SIZE = 3;
@@ -78,7 +79,10 @@ const TodaysReview = ({ keywordNo, query }) => {
 
         <ReviewGrid>
           {reviews.map((review) => (
-            <ReviewCard key={review.reviewNo} review={review} />
+            <ReviewCard 
+              key={review.reviewNo} 
+              review={review}
+              />
           ))}
         </ReviewGrid>
 

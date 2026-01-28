@@ -48,12 +48,14 @@ export default function App() {
         {/* ==========로그인이 필요한 페이지========== */}
         <Route element={<RequireAuth />}>
           <Route path="/reviews/enroll" element={<ReviewEnrollPage />} />
+
           <Route path="my" element={<MyLayout />}>
             <Route index element={<MyProfileViewPage />} />
             <Route path="profile" element={<MyProfilePage />} />
             <Route path="list" element={<MyListPage />} />
             <Route path="bookmarks" element={<MyBookmarksPage />} />
           </Route>
+          
           <Route path="/admin" element={<AdminPage />} />
         </Route>
         

@@ -34,6 +34,7 @@ import {
   ErrorText,
   SuccessBox,
 } from "./MyProfileViewStyles";
+import Header from "../../common/Header";
 
 function decodeJwtPayload(token) {
   try {
@@ -172,6 +173,7 @@ export default function MyProfileViewPage() {
   };
 
   return (
+    
     <Page>
       <TopBar>
         <Title>내 정보</Title>

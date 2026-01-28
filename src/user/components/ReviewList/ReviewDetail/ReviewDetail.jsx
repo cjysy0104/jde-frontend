@@ -6,6 +6,8 @@ import ImageSlider from "../../common/Image/ImageSlider"
 import { reviewApi } from '../../../../utils/reviewApi';
 import { AuthContext } from '../../context/AuthContext';
 import ReviewMapSection from '../../ReviewMapSection/ReviewMapSection';
+import ReportModal from "../../report/ReportModal";
+import { reportApi } from "../../../../utils/reportApi";
 
 const ReviewDetail = ({ reviewNo }) => {
   const { auth } = useContext(AuthContext);
@@ -13,6 +15,7 @@ const ReviewDetail = ({ reviewNo }) => {
 
   const [review, setReview] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const isLoggedIn = auth?.isAuthenticated;
 
@@ -66,15 +69,13 @@ const ReviewDetail = ({ reviewNo }) => {
   };
 
   const handleReport = () => {
-    // 신고 기능 구현
-    /*
-    신고 기능 API 명시 해주세요
-    */
-    if (window.confirm('이 리뷰를 신고하시겠습니까?')) {
-      // 신고 API 호출
-      alert('신고가 접수되었습니다.');
-    }
-  };
+    if (!isLoggedIn) {
+    alert("로그인이 필요합니다.");
+    navigate("/login");
+    return;
+  }
+  setReportOpen(true);
+};
 
   const renderStars = (rating) => {
     return Array.from({ length: 5 }, (_, index) => (
@@ -155,6 +156,20 @@ const ReviewDetail = ({ reviewNo }) => {
             longitude: review.restaurant.longitude,
             thumbnailUrl: review.files?.[0]?.fileUrl ?? null,
           }}
+        />
+        <ReportModal
+          open={reportOpen}
+          onClose={() => setReportOpen(false)}
+          targetLabel="리뷰"
+          targetTitle={review?.content ? review.content.slice(0, 40) : ""}
+          targetWriter={review?.writer?.nickname}
+          onSubmit={({ reportCategoryNo, reportContent }) =>
+            reportApi.createReviewReport({
+              reviewNo,
+              reportCategoryNo,
+              reportContent,
+            })
+          }
         />
       </S.MapSection>
       {renderButtons()}

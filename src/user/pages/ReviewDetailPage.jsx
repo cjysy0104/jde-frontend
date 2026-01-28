@@ -10,10 +10,7 @@ import { useParams, useLocation } from 'react-router-dom';
 const ReviewDetailPage = () => {
 
     const  {reviewNo} = useParams();
-    const location = useLocation();
 
-    console.log("ReviewDetailPage location:", location);
-    console.log("navContext:", location.state?.navContext);
     return (
         <ReviewDetailContainer>
             <Header />

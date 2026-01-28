@@ -29,7 +29,7 @@ const FileSection = ({ files, onFilesChange }) => {
     <FileUploadContainer>
       {files.map((file, index) => (
         <FilePreviewWrapper key={index}>
-          <FilePreview src={file.preview} alt={`preview-${index}`} />
+          <FilePreview src={file.preview ?? file.fileUrl} alt={`preview-${index}`} />
           <RemoveButton onClick={() => handleRemoveFile(index)}>×</RemoveButton>
         </FilePreviewWrapper>
       ))}

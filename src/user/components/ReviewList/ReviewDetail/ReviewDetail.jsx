@@ -40,7 +40,6 @@ const ReviewDetail = ({ reviewNo }) => {
     };
 
     fetchReview();
-    console.log(auth);
   }, [reviewNo]);
 
   // 버튼 핸들러들
@@ -49,7 +48,7 @@ const ReviewDetail = ({ reviewNo }) => {
   };
 
   const handleEdit = () => {
-    navigate(`/review/edit/${reviewNo}`);
+    navigate(`/reviews/update/${reviewNo}`);
   };
 
   const handleDelete = async () => {

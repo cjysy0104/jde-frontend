@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useKakaoMapScript from '../../utils/map/useKakaoMapScript';
 import KakaoMap from '../components/common/Map/KakaoMap';
 import RestaurantCard from '../components/MapSearch/RestaurantCard';
+import ReviewCard from '../components/ReviewList/ReviewCard';
 import { restaurantApi } from '../../utils/restaurantApi';
 import radiusIcon from '../../assets/radius-icon.png';
+import locationIcon from '../../assets/location-icon.png';
 import {
   MapSearchContainer,
   LeftPanel,
@@ -19,6 +21,7 @@ import {
   LoadingMessage,
   EmptyMessage,
   LocationButton,
+  LocationIcon,
   MapControls,
   RadiusFilter,
   RadiusFilterTitle,
@@ -26,6 +29,9 @@ import {
   RadiusButton,
   NearbyButton,
   NearbyIcon,
+  RestaurantReviewsSection,
+  RestaurantReviewsTitle,
+  RestaurantReviewsList,
 } from './MapSearchPage.styles';
 
 const MapSearchPage = () => {
@@ -39,6 +45,8 @@ const MapSearchPage = () => {
   const [hasNext, setHasNext] = useState(true);
   const [cursor, setCursor] = useState(null);
   const [selectedReview, setSelectedReview] = useState(null);
+  const [selectedRestaurantReviews, setSelectedRestaurantReviews] = useState([]);
+  const [loadingRestaurantReviews, setLoadingRestaurantReviews] = useState(false);
   
   // 지도 상태
   const [mapCenter, setMapCenter] = useState({ lat: 37.5665, lng: 126.9780 }); // 서울 기본값
@@ -52,16 +60,23 @@ const MapSearchPage = () => {
   const [locationError, setLocationError] = useState(null);
   const [radius, setRadius] = useState(3); // 기본값 3km
 
-  // 레스토랑 데이터 가져오기 (무한 스크롤)
+  // 레스토랑 데이터 가져오기 (무한 스크롤) — 검색어 있으면 searchRestaurant, 없으면 getRestaurantList
   const fetchReviews = useCallback(async (append = false) => {
     if (loading || !hasNext) return;
 
     setLoading(true);
     try {
-      const response = await restaurantApi.getRestaurantList({
-        cursor,
-        scrollSize: 20, // 한 번에 가져올 개수
-      });
+      const keyword = searchQuery?.trim() || '';
+      const response = keyword
+        ? await restaurantApi.searchRestaurant({
+            keyword,
+            cursor,
+            scrollSize: 20,
+          })
+        : await restaurantApi.getRestaurantList({
+            cursor,
+            scrollSize: 20,
+          });
 
       let list = response?.data || [];
 
@@ -98,7 +113,7 @@ const MapSearchPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [cursor, loading, hasNext]);
+  }, [cursor, loading, hasNext, searchQuery]);
 
   // 검색 실행
   const handleSearch = (e) => {
@@ -201,6 +216,34 @@ const MapSearchPage = () => {
     }
   };
 
+  // 선택한 음식점의 리뷰 조회 — GET /api/restaurants/{restaurantNo}/reviews
+  useEffect(() => {
+    const restaurantNo = selectedReview?.restaurantNo ?? selectedReview?.reviewNo;
+    if (restaurantNo == null) {
+      setSelectedRestaurantReviews([]);
+      return;
+    }
+    let cancelled = false;
+    setLoadingRestaurantReviews(true);
+    restaurantApi
+      .getRestaurantReviews(restaurantNo, { sort: 'latest' })
+      .then((response) => {
+        if (cancelled) return;
+        const list = response?.data ?? [];
+        setSelectedRestaurantReviews(Array.isArray(list) ? list : []);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          console.error('레스토랑 리뷰 조회 실패:', err);
+          setSelectedRestaurantReviews([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingRestaurantReviews(false);
+      });
+    return () => { cancelled = true; };
+  }, [selectedReview?.restaurantNo, selectedReview?.reviewNo]);
+
   // 지도 생성 콜백
   const handleMapCreated = (map) => {
     setMapInstance(map);
@@ -211,6 +254,20 @@ const MapSearchPage = () => {
     if (!ready) return;
     fetchReviews(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready]);
+
+  // 페이지 진입 시 내 위치 한 번 요청 (지도에 상시 표시용)
+  useEffect(() => {
+    if (!ready || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setMyLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+      },
+      () => { /* 거부/실패 시 무시, 내 주변 보기 클릭 시 다시 요청 */ }
+    );
   }, [ready]);
 
   // 무한 스크롤 (LeftPanel 내부 스크롤)
@@ -229,7 +286,34 @@ const MapSearchPage = () => {
     return () => restaurantList.removeEventListener('scroll', handleScroll);
   }, [hasNext, loading, fetchReviews]);
 
-  // 현재 위치 가져오기 및 토글
+  // 내 위치로 지도 중심 이동 (위치 없으면 요청 후 이동)
+  const handleMoveToMyLocation = () => {
+    if (myLocation) {
+      setMapCenter(myLocation);
+      setMapLevel(4);
+      return;
+    }
+    if (!navigator.geolocation) {
+      alert('이 브라우저는 위치 정보를 지원하지 않습니다.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const location = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+        setMyLocation(location);
+        setMapCenter(location);
+        setMapLevel(4);
+      },
+      () => {
+        alert('위치 정보 접근 권한이 필요합니다.');
+      }
+    );
+  };
+
+  // 현재 위치 가져오기 및 토글 (내 주변 보기 / 반경 필터)
   const toggleNearbyView = () => {
     // 이미 활성화되어 있으면 해제
     if (showNearby) {
@@ -301,13 +385,26 @@ const MapSearchPage = () => {
     });
   };
 
+  // 리스트에 표시할 음식점 (반경 필터 켜면 반경 내만)
+  const displayedRestaurants = useMemo(() => {
+    if (!showNearby || !myLocation) return reviews;
+    return reviews.filter((item) => {
+      const lat = item.latitude ?? item.lat;
+      const lng = item.longitude ?? item.lng;
+      if (lat == null || lng == null) return false;
+      const distance = calculateDistance(myLocation.lat, myLocation.lng, lat, lng);
+      return distance <= radius;
+    });
+  }, [reviews, showNearby, myLocation, radius]);
+
   // 지역명 추출 (주소에서)
   const getLocationName = () => {
     if (showNearby && myLocation) {
       return '내 주변';
     }
-    if (reviews.length === 0) return '';
-    const firstAddress = reviews[0]?.address || '';
+    const list = displayedRestaurants.length ? displayedRestaurants : reviews;
+    if (list.length === 0) return '';
+    const firstAddress = list[0]?.address || '';
     // 주소에서 동 단위 추출 (예: "서울특별시 강남구 역삼동" -> "역삼동")
     const match = firstAddress.match(/(\S+동)/);
     return match ? match[1] : '맛집';
@@ -342,15 +439,17 @@ const MapSearchPage = () => {
 
         <ResultsHeader>
           <ResultsCount>
-            {getLocationName()} 맛집 {reviews.length > 0 ? reviews.length.toLocaleString() : 0}곳
+            {getLocationName()} 맛집 {displayedRestaurants.length > 0 ? displayedRestaurants.length.toLocaleString() : 0}곳
           </ResultsCount>
         </ResultsHeader>
 
         <RestaurantList data-restaurant-list>
-          {reviews.length === 0 && !loading ? (
-            <EmptyMessage>검색 결과가 없습니다.</EmptyMessage>
+          {displayedRestaurants.length === 0 && !loading ? (
+            <EmptyMessage>
+              {showNearby && myLocation ? '반경 내 맛집이 없습니다.' : '검색 결과가 없습니다.'}
+            </EmptyMessage>
           ) : (
-            reviews.map((review) => (
+            displayedRestaurants.map((review) => (
               <RestaurantCard
                 key={review.reviewNo}
                 review={review}
@@ -359,6 +458,29 @@ const MapSearchPage = () => {
                 onViewDetail={() => navigate(`/reviews/${review.reviewNo}`)}
               />
             ))
+          )}
+          {selectedReview && (
+            <RestaurantReviewsSection>
+              <RestaurantReviewsTitle>
+                이 음식점 리뷰 ({loadingRestaurantReviews ? '…' : selectedRestaurantReviews.length}개)
+              </RestaurantReviewsTitle>
+              {loadingRestaurantReviews && <LoadingMessage>리뷰 로딩 중...</LoadingMessage>}
+              {!loadingRestaurantReviews && selectedRestaurantReviews.length === 0 && (
+                <EmptyMessage>등록된 리뷰가 없습니다.</EmptyMessage>
+              )}
+              {!loadingRestaurantReviews && selectedRestaurantReviews.length > 0 && (
+                <RestaurantReviewsList>
+                  {selectedRestaurantReviews.map((r) => (
+                    <ReviewCard
+                      key={r.reviewNo}
+                      review={r}
+                      onLike={() => {}}
+                      onBookmark={() => {}}
+                    />
+                  ))}
+                </RestaurantReviewsList>
+              )}
+            </RestaurantReviewsSection>
           )}
           {loading && <LoadingMessage>로딩 중...</LoadingMessage>}
         </RestaurantList>
@@ -370,8 +492,8 @@ const MapSearchPage = () => {
             center={mapCenter}
             level={mapLevel}
             markers={[
-              // 내 위치 마커
-              ...(myLocation && showNearby ? [{
+              // 내 위치 마커 (상시 표시)
+              ...(myLocation ? [{
                 lat: myLocation.lat,
                 lng: myLocation.lng,
                 isMyLocation: true,
@@ -419,8 +541,8 @@ const MapSearchPage = () => {
             </RadiusFilter>
           )}
           <MapControls>
-            <LocationButton onClick={toggleNearbyView} title="내 위치로 이동">
-              📍
+            <LocationButton onClick={handleMoveToMyLocation} title="내 위치로 이동">
+              <LocationIcon src={locationIcon} alt="내 위치로 이동" />
             </LocationButton>
           </MapControls>
         </MapContainer>

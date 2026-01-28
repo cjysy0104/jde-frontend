@@ -29,5 +29,37 @@ export const restaurantApi = {
       throw error;
     }
   },
+
+  searchRestaurant: async ({ keyword, cursor, scrollSize = 20 } = {}) => {
+    try {
+      const params = {};
+      if (cursor != null) {
+        params.cursor = cursor;
+      }
+      params.keyword = keyword;
+      params['scroll.sizePlusOne'] = scrollSize + 1;
+      return await apiClient.get("/api/restaurants/search", {
+        params,
+      });
+    } catch (error) {
+      console.error("searchRestaurant error:", error);
+      throw error;
+    }
+  },
+
+  // 레스토랑별 리뷰 조회 — GET /api/restaurants/{restaurantNo}/reviews
+  getRestaurantReviews: async (restaurantNo, { cursor, sort } = {}) => {
+    try {
+      const params = {};
+      if (cursor != null) params.cursor = cursor;
+      if (sort) params.sort = sort;
+      return await apiClient.get(`/api/restaurants/${restaurantNo}/reviews`, {
+        params,
+      });
+    } catch (error) {
+      console.error("getRestaurantReviews error:", error);
+      throw error;
+    }
+  },
 };
 

@@ -3,25 +3,36 @@ import styled from 'styled-components';
 export const MapSearchContainer = styled.div`
   display: flex;
   width: 100%;
-  height: calc(100vh - 200px);
-  min-height: 600px;
-  margin-top: 24px; /* NavBar와의 간격 */
+  height: calc(100vh - 296px); /* 헤더·Nav·Footer·상하여백 반영 */
+  min-height: 520px;
+  margin-top: 48px; /* NavBar와의 간격 */
+  margin-bottom: 48px; /* Footer와의 간격 */
+  padding-left: 24px;
+  padding-right: 24px;
+  gap: 24px; /* 리스트와 지도 사이 간격 */
+  box-sizing: border-box;
 `;
 
 export const LeftPanel = styled.div`
   width: 35%;
-  min-width: 400px;
+  min-width: 380px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   background-color: #ffffff;
-  border-right: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   overflow: hidden;
 `;
 
 export const RightPanel = styled.div`
   flex: 1;
+  min-width: 0;
   position: relative;
   background-color: #f9fafb;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 `;
 
 export const SearchBar = styled.div`
@@ -192,7 +203,6 @@ export const LocationButton = styled.button`
   background: #ffffff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   cursor: pointer;
-  font-size: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -207,6 +217,13 @@ export const LocationButton = styled.button`
   &:active {
     transform: translateY(0);
   }
+`;
+
+export const LocationIcon = styled.img`
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  display: block;
 `;
 
 export const RadiusFilter = styled.div`
@@ -263,4 +280,25 @@ export const RadiusButton = styled.button`
   &:active {
     transform: translateY(0);
   }
+`;
+
+/* 선택한 음식점의 리뷰 섹션 */
+export const RestaurantReviewsSection = styled.section`
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+`;
+
+export const RestaurantReviewsTitle = styled.h3`
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 12px 0;
+  padding: 0 4px;
+`;
+
+export const RestaurantReviewsList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 `;

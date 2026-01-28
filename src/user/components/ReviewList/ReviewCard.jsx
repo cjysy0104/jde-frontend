@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Heart, MessageCircle, Bookmark, Eye } from 'lucide-react';
 import { getImageProps } from "../../../utils/image";
 import {
@@ -25,9 +25,12 @@ import { useNavigate } from 'react-router';
 
 import CommentModal from "../Comment/CommentModal";
 import CommentList from "../Comment/CommentList";
+import { AuthContext } from '../context/AuthContext';
 
 const ReviewCard = ({ review, onLike, onBookmark }) => {
   const navigate = useNavigate();
+  const { auth } = useContext(AuthContext);
+  const isLoggedIn = !!auth?.isAuthenticated;
 
   const [isCommentOpen, setIsCommentOpen] = useState(false);
 
@@ -37,11 +40,19 @@ const ReviewCard = ({ review, onLike, onBookmark }) => {
 
   const handleLikeClick = (e) => {
     e.stopPropagation();
+    if(!isLoggedIn){
+      alert("로그인 후 이용 가능합니다.");
+      return;
+    }
     onLike(review.reviewNo);
   };
 
   const handleBookmarkClick = (e) => {
     e.stopPropagation();
+    if(!isLoggedIn){
+      alert("로그인 후 이용 가능합니다.");
+      return;
+    }
     onBookmark(review.reviewNo);
   };
 

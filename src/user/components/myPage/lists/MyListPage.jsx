@@ -5,140 +5,131 @@ import { styles } from "./myListStyles";
 
 export default function MyListPage() {
   const navigate = useNavigate();
-  const [sp, setSp] = useSearchParams();
-  const type = sp.get("type") ?? "review";
-  const isReviews = useMemo(() => type === "review", [type]);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const size = 10;
+  const listType = searchParams.get("type") ?? "review"; // "review" | "comment"
+  const isReviewList = useMemo(() => listType === "review", [listType]);
+
+  const pageSize = 10;
 
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [page, setPage] = useState(0);
-  const [hasNext, setHasNext] = useState(true);
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [hasNextPage, setHasNextPage] = useState(true);
 
-  const [pageCursor, setPageCursor] = useState([1]);
+  const isRequestInFlightRef = useRef(false);
+  const requestSequenceRef = useRef(0);
 
-  const inFlightRef = useRef(false);
-  const reqSeqRef = useRef(0);
+  const normalizeResponseList = (apiResponse) => {
+    const payload = apiResponse?.data ?? apiResponse;
 
-  const normalizeList = (input) => {
-    const payload = input?.data ?? input;
     if (Array.isArray(payload)) return payload;
-    const maybe = payload?.result ?? payload?.data ?? payload;
-    if (Array.isArray(maybe)) return maybe;
+    if (Array.isArray(payload?.result)) return payload.result;
+    if (Array.isArray(payload?.data)) return payload.data;
 
-    const r = payload?.result ?? payload?.data;
-    const list = maybe?.list ?? maybe?.content ?? maybe?.items ?? [];
+    const list = payload?.result?.list ?? payload?.data?.list ?? payload?.list ?? payload?.items ?? payload?.content;
     return Array.isArray(list) ? list : [];
   };
 
-  const cut20 = (s) => {
-    if (!s) return "내용 없음";
-    return s.length > 20 ? s.slice(0, 20) + "…" : s;
+  const cutTextTo20Chars = (text) => {
+    if (!text) return "내용 없음";
+    return text.length > 20 ? text.slice(0, 20) + "…" : text;
   };
 
-  const fmt = (v) => (v ? String(v) : "-");
+  const formatValueOrDash = (value) => (value ? String(value) : "-");
 
-  const pickReviewCreated = (obj) => obj?.createDate;
-  const pickReviewUpdated = (obj) => obj?.updateDate;
-  const pickCommentCreated = (obj) => obj?.commentDate;
+  const fetchPageByIndex = useCallback(
+    async (targetPageIndex) => {
+      if (isRequestInFlightRef.current) return;
 
-  const fetchPage = useCallback(
-    async (targetPage) => {
-      if (inFlightRef.current) return;
+      isRequestInFlightRef.current = true;
+      setIsLoading(true);
 
-      inFlightRef.current = true;
-      setLoading(true);
-
-      const myReq = ++reqSeqRef.current;
+      const requestId = ++requestSequenceRef.current;
 
       try {
-        const cursorForBackend = targetPage + 1;
+        const cursorForBackend = targetPageIndex + 1;
 
-        const data = isReviews
-          ? await myActivityApi.getMyReviews({ size: size + 1, cursor: cursorForBackend })
-          : await myActivityApi.getMyComments({ size: size + 1, cursor: cursorForBackend });
+        const apiResponse = isReviewList
+          ? await myActivityApi.getMyReviews({ size: pageSize + 1, cursor: cursorForBackend })
+          : await myActivityApi.getMyComments({ size: pageSize + 1, cursor: cursorForBackend });
 
-        const list = normalizeList(data);
+        const fullList = normalizeResponseList(apiResponse);
 
-        if (myReq !== reqSeqRef.current) return;
+        if (requestId !== requestSequenceRef.current) return;
 
-        const next = list.length > size;
-        const sliced = next ? list.slice(0, size) : list;
+        const nextPageExists = fullList.length > pageSize;
+        const slicedList = nextPageExists ? fullList.slice(0, pageSize) : fullList;
 
-        setItems(sliced);
-        setHasNext(next);
-        setPage(targetPage);
-
-        setPageCursor((prev) => {
-          const copy = [...prev];
-          copy[targetPage] = targetPage + 1;
-          copy[targetPage + 1] = targetPage + 2;
-          return copy;
-        });
-      } catch (e) {
-        console.error(e);
+        setItems(slicedList);
+        setHasNextPage(nextPageExists);
+        setCurrentPageIndex(targetPageIndex);
+      } catch (error) {
         alert("내 리뷰/댓글 조회 실패");
         setItems([]);
-        setHasNext(false);
+        setHasNextPage(false);
       } finally {
-        if (myReq === reqSeqRef.current) setLoading(false);
-        inFlightRef.current = false;
+        if (requestId === requestSequenceRef.current) setIsLoading(false);
+        isRequestInFlightRef.current = false;
       }
     },
-    [isReviews, size]
+    [isReviewList]
   );
 
   useEffect(() => {
-    reqSeqRef.current++;
-    inFlightRef.current = false;
+    requestSequenceRef.current++;
+    isRequestInFlightRef.current = false;
 
     setItems([]);
-    setPage(0);
-    setHasNext(true);
-    setPageCursor([1]);
+    setCurrentPageIndex(0);
+    setHasNextPage(true);
 
-    fetchPage(0);
-  }, [type, fetchPage]);
+    fetchPageByIndex(0);
+  }, [listType, fetchPageByIndex]);
 
-  const onDeleteReview = async (reviewNo) => {
+  const handleDeleteReview = async (reviewNumber) => {
     if (!window.confirm("리뷰를 삭제할까요?")) return;
+
     try {
-      await myActivityApi.deleteReview(reviewNo);
-      fetchPage(page);
+      await myActivityApi.deleteReview(reviewNumber);
+      await fetchPageByIndex(currentPageIndex);
       alert("삭제 완료");
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
       alert("삭제 실패 (권한/로그인 확인)");
     }
   };
 
-  const onDeleteComment = async (commentNo) => {
+  const handleDeleteComment = async (commentNumber) => {
     if (!window.confirm("댓글을 삭제할까요?")) return;
+
     try {
-      await myActivityApi.deleteComment(commentNo);
-      fetchPage(page);
+      await myActivityApi.deleteComment(commentNumber);
+      await fetchPageByIndex(currentPageIndex);
       alert("삭제 완료");
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
       alert("삭제 실패 (권한/로그인 확인)");
     }
   };
 
-  const goEditReview = (reviewNo) => navigate(`/reviews/${reviewNo}/edit`);
-  const goEditComment = (commentNo) => navigate(`/comments/${commentNo}/edit`);
+  const goToEditReviewPage = (reviewNumber) => navigate(`/reviews/${reviewNumber}/edit`);
+  const goToEditCommentPage = (commentNumber) => navigate(`/comments/${commentNumber}/edit`);
 
-  const knownLastPage = Math.max(0, pageCursor.length - 1);
-  const visibleCount = 5;
-  const start = Math.max(0, page - 2);
-  const end = Math.min(start + visibleCount - 1, knownLastPage);
-  const pages = [];
-  for (let p = start; p <= end; p++) pages.push(p);
+  const visiblePageCount = 5;
+  const pageStartIndex = Math.max(0, currentPageIndex - 2);
 
-  const goPrev = () => page > 0 && fetchPage(page - 1);
-  const goNext = () => hasNext && fetchPage(page + 1);
-  const goPage = (p) => fetchPage(p);
+  const pageIndexList = [];
+  for (let i = 0; i < visiblePageCount; i++) {
+    pageIndexList.push(pageStartIndex + i);
+  }
+
+  const pageIndexListTrimmed = hasNextPage
+    ? pageIndexList
+    : pageIndexList.filter((pageIndex) => pageIndex <= currentPageIndex);
+
+  const goToPreviousPage = () => currentPageIndex > 0 && fetchPageByIndex(currentPageIndex - 1);
+  const goToNextPage = () => hasNextPage && fetchPageByIndex(currentPageIndex + 1);
+  const goToPageIndex = (pageIndex) => fetchPageByIndex(pageIndex);
 
   return (
     <div>
@@ -146,61 +137,64 @@ export default function MyListPage() {
         <h2 style={styles.title}>내 리뷰/댓글</h2>
 
         <div style={styles.tabGroup}>
-          <button onClick={() => setSp({ type: "review" })} style={styles.pillBtn(type === "review")}>
+          <button
+            onClick={() => setSearchParams({ type: "review" })}
+            style={styles.pillBtn(listType === "review")}
+          >
             리뷰
           </button>
-          <button onClick={() => setSp({ type: "comment" })} style={styles.pillBtn(type === "comment")}>
+          <button
+            onClick={() => setSearchParams({ type: "comment" })}
+            style={styles.pillBtn(listType === "comment")}
+          >
             댓글
           </button>
         </div>
       </div>
 
       {items.length === 0 ? (
-        <div style={styles.empty}>{loading ? "로딩중..." : "목록이 없습니다."}</div>
-      ) : isReviews ? (
-        // 리뷰 카드
+        <div style={styles.empty}>{isLoading ? "로딩중..." : "목록이 없습니다."}</div>
+      ) : isReviewList ? (
         <div style={styles.list}>
-          {items.map((r, idx) => {
-            const idRaw = r.reviewNo ?? r.reviewId ?? r.id;
-            const id = idRaw != null ? String(idRaw) : "";
+          {items.map((reviewItem, index) => {
+            const reviewNumber = reviewItem.reviewNo ?? reviewItem.reviewId ?? reviewItem.id;
+            const reviewKey = reviewNumber != null ? `review-${reviewNumber}` : `review-index-${index}`;
 
-            const key = `review-${id || "noid"}-${idx}`;
-
-            const created = fmt(pickReviewCreated(r));
-            const updated = fmt(pickReviewUpdated(r));
+            const createdDate = formatValueOrDash(reviewItem.createDate);
+            const updatedDate = formatValueOrDash(reviewItem.updateDate);
 
             return (
-              <div key={key} style={styles.reviewCard}>
+              <div key={reviewKey} style={styles.reviewCard}>
                 <div style={styles.reviewThumbWrap}>
-                  {r.thumbnailUrl ? (
-                    <img src={r.thumbnailUrl} alt="thumbnail" style={styles.reviewThumbImg} />
+                  {reviewItem.thumbnailUrl ? (
+                    <img src={reviewItem.thumbnailUrl} alt="thumbnail" style={styles.reviewThumbImg} />
                   ) : (
                     <div style={styles.reviewThumbFallback}>썸네일</div>
                   )}
                 </div>
 
                 <div style={styles.reviewBlackArea}>
-                  <div style={styles.reviewHeadline}>{cut20(r.content)}</div>
-                  <div style={styles.reviewShopName}>{r.restaurantName ?? "가게명"}</div>
+                  <div style={styles.reviewHeadline}>{cutTextTo20Chars(reviewItem.content)}</div>
+                  <div style={styles.reviewShopName}>{reviewItem.restaurantName ?? "가게명"}</div>
 
                   <div style={styles.reviewMetaRow}>
-                    <span style={styles.reviewMetaChip}>⭐ {r.rating ?? 0}</span>
-                    <span style={styles.reviewMetaChip}>👍 {r.likeCount ?? 0}</span>
-                    <span style={styles.reviewMetaChip}>💬 {r.commentCount ?? 0}</span>
-                    <span style={styles.reviewMetaChip}>👁 {r.viewCount ?? 0}</span>
+                    <span style={styles.reviewMetaChip}>⭐ {reviewItem.rating ?? 0}</span>
+                    <span style={styles.reviewMetaChip}>👍 {reviewItem.likeCount ?? 0}</span>
+                    <span style={styles.reviewMetaChip}>💬 {reviewItem.commentCount ?? 0}</span>
+                    <span style={styles.reviewMetaChip}>👁 {reviewItem.viewCount ?? 0}</span>
                   </div>
 
                   <div style={styles.reviewDates}>
-                    <div>작성일: {created}</div>
-                    <div>업데이트: {updated}</div>
+                    <div>작성일: {createdDate}</div>
+                    <div>업데이트: {updatedDate}</div>
                   </div>
                 </div>
 
                 <div style={styles.reviewActionCol}>
-                  <button onClick={() => goEditReview(idRaw)} style={styles.btnDark}>
+                  <button onClick={() => goToEditReviewPage(reviewNumber)} style={styles.btnDark}>
                     수정
                   </button>
-                  <button onClick={() => onDeleteReview(idRaw)} style={styles.btnDanger}>
+                  <button onClick={() => handleDeleteReview(reviewNumber)} style={styles.btnDanger}>
                     삭제
                   </button>
                 </div>
@@ -209,40 +203,37 @@ export default function MyListPage() {
           })}
         </div>
       ) : (
-        // 댓글 카드
         <div style={styles.list}>
-          {items.map((c, idx) => {
-            const commentId = c.commentNo ?? c.commentId ?? c.id;
+          {items.map((commentItem, index) => {
+            const commentNumber = commentItem.commentNo ?? commentItem.commentId ?? commentItem.id;
+            const commentKey = commentNumber != null ? `comment-${commentNumber}` : `comment-index-${index}`;
 
-            const key = commentId != null ? `comment-${commentId}` : `comment-idx-${idx}`;
-            const reviewNo = c.reviewNo ?? c.reviewId;
-            const created = fmt(pickCommentCreated(c));
-            const headline = cut20(c.reviewContentPreview || c.content);
+            const reviewNumber = commentItem.reviewNo ?? commentItem.reviewId;
+            const createdDate = formatValueOrDash(commentItem.commentDate);
+            const headline = cutTextTo20Chars(commentItem.reviewContentPreview || commentItem.content);
 
             return (
-              <div key={key} style={styles.commentCard}>
+              <div key={commentKey} style={styles.commentCard}>
                 <div style={styles.commentBody}>
                   <div style={styles.commentHeadline}>{headline}</div>
 
                   <div style={styles.commentMetaRow}>
-                    <span style={styles.commentMetaText}>👍 {c.likeCount ?? 0}</span>
+                    <span style={styles.commentMetaText}>👍 {commentItem.likeCount ?? 0}</span>
                     <span style={styles.dot}>·</span>
-                    <span style={styles.commentMetaText}>작성일 {created}</span>
-                    <span style={styles.dot}>·</span>
-                    <span style={styles.commentMetaText}>{c.restaurantName ?? "식당명"}</span>
+                    <span style={styles.commentMetaText}>작성일 {createdDate}</span>
                   </div>
 
-                  <div style={styles.commentContent}>{c.content}</div>
+                  <div style={styles.commentContent}>{commentItem.content}</div>
                 </div>
 
                 <div style={styles.commentActionCol}>
-                  <a href={`/reviews/${reviewNo ?? ""}`} style={styles.btnOutline}>
+                  <a href={`/reviews/${reviewNumber ?? ""}`} style={styles.btnOutline}>
                     리뷰로
                   </a>
-                  <button onClick={() => goEditComment(commentId)} style={styles.btnDark}>
+                  <button onClick={() => goToEditCommentPage(commentNumber)} style={styles.btnDark}>
                     수정
                   </button>
-                  <button onClick={() => onDeleteComment(commentId)} style={styles.btnDanger}>
+                  <button onClick={() => handleDeleteComment(commentNumber)} style={styles.btnDanger}>
                     삭제
                   </button>
                 </div>
@@ -253,17 +244,30 @@ export default function MyListPage() {
       )}
 
       <div style={styles.pagerWrap}>
-        <button disabled={page === 0 || loading} onClick={goPrev} style={styles.pagerNavBtn(page === 0 || loading)}>
+        <button
+          disabled={currentPageIndex === 0 || isLoading}
+          onClick={goToPreviousPage}
+          style={styles.pagerNavBtn(currentPageIndex === 0 || isLoading)}
+        >
           이전
         </button>
 
-        {pages.map((p) => (
-          <button key={p} onClick={() => goPage(p)} style={styles.pagerBtn(p === page)} disabled={loading}>
-            {p + 1}
+        {pageIndexListTrimmed.map((pageIndex) => (
+          <button
+            key={pageIndex}
+            onClick={() => goToPageIndex(pageIndex)}
+            style={styles.pagerBtn(pageIndex === currentPageIndex)}
+            disabled={isLoading}
+          >
+            {pageIndex + 1}
           </button>
         ))}
 
-        <button disabled={!hasNext || loading} onClick={goNext} style={styles.pagerNavBtn(!hasNext || loading)}>
+        <button
+          disabled={!hasNextPage || isLoading}
+          onClick={goToNextPage}
+          style={styles.pagerNavBtn(!hasNextPage || isLoading)}
+        >
           다음
         </button>
       </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { memberApi } from "../../../../utils/api";
 import { authStorage } from "../../../../utils/apiClient";
@@ -38,103 +38,112 @@ export default function MyProfilePage() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
-  const [defaultImages, setDefaultImages] = useState([]);
-  const [defaultLoading, setDefaultLoading] = useState(false);
+  // ===== 기본 이미지 목록 =====
+  const [defaultImageList, setDefaultImageList] = useState([]);
+  const [isDefaultImageLoading, setIsDefaultImageLoading] = useState(false);
 
-  const readMemberInfo = () => {
+  const readMemberInfoFromStorage = useCallback(() => {
     try {
       return authStorage.getMemberInfo();
     } catch {
       return null;
     }
-  };
+  }, []);
 
-  const readToken = () => {
+  const readTokenFromStorage = useCallback(() => {
     try {
       return authStorage.getToken();
     } catch {
       return null;
     }
-  };
-
-  const [me, setMe] = useState(readMemberInfo());
-
-  const [pwModalOpen, setPwModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [pendingField, setPendingField] = useState(null);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [verifiedPassword, setVerifiedPassword] = useState("");
-  const [newValue, setNewValue] = useState("");
-
-  const [photoPwModalOpen, setPhotoPwModalOpen] = useState(false);
-  const [photoModalOpen, setPhotoModalOpen] = useState(false);
-  const [photoPassword, setPhotoPassword] = useState("");
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [uploadPreviewUrl, setUploadPreviewUrl] = useState("");
-  const [selectedDefault, setSelectedDefault] = useState(null);
-
-  const [passPwModalOpen, setPassPwModalOpen] = useState(false);
-  const [passModalOpen, setPassModalOpen] = useState(false);
-  const [passCurrentPassword, setPassCurrentPassword] = useState("");
-  const [newPassword1, setNewPassword1] = useState("");
-  const [newPassword2, setNewPassword2] = useState("");
-
-  const [viewModalOpen, setViewModalOpen] = useState(false);
-
-  const fieldLabel = useMemo(() => {
-    if (pendingField === "name") return "이름";
-    if (pendingField === "nickname") return "닉네임";
-    if (pendingField === "phone") return "전화번호";
-    return "";
-  }, [pendingField]);
-
-  const currentFieldValue = useMemo(() => {
-    if (!me) return "";
-    if (pendingField === "name") return me.memberName || "";
-    if (pendingField === "nickname") return me.nickname || "";
-    if (pendingField === "phone") return me.phone || "";
-    return "";
-  }, [me, pendingField]);
-
-  useEffect(() => {
-    const sync = () => setMe(readMemberInfo());
-    window.addEventListener("storage", sync);
-    window.addEventListener("authChanged", sync);
-    return () => {
-      window.removeEventListener("storage", sync);
-      window.removeEventListener("authChanged", sync);
-    };
   }, []);
 
+  const [currentMemberInfo, setCurrentMemberInfo] = useState(() => readMemberInfoFromStorage());
+
+  // ===== 공통 모달 닫기 =====
+  const [isProfileViewModalOpen, setIsProfileViewModalOpen] = useState(false);
+
+  // ===== 회원정보 변경 =====
+  const [isPasswordVerifyModalOpen, setIsPasswordVerifyModalOpen] = useState(false);
+  const [isEditFieldModalOpen, setIsEditFieldModalOpen] = useState(false);
+  const [pendingEditField, setPendingEditField] = useState(null); // "name" | "nickname" | "phone" | null
+  const [passwordForFieldEdit, setPasswordForFieldEdit] = useState("");
+  const [verifiedPasswordForFieldEdit, setVerifiedPasswordForFieldEdit] = useState("");
+  const [newFieldValue, setNewFieldValue] = useState("");
+
+  // ===== 프로필 사진 변경 =====
+  const [isPhotoPasswordVerifyModalOpen, setIsPhotoPasswordVerifyModalOpen] = useState(false);
+  const [isPhotoChangeModalOpen, setIsPhotoChangeModalOpen] = useState(false);
+  const [passwordForPhotoChange, setPasswordForPhotoChange] = useState("");
+  const [selectedUploadFile, setSelectedUploadFile] = useState(null);
+  const [uploadPreviewUrl, setUploadPreviewUrl] = useState("");
+  const [selectedDefaultImage, setSelectedDefaultImage] = useState(null);
+
+  // ===== 비밀번호 변경 =====
+  const [isPasswordChangeVerifyModalOpen, setIsPasswordChangeVerifyModalOpen] = useState(false);
+  const [isPasswordChangeModalOpen, setIsPasswordChangeModalOpen] = useState(false);
+  const [currentPasswordForPasswordChange, setCurrentPasswordForPasswordChange] = useState("");
+  const [newPasswordValue, setNewPasswordValue] = useState("");
+  const [newPasswordConfirmValue, setNewPasswordConfirmValue] = useState("");
+
+  // ===== 파생값 =====
+  const editFieldLabel = useMemo(() => {
+    if (pendingEditField === "name") return "이름";
+    if (pendingEditField === "nickname") return "닉네임";
+    if (pendingEditField === "phone") return "전화번호";
+    return "";
+  }, [pendingEditField]);
+
+  const currentEditFieldValue = useMemo(() => {
+    if (!currentMemberInfo) return "";
+    if (pendingEditField === "name") return currentMemberInfo.memberName || "";
+    if (pendingEditField === "nickname") return currentMemberInfo.nickname || "";
+    if (pendingEditField === "phone") return currentMemberInfo.phone || "";
+    return "";
+  }, [currentMemberInfo, pendingEditField]);
+
+  // ===== 저장소 변경 =====
   useEffect(() => {
-    if (!selectedFile) {
+    const syncMemberInfo = () => setCurrentMemberInfo(readMemberInfoFromStorage());
+    window.addEventListener("storage", syncMemberInfo);
+    window.addEventListener("authChanged", syncMemberInfo);
+    return () => {
+      window.removeEventListener("storage", syncMemberInfo);
+      window.removeEventListener("authChanged", syncMemberInfo);
+    };
+  }, [readMemberInfoFromStorage]);
+
+  // ===== 업로드 미리보기 =====
+  useEffect(() => {
+    if (!selectedUploadFile) {
       setUploadPreviewUrl("");
       return;
     }
-    const url = URL.createObjectURL(selectedFile);
-    setUploadPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [selectedFile]);
+    const createdObjectUrl = URL.createObjectURL(selectedUploadFile);
+    setUploadPreviewUrl(createdObjectUrl);
+    return () => URL.revokeObjectURL(createdObjectUrl);
+  }, [selectedUploadFile]);
 
-  const fetchDefaultImages = async () => {
-    setDefaultLoading(true);
+  // ===== 기본이미지 목록 로딩 =====
+  const fetchDefaultImageList = useCallback(async () => {
+    setIsDefaultImageLoading(true);
     try {
-      const res = await memberApi.getDefaultProfiles();
-      const list = res?.result ?? res?.data?.result ?? res?.data ?? res ?? [];
-      setDefaultImages(Array.isArray(list) ? list : []);
-    } catch (e) {
-      console.error(e);
-      setDefaultImages([]);
+      const response = await memberApi.getDefaultProfiles();
+      const list = response?.result ?? response?.data?.result ?? response?.data ?? response ?? [];
+      setDefaultImageList(Array.isArray(list) ? list : []);
+    } catch {
+      setDefaultImageList([]);
     } finally {
-      setDefaultLoading(false);
+      setIsDefaultImageLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchDefaultImages();
   }, []);
 
-  if (!me) {
+  useEffect(() => {
+    fetchDefaultImageList();
+  }, [fetchDefaultImageList]);
+
+  // ===== 로그인 체크 =====
+  if (!currentMemberInfo) {
     return (
       <div style={{ padding: 24 }}>
         <h3 style={{ marginBottom: 8 }}>로그인이 필요합니다.</h3>
@@ -145,32 +154,33 @@ export default function MyProfilePage() {
     );
   }
 
+  // ===== 공통 유틸 =====
   const closeAllModals = () => {
-    setViewModalOpen(false);
-    setPwModalOpen(false);
-    setEditModalOpen(false);
-    setPhotoPwModalOpen(false);
-    setPhotoModalOpen(false);
+    setIsProfileViewModalOpen(false);
 
-    setPendingField(null);
-    setCurrentPassword("");
-    setVerifiedPassword("");
-    setNewValue("");
+    setIsPasswordVerifyModalOpen(false);
+    setIsEditFieldModalOpen(false);
+    setPendingEditField(null);
+    setPasswordForFieldEdit("");
+    setVerifiedPasswordForFieldEdit("");
+    setNewFieldValue("");
 
-    setPhotoPassword("");
-    setSelectedFile(null);
-    setSelectedDefault(null);
+    setIsPhotoPasswordVerifyModalOpen(false);
+    setIsPhotoChangeModalOpen(false);
+    setPasswordForPhotoChange("");
+    setSelectedUploadFile(null);
+    setSelectedDefaultImage(null);
     setUploadPreviewUrl("");
 
-    setPassPwModalOpen(false);
-    setPassModalOpen(false);
-    setPassCurrentPassword("");
-    setNewPassword1("");
-    setNewPassword2("");
+    setIsPasswordChangeVerifyModalOpen(false);
+    setIsPasswordChangeModalOpen(false);
+    setCurrentPasswordForPasswordChange("");
+    setNewPasswordValue("");
+    setNewPasswordConfirmValue("");
   };
 
-  const ensureAuth = () => {
-    const token = readToken();
+  const ensureAuthenticatedOrRedirect = () => {
+    const token = readTokenFromStorage();
     if (!token) {
       alert("로그인이 만료되었습니다. 다시 로그인 해주세요.");
       navigate("/login");
@@ -179,214 +189,202 @@ export default function MyProfilePage() {
     return true;
   };
 
-  const getErrorMessage = (e, fallback = "비밀번호가 일치하지 않습니다.") =>
-    e?.message || fallback;
-
   const verifyPasswordOrThrow = async (password) => {
-    if (!ensureAuth()) throw new Error("AUTH_REQUIRED");
+    if (!ensureAuthenticatedOrRedirect()) throw new Error("AUTH_REQUIRED");
     if (!password?.trim()) throw new Error("비밀번호를 입력하세요.");
     await memberApi.verifyPassword(password);
   };
 
-  const openEdit = (field) => {
-    setPendingField(field);
-    setCurrentPassword("");
-    setVerifiedPassword("");
-
-    const preset =
-      field === "name"
-        ? me.memberName || ""
-        : field === "nickname"
-        ? me.nickname || ""
-        : me.phone || "";
-
-    setNewValue(preset);
-    setPwModalOpen(true);
+  const updateLocalMemberInfoAndBroadcast = (updatedMemberInfo) => {
+    authStorage.setMemberInfo(updatedMemberInfo);
+    setCurrentMemberInfo(updatedMemberInfo);
+    window.dispatchEvent(new Event("authChanged"));
   };
 
-  const afterPwConfirm = async () => {
+  const cacheBustUrl = (url) => (url ? `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}` : "");
+
+  const pickProfileUrlFromResponse = (response) =>
+    response?.data ||
+    response?.result?.profileUrl ||
+    response?.result?.fileUrl ||
+    response?.result?.url ||
+    response?.profileUrl ||
+    response?.fileUrl ||
+    response?.url ||
+    "";
+
+  // ===== 회원정보 변경 =====
+  const openEditFieldFlow = (field) => {
+    setPendingEditField(field);
+    setPasswordForFieldEdit("");
+    setVerifiedPasswordForFieldEdit("");
+
+    const presetValue =
+      field === "name"
+        ? currentMemberInfo.memberName || ""
+        : field === "nickname"
+        ? currentMemberInfo.nickname || ""
+        : currentMemberInfo.phone || "";
+
+    setNewFieldValue(presetValue);
+    setIsPasswordVerifyModalOpen(true);
+  };
+
+  const confirmPasswordForFieldEdit = async () => {
     try {
-      await verifyPasswordOrThrow(currentPassword);
-      setVerifiedPassword(currentPassword);
-      setPwModalOpen(false);
-      setEditModalOpen(true);
-    } catch (e) {
-      const msg = e?.message === "AUTH_REQUIRED" ? null : getErrorMessage(e);
-      if (msg) alert(msg);
+      await verifyPasswordOrThrow(passwordForFieldEdit);
+      setVerifiedPasswordForFieldEdit(passwordForFieldEdit);
+      setIsPasswordVerifyModalOpen(false);
+      setIsEditFieldModalOpen(true);
+    } catch (error) {
+      if (error?.message !== "AUTH_REQUIRED") alert(error?.message || "비밀번호가 일치하지 않습니다.");
     }
   };
 
-  const saveInfo = async () => {
+  const applyFieldEdit = async () => {
     try {
-      if (!ensureAuth()) return;
+      if (!ensureAuthenticatedOrRedirect()) return;
 
-      const trimmed = newValue?.trim();
-      if (!trimmed) return alert("새 값을 입력하세요.");
-      if (!verifiedPassword?.trim()) return alert("비밀번호 인증이 필요합니다.");
+      const trimmedValue = newFieldValue?.trim();
+      if (!trimmedValue) return alert("새 값을 입력하세요.");
+      if (!verifiedPasswordForFieldEdit?.trim()) return alert("비밀번호 인증이 필요합니다.");
 
-      if (pendingField === "name")
-        await memberApi.changeName(verifiedPassword, trimmed);
-      else if (pendingField === "nickname")
-        await memberApi.changeNickname(verifiedPassword, trimmed);
-      else if (pendingField === "phone")
-        await memberApi.changePhone(verifiedPassword, trimmed);
+      if (pendingEditField === "name") await memberApi.changeName(verifiedPasswordForFieldEdit, trimmedValue);
+      else if (pendingEditField === "nickname")
+        await memberApi.changeNickname(verifiedPasswordForFieldEdit, trimmedValue);
+      else if (pendingEditField === "phone") await memberApi.changePhone(verifiedPasswordForFieldEdit, trimmedValue);
       else return alert("수정할 항목이 선택되지 않았습니다.");
 
-      const updated = {
-        ...me,
-        memberName: pendingField === "name" ? trimmed : me.memberName,
-        nickname: pendingField === "nickname" ? trimmed : me.nickname,
-        phone: pendingField === "phone" ? trimmed : me.phone,
+      const updatedMemberInfo = {
+        ...currentMemberInfo,
+        memberName: pendingEditField === "name" ? trimmedValue : currentMemberInfo.memberName,
+        nickname: pendingEditField === "nickname" ? trimmedValue : currentMemberInfo.nickname,
+        phone: pendingEditField === "phone" ? trimmedValue : currentMemberInfo.phone,
       };
 
-      authStorage.setMemberInfo(updated);
-      setMe(updated);
-      window.dispatchEvent(new Event("authChanged"));
+      updateLocalMemberInfoAndBroadcast(updatedMemberInfo);
 
-      setEditModalOpen(false);
+      setIsEditFieldModalOpen(false);
       alert("변경 완료!");
       navigate("/my/profile", { replace: true });
-    } catch (e) {
-      alert(e?.message || "변경에 실패했습니다.");
-      setEditModalOpen(false);
-      setPwModalOpen(true);
+    } catch (error) {
+      alert(error?.message || "변경에 실패했습니다.");
+      setIsEditFieldModalOpen(false);
+      setIsPasswordVerifyModalOpen(true);
     }
   };
 
-  const openPasswordModal = () => {
-    setPassCurrentPassword("");
-    setNewPassword1("");
-    setNewPassword2("");
-    setPassModalOpen(false);
-    setPassPwModalOpen(true);
+  // ===== 비밀번호 변경 =====
+  const openPasswordChangeFlow = () => {
+    setCurrentPasswordForPasswordChange("");
+    setNewPasswordValue("");
+    setNewPasswordConfirmValue("");
+    setIsPasswordChangeModalOpen(false);
+    setIsPasswordChangeVerifyModalOpen(true);
   };
 
-  const afterPassPwConfirm = async () => {
+  const confirmPasswordForPasswordChange = async () => {
     try {
-      await verifyPasswordOrThrow(passCurrentPassword);
-      setPassPwModalOpen(false);
-      setPassModalOpen(true);
-    } catch (e) {
-      const msg = e?.message === "AUTH_REQUIRED" ? null : getErrorMessage(e);
-      if (msg) alert(msg);
+      await verifyPasswordOrThrow(currentPasswordForPasswordChange);
+      setIsPasswordChangeVerifyModalOpen(false);
+      setIsPasswordChangeModalOpen(true);
+    } catch (error) {
+      if (error?.message !== "AUTH_REQUIRED") alert(error?.message || "비밀번호가 일치하지 않습니다.");
     }
   };
 
   const applyPasswordChange = async () => {
     try {
-      if (!ensureAuth()) return;
-      if (!passCurrentPassword?.trim()) return alert("현재 비밀번호를 입력하세요.");
-      if (!newPassword1?.trim()) return alert("새 비밀번호를 입력하세요.");
-      if (!newPassword2?.trim()) return alert("새 비밀번호 확인을 입력하세요.");
-      if (newPassword1 !== newPassword2)
-        return alert("새 비밀번호와 확인이 일치하지 않습니다.");
+      if (!ensureAuthenticatedOrRedirect()) return;
 
-      await memberApi.changePassword(passCurrentPassword, newPassword1);
+      if (!currentPasswordForPasswordChange?.trim()) return alert("현재 비밀번호를 입력하세요.");
+      if (!newPasswordValue?.trim()) return alert("새 비밀번호를 입력하세요.");
+      if (!newPasswordConfirmValue?.trim()) return alert("새 비밀번호 확인을 입력하세요.");
+      if (newPasswordValue !== newPasswordConfirmValue) return alert("새 비밀번호와 확인이 일치하지 않습니다.");
 
-      setPassModalOpen(false);
+      await memberApi.changePassword(currentPasswordForPasswordChange, newPasswordValue);
+
+      setIsPasswordChangeModalOpen(false);
       alert("비밀번호가 변경되었습니다.");
       navigate("/my/profile", { replace: true });
-    } catch (e) {
-      alert(e?.message || "비밀번호 변경에 실패했습니다.");
+    } catch (error) {
+      alert(error?.message || "비밀번호 변경에 실패했습니다.");
     }
   };
 
-  const openPhotoModal = () => {
-    setPhotoPassword("");
-    setSelectedFile(null);
-    setSelectedDefault(null);
+  // ===== 프로필 사진 변경 =====
+  const openPhotoChangeFlow = () => {
+    setPasswordForPhotoChange("");
+    setSelectedUploadFile(null);
+    setSelectedDefaultImage(null);
     setUploadPreviewUrl("");
-    setPhotoModalOpen(false);
-    setPhotoPwModalOpen(true);
+    setIsPhotoChangeModalOpen(false);
+    setIsPhotoPasswordVerifyModalOpen(true);
   };
 
-  const afterPhotoPwConfirm = async () => {
+  const confirmPasswordForPhotoChange = async () => {
     try {
-      await verifyPasswordOrThrow(photoPassword);
-      setPhotoPwModalOpen(false);
-      setPhotoModalOpen(true);
-    } catch (e) {
-      const msg = e?.message === "AUTH_REQUIRED" ? null : getErrorMessage(e);
-      if (msg) alert(msg);
+      await verifyPasswordOrThrow(passwordForPhotoChange);
+      setIsPhotoPasswordVerifyModalOpen(false);
+      setIsPhotoChangeModalOpen(true);
+    } catch (error) {
+      if (error?.message !== "AUTH_REQUIRED") alert(error?.message || "비밀번호가 일치하지 않습니다.");
     }
   };
 
-  const triggerFilePick = () => fileInputRef.current?.click();
+  const triggerUploadFilePicker = () => fileInputRef.current?.click();
 
-  const cacheBust = (url) =>
-    url ? `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}` : "";
-
-  const pickUrl = (res) =>
-    res?.data ||
-    res?.result?.profileUrl ||
-    res?.result?.fileUrl ||
-    res?.result?.url ||
-    res?.profileUrl ||
-    res?.fileUrl ||
-    res?.url ||
-    "";
-
-  const applyUpload = async () => {
+  const applyUploadedProfileImage = async () => {
     try {
-      if (!ensureAuth()) return;
-      if (!photoPassword?.trim()) return alert("비밀번호를 입력하세요.");
-      if (!selectedFile) return alert("업로드할 파일을 선택하세요.");
+      if (!ensureAuthenticatedOrRedirect()) return;
+      if (!passwordForPhotoChange?.trim()) return alert("비밀번호를 입력하세요.");
+      if (!selectedUploadFile) return alert("업로드할 파일을 선택하세요.");
 
-      const uploadRes = await memberApi.uploadProfileImage(
-        photoPassword,
-        selectedFile
-      );
-      const uploadUrl = pickUrl(uploadRes);
-      if (!uploadUrl) return alert("업로드는 됐는데 프로필 URL을 받지 못했습니다.");
+      const uploadResponse = await memberApi.uploadProfileImage(passwordForPhotoChange, selectedUploadFile);
+      const uploadedUrl = pickProfileUrlFromResponse(uploadResponse);
+      if (!uploadedUrl) return alert("업로드는 됐는데 프로필 URL을 받지 못했습니다.");
 
-      const finalUrl = cacheBust(uploadUrl);
-      const updated = { ...me, profileUrl: finalUrl, fileUrl: finalUrl };
+      const finalUrl = cacheBustUrl(uploadedUrl);
+      const updatedMemberInfo = { ...currentMemberInfo, profileUrl: finalUrl, fileUrl: finalUrl };
 
-      authStorage.setMemberInfo(updated);
-      setMe(updated);
-      window.dispatchEvent(new Event("authChanged"));
+      updateLocalMemberInfoAndBroadcast(updatedMemberInfo);
 
-      setPhotoModalOpen(false);
+      setIsPhotoChangeModalOpen(false);
       alert("프로필 사진이 변경되었습니다!");
       navigate("/my/profile", { replace: true });
-    } catch (e) {
-      alert(e?.message || "프로필 사진 변경에 실패했습니다.");
+    } catch (error) {
+      alert(error?.message || "프로필 사진 변경에 실패했습니다.");
     }
   };
 
-  const applyDefault = async () => {
+  const applyDefaultProfileImage = async () => {
     try {
-      if (!ensureAuth()) return;
-      if (!photoPassword?.trim()) return alert("비밀번호를 입력하세요.");
-      if (!selectedDefault?.fileNo) return alert("기본 이미지를 선택하세요.");
+      if (!ensureAuthenticatedOrRedirect()) return;
+      if (!passwordForPhotoChange?.trim()) return alert("비밀번호를 입력하세요.");
+      if (!selectedDefaultImage?.fileNo) return alert("기본 이미지를 선택하세요.");
 
-      const res = await memberApi.changeProfileToDefault(
-        photoPassword,
-        selectedDefault.fileNo
-      );
-      const urlFromServer = pickUrl(res) || selectedDefault.fileUrl;
-      const finalUrl = cacheBust(urlFromServer);
+      const response = await memberApi.changeProfileToDefault(passwordForPhotoChange, selectedDefaultImage.fileNo);
+      const urlFromServer = pickProfileUrlFromResponse(response) || selectedDefaultImage.fileUrl;
+      const finalUrl = cacheBustUrl(urlFromServer);
 
-      const updated = { ...me, profileUrl: finalUrl, fileUrl: finalUrl };
-      authStorage.setMemberInfo(updated);
-      setMe(updated);
-      window.dispatchEvent(new Event("authChanged"));
+      const updatedMemberInfo = { ...currentMemberInfo, profileUrl: finalUrl, fileUrl: finalUrl };
+      updateLocalMemberInfoAndBroadcast(updatedMemberInfo);
 
-      setPhotoModalOpen(false);
+      setIsPhotoChangeModalOpen(false);
       alert("기본 이미지로 변경되었습니다!");
       navigate("/my/profile", { replace: true });
-    } catch (e) {
-      alert(e?.message || "기본 이미지 변경에 실패했습니다.");
+    } catch (error) {
+      alert(error?.message || "기본 이미지 변경에 실패했습니다.");
     }
   };
 
-  const primaryPhotoAction = () => {
-    if (selectedFile) return applyUpload();
-    if (selectedDefault) return applyDefault();
+  const applyProfilePhotoChange = () => {
+    if (selectedUploadFile) return applyUploadedProfileImage();
+    if (selectedDefaultImage) return applyDefaultProfileImage();
     alert("업로드 파일을 선택하거나 기본 이미지를 선택하세요.");
   };
 
-  const fallbackImg = "https://placehold.co/160x160?text=USER";
+  const fallbackProfileImageUrl = "https://placehold.co/160x160?text=USER";
 
   return (
     <Page>
@@ -394,139 +392,137 @@ export default function MyProfilePage() {
 
       <BigAvatarWrap>
         <BigAvatar
-          src={me.profileUrl || me.fileUrl || fallbackImg}
+          src={currentMemberInfo.profileUrl || currentMemberInfo.fileUrl || fallbackProfileImageUrl}
           alt="profile"
-          onError={(e) => (e.currentTarget.src = fallbackImg)}
-          onClick={() => setViewModalOpen(true)}
+          onError={(e) => (e.currentTarget.src = fallbackProfileImageUrl)}
+          onClick={() => setIsProfileViewModalOpen(true)}
           title="클릭해서 크게 보기"
           style={{ cursor: "zoom-in" }}
         />
       </BigAvatarWrap>
 
       <ActionRow style={{ gap: 10 }}>
-        <PrimaryButton type="button" onClick={openPhotoModal}>
+        <PrimaryButton type="button" onClick={openPhotoChangeFlow}>
           프로필 사진 변경
         </PrimaryButton>
 
-        <PrimaryButton type="button" onClick={openPasswordModal}>
+        <PrimaryButton type="button" onClick={openPasswordChangeFlow}>
           비밀번호 변경
         </PrimaryButton>
       </ActionRow>
 
       <Row>
         <Label>이메일</Label>
-        <Value>{me.email}</Value>
+        <Value>{currentMemberInfo.email}</Value>
         <div />
       </Row>
 
       <Row>
         <Label>이름</Label>
-        <Value>{me.memberName}</Value>
-        <Btn type="button" onClick={() => openEdit("name")}>
+        <Value>{currentMemberInfo.memberName}</Value>
+        <Btn type="button" onClick={() => openEditFieldFlow("name")}>
           변경
         </Btn>
       </Row>
 
       <Row>
         <Label>닉네임</Label>
-        <Value>{me.nickname}</Value>
-        <Btn type="button" onClick={() => openEdit("nickname")}>
+        <Value>{currentMemberInfo.nickname}</Value>
+        <Btn type="button" onClick={() => openEditFieldFlow("nickname")}>
           변경
         </Btn>
       </Row>
 
       <Row>
         <Label>전화번호</Label>
-        <Value>{me.phone}</Value>
-        <Btn type="button" onClick={() => openEdit("phone")}>
+        <Value>{currentMemberInfo.phone}</Value>
+        <Btn type="button" onClick={() => openEditFieldFlow("phone")}>
           변경
         </Btn>
       </Row>
 
-      {pwModalOpen && (
+      {isPasswordVerifyModalOpen && (
         <Modal
           title="비밀번호 인증"
           onClose={closeAllModals}
           primaryText="확인"
           cancelText="취소"
-          onPrimary={afterPwConfirm}
+          onPrimary={confirmPasswordForFieldEdit}
         >
           <ModalDesc>
-            {fieldLabel
-              ? `${fieldLabel} 변경을 위해 비밀번호를 입력하세요.`
-              : "비밀번호를 입력하세요."}
+            {editFieldLabel ? `${editFieldLabel} 변경을 위해 비밀번호를 입력하세요.` : "비밀번호를 입력하세요."}
           </ModalDesc>
           <ModalInput
             type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
+            value={passwordForFieldEdit}
+            onChange={(e) => setPasswordForFieldEdit(e.target.value)}
             placeholder="현재 비밀번호"
           />
           <Hint>Enter: 확인 · ESC: 닫기</Hint>
         </Modal>
       )}
 
-      {editModalOpen && (
+      {isEditFieldModalOpen && (
         <Modal
-          title={`${fieldLabel} 수정`}
+          title={`${editFieldLabel} 수정`}
           onClose={closeAllModals}
           primaryText="저장"
           cancelText="취소"
-          onPrimary={saveInfo}
+          onPrimary={applyFieldEdit}
         >
           <ModalDesc>
-            현재 값: <b>{currentFieldValue || "-"}</b>
+            현재 값: <b>{currentEditFieldValue || "-"}</b>
           </ModalDesc>
           <ModalInput
-            value={newValue}
-            onChange={(e) => setNewValue(e.target.value)}
+            value={newFieldValue}
+            onChange={(e) => setNewFieldValue(e.target.value)}
             placeholder="새 값 입력"
           />
           <Hint>Enter: 저장 · ESC: 닫기</Hint>
         </Modal>
       )}
 
-      {photoPwModalOpen && (
+      {isPhotoPasswordVerifyModalOpen && (
         <Modal
           title="비밀번호 인증"
           onClose={closeAllModals}
           primaryText="확인"
           cancelText="취소"
-          onPrimary={afterPhotoPwConfirm}
+          onPrimary={confirmPasswordForPhotoChange}
           maxWidth={560}
         >
           <ModalDesc>프로필 사진 변경을 위해 비밀번호를 입력하세요.</ModalDesc>
           <ModalInput
             type="password"
-            value={photoPassword}
-            onChange={(e) => setPhotoPassword(e.target.value)}
+            value={passwordForPhotoChange}
+            onChange={(e) => setPasswordForPhotoChange(e.target.value)}
             placeholder="현재 비밀번호"
           />
           <Hint>Enter: 확인 · ESC: 닫기</Hint>
         </Modal>
       )}
 
-      {passPwModalOpen && (
+      {isPasswordChangeVerifyModalOpen && (
         <Modal
           title="비밀번호 인증"
           onClose={closeAllModals}
           primaryText="확인"
           cancelText="취소"
-          onPrimary={afterPassPwConfirm}
+          onPrimary={confirmPasswordForPasswordChange}
           maxWidth={560}
         >
           <ModalDesc>비밀번호 변경을 위해 현재 비밀번호를 입력하세요.</ModalDesc>
           <ModalInput
             type="password"
-            value={passCurrentPassword}
-            onChange={(e) => setPassCurrentPassword(e.target.value)}
+            value={currentPasswordForPasswordChange}
+            onChange={(e) => setCurrentPasswordForPasswordChange(e.target.value)}
             placeholder="현재 비밀번호"
           />
           <Hint>Enter: 확인 · ESC: 닫기</Hint>
         </Modal>
       )}
 
-      {passModalOpen && (
+      {isPasswordChangeModalOpen && (
         <Modal
           title="비밀번호 변경"
           onClose={closeAllModals}
@@ -539,16 +535,16 @@ export default function MyProfilePage() {
 
           <ModalInput
             type="password"
-            value={newPassword1}
-            onChange={(e) => setNewPassword1(e.target.value)}
+            value={newPasswordValue}
+            onChange={(e) => setNewPasswordValue(e.target.value)}
             placeholder="새 비밀번호"
             style={{ marginBottom: 10 }}
           />
 
           <ModalInput
             type="password"
-            value={newPassword2}
-            onChange={(e) => setNewPassword2(e.target.value)}
+            value={newPasswordConfirmValue}
+            onChange={(e) => setNewPasswordConfirmValue(e.target.value)}
             placeholder="새 비밀번호 확인"
           />
 
@@ -556,13 +552,13 @@ export default function MyProfilePage() {
         </Modal>
       )}
 
-      {photoModalOpen && (
+      {isPhotoChangeModalOpen && (
         <Modal
           title="프로필 사진 변경"
           onClose={closeAllModals}
-          primaryText={selectedFile ? "업로드 저장" : "적용"}
+          primaryText={selectedUploadFile ? "업로드 저장" : "적용"}
           cancelText="닫기"
-          onPrimary={primaryPhotoAction}
+          onPrimary={applyProfilePhotoChange}
           maxWidth={860}
         >
           <ModalDesc>업로드/기본 중 하나 선택</ModalDesc>
@@ -576,20 +572,18 @@ export default function MyProfilePage() {
                 type="file"
                 accept="image/*"
                 onChange={(e) => {
-                  const f = e.target.files?.[0] || null;
-                  setSelectedFile(f);
-                  if (f) setSelectedDefault(null);
+                  const pickedFile = e.target.files?.[0] || null;
+                  setSelectedUploadFile(pickedFile);
+                  if (pickedFile) setSelectedDefaultImage(null);
                 }}
                 style={{ display: "none" }}
               />
 
               <CardRow>
-                <GhostButton type="button" onClick={triggerFilePick}>
+                <GhostButton type="button" onClick={triggerUploadFilePicker}>
                   파일 선택
                 </GhostButton>
-                <FileName>
-                  {selectedFile ? selectedFile.name : "선택된 파일 없음"}
-                </FileName>
+                <FileName>{selectedUploadFile ? selectedUploadFile.name : "선택된 파일 없음"}</FileName>
               </CardRow>
 
               <PreviewBox style={{ height: 200 }}>
@@ -604,32 +598,30 @@ export default function MyProfilePage() {
             <Card>
               <CardTitle>
                 기본 이미지로 변경
-                {defaultLoading ? (
-                  <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.7 }}>
-                    불러오는 중...
-                  </span>
+                {isDefaultImageLoading ? (
+                  <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.7 }}>불러오는 중...</span>
                 ) : null}
               </CardTitle>
 
               <Grid>
-                {defaultImages.map((img) => {
-                  const isSelected = selectedDefault?.fileNo === img.fileNo;
+                {defaultImageList.map((defaultImage) => {
+                  const isSelected = selectedDefaultImage?.fileNo === defaultImage.fileNo;
                   return (
                     <Thumb
-                      key={img.fileNo}
+                      key={defaultImage.fileNo}
                       type="button"
                       $active={isSelected}
                       onClick={() => {
-                        setSelectedDefault(img);
-                        setSelectedFile(null);
+                        setSelectedDefaultImage(defaultImage);
+                        setSelectedUploadFile(null);
                         setUploadPreviewUrl("");
                       }}
-                      title={`${img.fileName} (#${img.fileNo})`}
+                      title={`${defaultImage.fileName} (#${defaultImage.fileNo})`}
                     >
-                      <ThumbImg src={img.fileUrl} alt={img.fileName} />
+                      <ThumbImg src={defaultImage.fileUrl} alt={defaultImage.fileName} />
                       <ThumbMeta>
-                        <span>{img.fileName}</span>
-                        <small>#{img.fileNo}</small>
+                        <span>{defaultImage.fileName}</span>
+                        <small>#{defaultImage.fileNo}</small>
                       </ThumbMeta>
                     </Thumb>
                   );
@@ -637,11 +629,8 @@ export default function MyProfilePage() {
               </Grid>
 
               <PreviewBox style={{ marginTop: 10, height: 200 }}>
-                {selectedDefault ? (
-                  <PreviewImg
-                    src={selectedDefault.fileUrl}
-                    alt="default preview"
-                  />
+                {selectedDefaultImage ? (
+                  <PreviewImg src={selectedDefaultImage.fileUrl} alt="default preview" />
                 ) : (
                   <PreviewPlaceholder>기본 이미지 미리보기</PreviewPlaceholder>
                 )}
@@ -651,34 +640,23 @@ export default function MyProfilePage() {
 
           <Hint>
             Enter:{" "}
-            {selectedFile
-              ? "업로드 저장"
-              : selectedDefault
-              ? "기본 적용"
-              : "선택 필요"}{" "}
-            · ESC: 닫기
+            {selectedUploadFile ? "업로드 저장" : selectedDefaultImage ? "기본 적용" : "선택 필요"} · ESC: 닫기
           </Hint>
         </Modal>
       )}
 
-      {viewModalOpen && (
+      {isProfileViewModalOpen && (
         <Modal
           title="프로필 원본 보기"
-          onClose={() => setViewModalOpen(false)}
-          onPrimary={() => setViewModalOpen(false)}
+          onClose={() => setIsProfileViewModalOpen(false)}
+          onPrimary={() => setIsProfileViewModalOpen(false)}
           primaryText="확인"
           cancelText={null}
           maxWidth={700}
         >
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
             <img
-              src={me.profileUrl || me.fileUrl || fallbackImg}
+              src={currentMemberInfo.profileUrl || currentMemberInfo.fileUrl || fallbackProfileImageUrl}
               alt="원본"
               style={{
                 width: "100%",
@@ -686,7 +664,7 @@ export default function MyProfilePage() {
                 objectFit: "contain",
                 maxHeight: "70vh",
               }}
-              onClick={() => setViewModalOpen(false)}
+              onClick={() => setIsProfileViewModalOpen(false)}
             />
           </div>
         </Modal>

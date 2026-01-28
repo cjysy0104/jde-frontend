@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { authStorage, memberApi } from "../../../../utils/api"; // ✅ api.js에서 import
 
@@ -34,10 +34,18 @@ import {
   ErrorText,
   SuccessBox,
 } from "./MyProfileViewStyles";
+import Header from "../../common/Header";
 
 function decodeJwtPayload(token) {
   try {
-    const base64Url = token.split(".")[1];
+    if (!token || typeof token !== "string") return null;
+
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+
+    const base64Url = parts[1];
+    if (!base64Url) return null;
+
     const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
     const json = decodeURIComponent(
       atob(base64)
@@ -45,6 +53,7 @@ function decodeJwtPayload(token) {
         .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
         .join("")
     );
+
     return JSON.parse(json);
   } catch {
     return null;
@@ -82,11 +91,12 @@ export default function MyProfileViewPage() {
   const [withdrawing, setWithdrawing] = useState(false);
 
   useEffect(() => {
-    const load = () => {
-      const stored = authStorage.getMemberInfo?.();
-      const normalizedStored = normalizeMember(stored);
-      if (normalizedStored) {
-        setMember(normalizedStored);
+    const loadMember = () => {
+      const storedMemberInfo = authStorage.getMemberInfo?.();
+      const normalizedStoredMember = normalizeMember(storedMemberInfo);
+
+      if (normalizedStoredMember) {
+        setMember(normalizedStoredMember);
         return;
       }
 
@@ -95,21 +105,22 @@ export default function MyProfileViewPage() {
       setMember(normalizeMember(payload));
     };
 
-    load();
+    loadMember();
 
-    const onStorage = () => load();
-    window.addEventListener("storage", onStorage);
-    window.addEventListener("authChanged", onStorage);
+    const onAuthChanged = () => loadMember();
+    window.addEventListener("storage", onAuthChanged);
+    window.addEventListener("authChanged", onAuthChanged);
     return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener("authChanged", onStorage);
+      window.removeEventListener("storage", onAuthChanged);
+      window.removeEventListener("authChanged", onAuthChanged);
     };
   }, []);
 
-  const initial = (member?.nickname || member?.name || member?.email || "U")
-    .trim()
-    .charAt(0)
-    .toUpperCase();
+  const avatarFallbackInitial = useMemo(() => {
+    return (member?.nickname || member?.name || member?.email || "U").trim().charAt(0).toUpperCase();
+  }, [member]);
+
+  const fallbackImageUrl = "https://placehold.co/160x160?text=USER";
 
   const openConfirm = () => {
     setWithdrawError("");
@@ -162,6 +173,7 @@ export default function MyProfileViewPage() {
   };
 
   return (
+    
     <Page>
       <TopBar>
         <Title>내 정보</Title>
@@ -177,13 +189,13 @@ export default function MyProfileViewPage() {
               <AvatarImg
                 src={member.profileUrl}
                 alt="profile"
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = "https://placehold.co/160x160?text=USER";
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = fallbackImageUrl;
                 }}
               />
             ) : (
-              <AvatarFallback>{initial}</AvatarFallback>
+              <AvatarFallback>{avatarFallbackInitial}</AvatarFallback>
             )}
           </AvatarWrap>
 

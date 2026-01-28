@@ -1,11 +1,17 @@
 import React from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Layout, Side, Title, TabLink, Content } from "./styles";
+import Header from "../common/Header";
+import Nav from "../common/Nav";
+import Footer from "../common/Footer";
 
 export default function MyLayout() {
   const navigate = useNavigate();
 
   return (
+    <>
+    <Header />
+    <Nav />
     <Layout>
       <Side>
         <Title>My 페이지</Title>
@@ -45,5 +51,7 @@ export default function MyLayout() {
         <Outlet />
       </Content>
     </Layout>
+    <Footer />
+    </>
   );
 }

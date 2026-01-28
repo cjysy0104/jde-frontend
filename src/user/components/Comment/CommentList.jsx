@@ -38,6 +38,8 @@ const CommentList = ({ reviewNo }) => {
         currentPage,
       });
 
+
+      console.log(response)
       const data = response.data;
 
       setComments(data?.comments ?? []);
@@ -59,22 +61,56 @@ const CommentList = ({ reviewNo }) => {
     fetchComments();
   }, [fetchComments]);
 
-  const handleLikeComment = (commentNo) => {
+  const handleLikeComment = async (commentNo) => {
+    if (!isLoggedIn) {
+      alert("로그인 후 이용 가능합니다.");
+      return;
+    }
+
+    // 현재 댓글 찾기
+    const target = comments.find(c => c.commentNo === commentNo);
+    if (!target) return;
+
+    const wasLiked = target.isLiked === 'Y';
+
+    // 1) optimistic update (UI 먼저 반영)
     setComments(prev =>
-      prev.map(comment =>
-        comment.commentNo === commentNo
+      prev.map(c =>
+        c.commentNo === commentNo
           ? {
-              ...comment,
-              isLiked: comment.isLiked === 'Y' ? 'N' : 'Y',
-              likeCount:
-                comment.isLiked === 'Y'
-                  ? comment.likeCount - 1
-                  : comment.likeCount + 1
+              ...c,
+              isLiked: wasLiked ? 'N' : 'Y',
+              likeCount: Math.max(0, (c.likeCount ?? 0) + (wasLiked ? -1 : 1)),
             }
-          : comment
+          : c
       )
     );
+
+    try {
+      // 2) 서버 호출 (상태에 따라 POST/DELETE)
+      if (wasLiked) {
+        await commentApi.deleteCommentLike({ commentNo });
+      } else {
+        await commentApi.createCommentLike({ commentNo });
+      }
+    } catch (e) {
+      console.error(e);
+
+      // 3) 실패 시 롤백 (원복)
+      setComments(prev =>
+        prev.map(c =>
+          c.commentNo === commentNo
+            ? {
+                ...c,
+                isLiked: wasLiked ? 'Y' : 'N',
+                likeCount: Math.max(0, (c.likeCount ?? 0) + (wasLiked ? 1 : -1)),
+              }
+            : c
+        )
+      );
+    }
   };
+
 
   const handleSubmitComment = async () => {
     if (!isLoggedIn) return;

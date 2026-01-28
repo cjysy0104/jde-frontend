@@ -44,4 +44,22 @@ export const commentApi = {
             throw error;
         }
     },
+
+    createCommentLike: async({commentNo}) => {
+        try {
+            await apiClient.post(`/api/commentLikes/${commentNo}`);
+        } catch (error) {
+            console.error('createCommentLike error:', error);
+            throw error;
+        }
+    },
+
+    deleteCommentLike: async({commentNo}) => {
+        try {
+            await apiClient.delete(`/api/commentLikes/${commentNo}`);
+        } catch (error) {
+            console.error('deleteCommentLike error:', error);
+            throw error;
+        }
+    },
 };

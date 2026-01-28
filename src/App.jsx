@@ -50,12 +50,14 @@ export default function App() {
         <Route element={<RequireAuth />}>
           <Route path="/reviews/enroll" element={<ReviewEnrollPage />} />
           <Route path="/reviews/update/:reviewNo" element={<ReviewUpdatePage />} />
+
           <Route path="my" element={<MyLayout />}>
             <Route index element={<MyProfileViewPage />} />
             <Route path="profile" element={<MyProfilePage />} />
             <Route path="list" element={<MyListPage />} />
             <Route path="bookmarks" element={<MyBookmarksPage />} />
           </Route>
+
           <Route path="/admin" element={<AdminPage />} />
         </Route>
         

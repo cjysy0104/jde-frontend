@@ -1,5 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Heart } from 'lucide-react';
+import ReportModal from "../report/ReportModal";
+import { reportApi } from "../../../utils/reportApi";
 import {
   CommentItem,
   Avatar,
@@ -26,6 +28,7 @@ import { AuthContext } from '../context/AuthContext';
 const Comment = ({ comment, onLike, onDelete, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(comment.content);
+  const [reportOpen, setReportOpen] = useState(false);
 
 
   const { auth } = useContext(AuthContext);
@@ -69,8 +72,10 @@ const Comment = ({ comment, onLike, onDelete, onUpdate }) => {
           </UserInfo>
 
           <ActionGroup>
+
+            <ReportButton onClick={() => setReportOpen(true)}>신고</ReportButton>
             {comment.isOwner === 'N' && (
-            <ReportButton>신고</ReportButton>
+            <ReportButton onClick={() => setReportOpen(true)}>신고</ReportButton>
             )}
 
             {comment.isOwner === 'Y' && (
@@ -117,6 +122,20 @@ const Comment = ({ comment, onLike, onDelete, onUpdate }) => {
           <CommentDate>{comment.createDate}</CommentDate>
         </CommentActions>
       </CommentContent>
+      <ReportModal
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        targetLabel="댓글"
+        targetTitle={comment?.content ? comment.content.slice(0, 40) : ""}
+        targetWriter={comment?.nickname}
+        onSubmit={({ reportCategoryNo, reportContent }) =>
+          reportApi.createCommentReport({
+            commentNo: comment.commentNo,
+            reportCategoryNo,
+            reportContent,
+          })
+        }
+      />
     </CommentItem>
   );
 };

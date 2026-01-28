@@ -75,7 +75,7 @@ const ReviewCard = ({ review, onLike, onBookmark }) => {
         </FoodImageContainer>
 
         <CardContent>
-          <ActionBar>
+          <ActionBar onClick={(event) => event.stopPropagation()}>
             <ActionButton onClick={handleLikeClick}>
               <Heart
                 size={20}

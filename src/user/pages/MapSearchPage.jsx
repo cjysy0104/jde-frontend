@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useKakaoMapScript from '../../utils/map/useKakaoMapScript';
 import KakaoMap from '../components/common/Map/KakaoMap';
@@ -47,6 +47,7 @@ const MapSearchPage = () => {
   const [selectedReview, setSelectedReview] = useState(null);
   const [selectedRestaurantReviews, setSelectedRestaurantReviews] = useState([]);
   const [loadingRestaurantReviews, setLoadingRestaurantReviews] = useState(false);
+  const reviewsSectionRef = useRef(null);
   
   // 지도 상태
   const [mapCenter, setMapCenter] = useState({ lat: 37.5665, lng: 126.9780 }); // 서울 기본값
@@ -243,6 +244,18 @@ const MapSearchPage = () => {
       });
     return () => { cancelled = true; };
   }, [selectedReview?.restaurantNo, selectedReview?.reviewNo]);
+
+  // 리뷰가 있으면 리뷰 섹션으로 스크롤 이동 (선택한 음식점에 리뷰가 있을 때만)
+  useEffect(() => {
+    if (
+      selectedReview &&
+      !loadingRestaurantReviews &&
+      selectedRestaurantReviews.length > 0 &&
+      reviewsSectionRef.current
+    ) {
+      reviewsSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedReview, loadingRestaurantReviews, selectedRestaurantReviews.length]);
 
   // 지도 생성 콜백
   const handleMapCreated = (map) => {
@@ -460,7 +473,7 @@ const MapSearchPage = () => {
             ))
           )}
           {selectedReview && (
-            <RestaurantReviewsSection>
+            <RestaurantReviewsSection ref={reviewsSectionRef}>
               <RestaurantReviewsTitle>
                 이 음식점 리뷰 ({loadingRestaurantReviews ? '…' : selectedRestaurantReviews.length}개)
               </RestaurantReviewsTitle>

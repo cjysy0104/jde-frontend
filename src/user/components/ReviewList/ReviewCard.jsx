@@ -33,6 +33,24 @@ const ReviewCard = ({ review, onLike, onBookmark }) => {
     navigate(`/reviews/${review.reviewNo}`);
   }
 
+    const handleLikeClick = (e) => {
+    e.stopPropagation();
+    onLike(review.reviewNo);
+  };
+
+  const handleBookmarkClick = (e) => {
+    e.stopPropagation();
+    onBookmark(review.reviewNo);
+  };
+
+  const handleCommentClick = (e) => {
+    e.stopPropagation();
+    // 댓글 모달
+    /*
+    댓글 모달창 띄우기 구현하기
+    */
+  };
+
   return (
     <Card onClick={handleClick}>
       <FoodImageContainer>
@@ -46,7 +64,7 @@ const ReviewCard = ({ review, onLike, onBookmark }) => {
 
       <CardContent>
         <ActionBar>
-          <ActionButton onClick={() => onLike(review.reviewNo)}>
+          <ActionButton onClick={handleLikeClick}>
             <Heart 
               size={20} 
               fill={review.isLiked === 'Y' ? "#ff6b6b" : "none"} 
@@ -54,11 +72,11 @@ const ReviewCard = ({ review, onLike, onBookmark }) => {
             />
             {review.likeCount}
           </ActionButton>
-          <ActionButton>
+          <ActionButton onClick={handleCommentClick}>
             <MessageCircle size={20} color="#666" />
             {review.commentCount}
           </ActionButton>
-          <ActionButton onClick={() => onBookmark(review.reviewNo)}>
+          <ActionButton onClick={handleBookmarkClick}>
             <Bookmark 
               size={20} 
               fill={review.isMarked === 'Y' ? "#333" : "none"} 

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { FaSearch, FaUtensils, FaLightbulb, FaChair, FaFlag } from 'react-icons/fa';
+import React from "react";
+import { FaSearch, FaUtensils, FaLightbulb, FaChair, FaFlag } from "react-icons/fa";
 import {
   SearchSectionContainer,
   SearchContent,
@@ -11,18 +11,21 @@ import {
   SearchButton,
   FilterContainer,
   FilterButton,
-} from './styles';
+} from "./styles";
 
-const SearchSection = () => {
-  const [activeFilter, setActiveFilter] = useState('전체');
-
+const SearchSection = ({ keywordNo, setKeywordNo, query, setQuery }) => {
   const filters = [
-    { id: '전체', icon: null },
-    { id: '혼밥', icon: FaUtensils },
-    { id: '신선한', icon: FaLightbulb },
-    { id: '단체석', icon: FaChair },
-    { id: '신규', icon: FaFlag },
+    { id: "전체", icon: null, keywordNo: null },
+    { id: "혼밥", icon: FaUtensils, keywordNo: 1 },
+    { id: "신선한", icon: FaLightbulb, keywordNo: 2 },
+    { id: "단체석", icon: FaChair, keywordNo: 3 },
+    { id: "신규", icon: FaFlag, keywordNo: 4 },
   ];
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setQuery((prev) => prev.trim());
+  };
 
   return (
     <SearchSectionContainer>
@@ -31,25 +34,29 @@ const SearchSection = () => {
           <MainTitle>맛집을 찾아보세요</MainTitle>
           <SubTitle>Just Do Eat!</SubTitle>
         </TitleSection>
-        
-        <SearchBox>
-          <SearchInput
-            type="text"
-            placeholder="종로구 맛집, 리뷰가 많은 맛집 등..."
-          />
-          <SearchButton>
-            <FaSearch />
-          </SearchButton>
-        </SearchBox>
-        
+
+        <form onSubmit={handleSubmit}>
+          <SearchBox>
+            <SearchInput
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              type="text"
+              placeholder="종로구 맛집, 리뷰가 많은 맛집 등..."
+            />
+            <SearchButton type="submit">
+              <FaSearch />
+            </SearchButton>
+          </SearchBox>
+        </form>
+
         <FilterContainer>
           {filters.map((filter) => {
             const Icon = filter.icon;
             return (
               <FilterButton
                 key={filter.id}
-                $active={activeFilter === filter.id}
-                onClick={() => setActiveFilter(filter.id)}
+                $active={keywordNo === filter.keywordNo}
+                onClick={() => setKeywordNo(filter.keywordNo)}
               >
                 {Icon && <Icon />}
                 {filter.id}

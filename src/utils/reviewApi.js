@@ -1,11 +1,16 @@
 import apiClient from "./apiClient.js";
 
 export const reviewApi = {
-  // 베스트 리뷰 조회
-  getBestReviewList: async ({ cursor, cursorLikeCount }) => {
+  // 베스트 리뷰 조회 - 필터
+  getBestReviewList: async ({ cursor, cursorLikeCount, keywordNo, query }) => {
     try {
       return await apiClient.get(`/api/reviews/best`, {
-        params: { cursor, cursorLikeCount },
+        params: { 
+          cursor, 
+          cursorLikeCount,
+          keywordNo, 
+          query,
+        },
       });
     } catch (error) {
       console.error("getBestReviewList error:", error);
@@ -113,6 +118,16 @@ export const reviewApi = {
       });
     } catch (error) {
       console.error("createReview error:", error);
+      throw error;
+    }
+  },
+
+  // 리뷰 삭제
+  deleteReview: async (reviewNo) => {
+    try {
+      return await apiClient.delete(`/api/reviews/${reviewNo}`);
+    } catch (error) {
+      console.error("deleteReview error:", error);
       throw error;
     }
   }

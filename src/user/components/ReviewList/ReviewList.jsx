@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useContext } from "react";
 import ReviewCard from "./ReviewCard";
 import {
   Container,
@@ -18,15 +18,28 @@ import { reviewApi } from "../../../utils/api";
 import { useBookmarkToggle } from "../../../utils/toggles/BookmarkToggle";
 import { useLikeToggle } from "../../../utils/toggles/LikeToggle"
 import { useNavigate } from "react-router";
+import { AuthContext } from "../context/AuthContext";
 
 const ReviewList = ({
   mode = "ALL",          // ALL | CAPTAIN | MY 로 구분 = 전체/미식대장/내 리뷰로 구분 해봤음.
   captainNo,
   captainNickname,
 }) => {
+  const { auth } = useContext(AuthContext);
+
   const [reviews, setReviews] = useState([]);
   const [hasNext, setHasNext] = useState(true);
   const [cursor, setCursor] = useState(null);
+
+  const [searchText, setSearchText] = useState("");
+  const [filters, setFilters] = useState({
+    query: "",
+    keyword: "",
+    minRating: null,
+    maxRating: null,
+    sort: "latest",
+
+  })
 
   const [loading, setLoading] = useState(false);
 
@@ -56,8 +69,8 @@ const ReviewList = ({
       } else {
         // 기존 전체조회 호출 그대로 유지
         response = await reviewApi.getReviewList({
+          ...filters,
           cursor,
-          sort: "latest",
         });
       }
 
@@ -93,7 +106,7 @@ const ReviewList = ({
     } finally {
       setLoading(false);
     }
-  }, [loading, hasNext, isCaptainMode, captainNo, cursor]);
+  }, [loading, hasNext, isCaptainMode, captainNo, cursor, filters]);
 
   const onIntersection = (entries) => {
     const firstEntry = entries[0];
@@ -110,6 +123,8 @@ const ReviewList = ({
       observer.observe(elementRef.current);
     }
 
+
+
     return () => {
       if (elementRef.current) {
         observer.unobserve(elementRef.current);
@@ -124,7 +139,7 @@ const ReviewList = ({
     setReviews([]);
     setHasNext(true);
     setCursor(null);
-  }, [mode, captainNo]);
+  }, [mode, captainNo, filters]);
 
   const handleBookmark = useBookmarkToggle({
     items: reviews,
@@ -146,8 +161,21 @@ const ReviewList = ({
   });
 
   const handleEnrollBtn = () => {
+    if(!auth.isAuthenticated){
+      alert("로그인 후 이용 가능합니다.");
+      return;
+    }
     navigate(`/reviews/enroll`);
   }
+
+  const applySearch = () => {
+    setFilters((prev) => ({ ...prev, query: searchText.trim() }));
+  };
+
+  const onSearchKeyDown = (e) => {
+    if (e.key === "Enter") applySearch();
+  };
+
 
   return (
     <Container>
@@ -163,8 +191,13 @@ const ReviewList = ({
       ) : (
         <SearchSection>
           <SearchBar>
-            <SearchInput type="text" placeholder="Search" />
-            <SearchIcon>🔍</SearchIcon>
+            <SearchInput
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onKeyDown={onSearchKeyDown}
+              placeholder="Search"
+            />
+            <SearchIcon onClick={applySearch}>🔍</SearchIcon>
           </SearchBar>
           <SortDropdown>
             <select defaultValue="최신순" disabled>
@@ -185,15 +218,18 @@ const ReviewList = ({
         ))}
       </ReviewGrid>
 
-      {hasNext && !loading && (
-        <div ref={elementRef} style={{ textAlign: 'center' }}>
-          로딩중
+      {hasNext && (
+        <div ref={elementRef} style={{ textAlign: "center" }}>
+          {loading ? "로딩중..." : ""}
         </div>
       )}
 
-      <FloatingButton onClick={handleEnrollBtn}>
-        <PlusIcon>+</PlusIcon>
-      </FloatingButton>
+
+      {auth.isAuthenticated && (
+        <FloatingButton onClick={handleEnrollBtn}>
+          <PlusIcon>+</PlusIcon>
+        </FloatingButton>
+      )}
     </Container>
   );
 };

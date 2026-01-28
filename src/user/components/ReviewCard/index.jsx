@@ -11,11 +11,19 @@ import {
   RatingValue,
   Category,
 } from './styles';
+import { useNavigate } from 'react-router';
 
 
 const ReviewCard = ({ review }) => {
+  const navigate = useNavigate();
+
+    const handleClick = () => {
+    navigate(`/reviews/${review.reviewNo}`);
+  }
+
   return (
-    <CardContainer>
+    <CardContainer
+      onClick={handleClick}>
       <CardImage
         {...getImageProps(review.thumbnailUrl)}
         alt={review.restaurantName}

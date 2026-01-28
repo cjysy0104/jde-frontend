@@ -22,7 +22,7 @@ import {
   WithdrawButton,
   ButtonRow,
 
-  // ✅ 아래 스타일들은 MyProfileViewStyles에 추가되어 있어야 함
+  // 아래 스타일들은 MyProfileViewStyles에 추가되어 있어야 함
   ModalOverlay,
   ModalBox,
   ModalTitle,
@@ -83,7 +83,7 @@ export default function MyProfileViewPage() {
   const navigate = useNavigate();
   const [member, setMember] = useState(null);
 
-  // ✅ 탈퇴 플로우 상태
+  // 탈퇴 플로우 상태
   const [step, setStep] = useState("NONE"); // NONE | CONFIRM | PASSWORD | DONE
   const [password, setPassword] = useState("");
   const [withdrawError, setWithdrawError] = useState("");

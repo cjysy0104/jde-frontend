@@ -1,43 +1,45 @@
-import React, { useEffect, useState } from 'react';
-import ReviewCard from '../ReviewCard';
+import React, { useEffect, useState } from "react";
+import ReviewCard from "../ReviewCard";
+import { reviewApi } from "../../../utils/reviewApi";
 import {
   ReviewSectionContainer,
   ReviewContent,
   SectionTitle,
   ReviewGrid,
   MoreButton,
-} from './styles';
-import { reviewApi } from '../../../utils/reviewApi';
+} from "./styles";
+import { useNavigate } from "react-router";
 
-
-const TodaysReview = () => {
+const TodaysReview = ({ keywordNo, query }) => {
+  const SIZE = 3;
 
   const [reviews, setReviews] = useState([]);
+  const [cursor, setCursor] = useState(null);
+  const [cursorLikeCount, setCursorLikeCount] = useState(null);
 
-  const [cursor, setCursor] = useState();
-  const [cursorLikeCount, setCursorLikeCount] = useState();
   const [loading, setLoading] = useState(false);
   const [hasNext, setHasNext] = useState(true);
 
-  const fetchBestReviews = async ({ append = false } = {}) => {
-    if(loading || !hasNext) return;
+  const fetchBestReviews = async ({ append = false, nextCursor = null, nextCursorLikeCount = null } = {}) => {
+    if (loading || !hasNext) return;
 
     try {
       setLoading(true);
 
       const response = await reviewApi.getBestReviewList({
-        cursor, 
-        cursorLikeCount
+        cursor: nextCursor,
+        cursorLikeCount: nextCursorLikeCount,
+        keywordNo,
+        query,
       });
 
-      console.log(response);
       const list = response.data;
+      console.log(response.data);
 
-      const hasNextData = list.length > 3;
-      setHasNext(hasNextData);
+      const next = list.length > SIZE;
+      setHasNext(next);
 
-      const viewList = hasNextData? list.slice(0, 3) : list;
-
+      const viewList = next ? list.slice(0, SIZE) : list;
 
       setReviews((prev) => (append ? [...prev, ...viewList] : viewList));
 
@@ -46,36 +48,47 @@ const TodaysReview = () => {
         setCursor(last.reviewNo);
         setCursorLikeCount(last.recentLikeCount);
       }
-
-    } catch (error) {
-      console.log("베스트 리뷰 조회 실패", error)
+    } catch (e) {
+      console.log("베스트 리뷰 조회 실패", e);
     } finally {
       setLoading(false);
     }
-
-  }
+  };
 
   useEffect(() => {
-    fetchBestReviews();
-  }, []);
+    setReviews([]);
+    setCursor(null);
+    setCursorLikeCount(null);
+    setHasNext(true);
+
+    fetchBestReviews({ append: false, nextCursor: null, nextCursorLikeCount: null });
+  }, [keywordNo, query]);
 
   const handleMore = () => {
-    fetchBestReviews({append: true});
+    fetchBestReviews({
+      append: true,
+      nextCursor: cursor,
+      nextCursorLikeCount: cursorLikeCount,
+    });
   };
 
   return (
     <ReviewSectionContainer>
       <ReviewContent>
         <SectionTitle>오늘의 리뷰</SectionTitle>
+
         <ReviewGrid>
           {reviews.map((review) => (
-            <ReviewCard key={review.reviewNo} review={review} />
+            <ReviewCard 
+              key={review.reviewNo} 
+              review={review}
+              />
           ))}
         </ReviewGrid>
+
         {hasNext && (
           <MoreButton onClick={handleMore} disabled={loading}>
-            {loading ? "로딩 중..." : "더보기"}
-            <span>+</span>
+            {loading ? "로딩 중..." : "더보기"} <span>+</span>
           </MoreButton>
         )}
       </ReviewContent>

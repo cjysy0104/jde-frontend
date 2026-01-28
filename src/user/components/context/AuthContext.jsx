@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }) => {
     syncAuth();
   }, [syncAuth]);
 
-  // ✅ authChanged / storage 이벤트를 구독해서 UI(헤더 포함)가 즉시 동기화되게 함
+  // authChanged / storage 이벤트를 구독해서 UI(헤더 포함)가 즉시 동기화되게 함
   useEffect(() => {
     const handler = () => syncAuth();
 
@@ -110,7 +110,7 @@ export const AuthProvider = ({ children }) => {
     };
   }, [syncAuth]);
 
-  // ✅ 강제 로그아웃(토큰 만료 등): 상태 초기화 + 필요하면 리다이렉트
+  // 강제 로그아웃(토큰 만료 등): 상태 초기화 + 필요하면 리다이렉트
   useEffect(() => {
     const handler = (e) => {
       const redirectTo = e?.detail?.redirectTo; // 선택

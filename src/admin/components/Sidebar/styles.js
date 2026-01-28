@@ -47,9 +47,9 @@ export const MenuItem = styled.div`
   padding: 12px 20px;
   cursor: pointer;
   transition: background-color 0.2s;
-  background-color: ${props => props.$active ? '#f3f4f6' : 'transparent'};
-  color: ${props => props.$active ? '#111827' : '#6b7280'};
-  
+  background-color: ${(props) => (props.$active ? '#f3f4f6' : 'transparent')};
+  color: ${(props) => (props.$active ? '#111827' : '#6b7280')};
+
   &:hover {
     background-color: #f3f4f6;
   }
@@ -87,4 +87,23 @@ export const HelpBadge = styled.span`
 export const BottomMenu = styled.div`
   padding: 16px 0;
   border-top: 1px solid #e5e7eb;
+`;
+
+export const SubMenuList = styled.div`
+  padding: 4px 0 8px 0;
+`;
+
+export const SubMenuItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px 10px 40px; /* 들여쓰기 */
+  cursor: pointer;
+  transition: background-color 0.2s;
+  background-color: ${(props) => (props.$active ? '#eef2ff' : 'transparent')};
+  color: ${(props) => (props.$active ? '#111827' : '#6b7280')};
+
+  &:hover {
+    background-color: #f3f4f6;
+  }
 `;

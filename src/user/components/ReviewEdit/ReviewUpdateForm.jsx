@@ -13,8 +13,6 @@ import RatingSection from './RatingSection';
 import ContentSection from './ContentSection';
 import FileSection from './FileSection';
 import KeywordSection from './KeywordSection';
-import RestaurantSearchModal from './RestaurantSearchModal'
-import { kakaoMapApi } from '../../../utils/kakaoMapApi';
 import { reviewApi } from '../../../utils/reviewApi';
 import { useNavigate } from 'react-router';
 
@@ -72,31 +70,21 @@ const ReviewUpdateForm = ({reviewNo}) => {
     // 키워드
     setSelectedKeywords((r.keywords ?? []).map(k => k.keywordNo));
 
-    // 파일
-    setFiles(r.files ?? []);
-    setLegacyFiles(r.files ?? []);
+    // 기존 파일 -> legacy 형태로 변환 (preview=URL)
+    const legacy = (r.files ?? []).map((f) => ({
+      type: "legacy",
+      fileNo: f.fileNo, // 반드시 필요(없으면 keep가 불가능)
+      fileUrl: f.fileUrl,
+      preview: f.fileUrl,
+    }));
+
+    setFiles(legacy);
   }, [review]);
-
-
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchResults, setSearchResults] = useState([]); // documents
-  const [searchError, setSearchError] = useState(null);
 
   const [rating, setRating] = useState(0);
   const [content, setContent] = useState('');
   const [files, setFiles] = useState([]);
   const [selectedKeywords, setSelectedKeywords] = useState([]);
-
-   const handleSelectRestaurant = (place) => {
-    setRestaurant({
-      name: place.place_name,
-      address: place.road_address_name || place.address_name || '',
-      lat: place.y,
-      lng: place.x
-    });
-    setIsSearchOpen(false);
-  };
 
   const handleKeywordToggle = (keyword) => {
     setSelectedKeywords(prev =>
@@ -121,9 +109,6 @@ const ReviewUpdateForm = ({reviewNo}) => {
       return;
     }
 
-    const latNum = Number(restaurant.lat);
-    const lngNum = Number(restaurant.lng);
-
     // API 호출 - 제출
     const formData = new FormData();
 
@@ -133,17 +118,24 @@ const ReviewUpdateForm = ({reviewNo}) => {
     selectedKeywords.forEach((no) => {
       formData.append('keywordNos', String(no));
     });
+    
+    // 파일
+    files.forEach((f, idx) => {
+      const sortOrder = idx + 1;
 
-    files.forEach((f) => {
-        
-      formData.append('images', f.file);
+      if (f.type === "legacy") {
+        formData.append("existingFileNos", String(f.fileNo));
+        formData.append("existingSortOrders", String(sortOrder));
+      } else if (f.type === "new") {
+        formData.append("images", f.file);
+        formData.append("newSortOrders", String(sortOrder));
+      }
     });
 
 
     for (const [k, v] of formData.entries()) {
         console.log("FD:", k, v);
     }
-
 
     try {
         await reviewApi.updateReview(reviewNo, formData);
@@ -207,15 +199,6 @@ const ReviewUpdateForm = ({reviewNo}) => {
         <SubmitButton onClick={handleSubmit}>등록</SubmitButton>
       </SubmitButtonWrapper>
     </FormContainer>
-
-    <RestaurantSearchModal
-        open={isSearchOpen}
-        loading={searchLoading}
-        error={searchError}
-        results={searchResults}
-        onClose={() => setIsSearchOpen(false)}
-        onSelect={handleSelectRestaurant}
-      />
     </>
     
   );

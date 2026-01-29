@@ -62,20 +62,22 @@ const MapSearchPage = () => {
   const [radius, setRadius] = useState(3); // 기본값 3km
 
   // 레스토랑 데이터 가져오기 (무한 스크롤) — 검색어 있으면 searchRestaurant, 없으면 getRestaurantList
-  const fetchReviews = useCallback(async (append = false) => {
-    if (loading || !hasNext) return;
+  const fetchReviews = useCallback(async (append = false, currentCursor = null, force = false) => {
+    // force가 true면 조건 체크 우회 (검색 시 사용)
+    if (!force && (loading || (!append && !hasNext))) return;
 
     setLoading(true);
     try {
       const keyword = searchQuery?.trim() || '';
+      const cursorToUse = currentCursor !== undefined ? currentCursor : cursor;
       const response = keyword
         ? await restaurantApi.searchRestaurant({
             keyword,
-            cursor,
+            cursor: cursorToUse,
             scrollSize: 20,
           })
         : await restaurantApi.getRestaurantList({
-            cursor,
+            cursor: cursorToUse,
             scrollSize: 20,
           });
 
@@ -118,10 +120,18 @@ const MapSearchPage = () => {
 
   // 검색 실행
   const handleSearch = (e) => {
+    // Enter 키 또는 클릭 이벤트 처리
     if (e.key === 'Enter' || e.type === 'click') {
+      // Enter 키 기본 동작 방지
+      if (e.key === 'Enter') {
+        e.preventDefault();
+      }
+      // 검색 시 선택 해제 및 상태 초기화
+      setSelectedReview(null);
       setCursor(null);
       setHasNext(true);
-      fetchReviews(false);
+      // force=true로 조건 체크 우회하여 즉시 실행
+      fetchReviews(false, null, true);
     }
   };
 
@@ -136,7 +146,7 @@ const MapSearchPage = () => {
     }
 
     // RestaurantListDTO 는 latitude / longitude 를 제공하므로
-    // 우선 그 값을 사용하고, 없을 때만 주소 기반 geocoding 을 고려할 수 있다.
+    // 우선 그 값을 사용하고, 없을 때만 주소 기반 geocoding 을 사용.
     const geocoder = new window.kakao.maps.services.Geocoder();
 
     const markerPromises = reviews.map((item) => {
@@ -181,12 +191,13 @@ const MapSearchPage = () => {
       const validMarkers = markerData.filter(Boolean);
       setMarkers(validMarkers);
 
-      // 첫 번째 마커로 지도 중심 이동 (반경 모드가 아닐 때만)
+      // 첫 번째 마커로 지도 중심 이동 (반경 모드가 아닐 때, 선택된 리뷰가 없을 때)
       if (validMarkers.length > 0 && !selectedReview && !showNearby) {
         setMapCenter({
           lat: validMarkers[0].lat,
           lng: validMarkers[0].lng,
         });
+        setMapLevel(4); // 적절한 줌 레벨 설정
       }
     });
   }, [ready, reviews, selectedReview, showNearby, searchQuery]);
@@ -440,7 +451,7 @@ const MapSearchPage = () => {
             placeholder="Search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyPress={handleSearch}
+            onKeyDown={handleSearch}
           />
           <SearchIcon onClick={handleSearch}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">

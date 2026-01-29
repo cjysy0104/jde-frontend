@@ -10,7 +10,7 @@ import {
 } from "./styles";
 import { useNavigate } from "react-router";
 
-const TodaysReview = ({ keywordNo, query }) => {
+const TodaysReview = ({ keywordNo}) => {
   const SIZE = 3;
 
   const [reviews, setReviews] = useState([]);
@@ -30,7 +30,6 @@ const TodaysReview = ({ keywordNo, query }) => {
         cursor: nextCursor,
         cursorLikeCount: nextCursorLikeCount,
         keywordNo,
-        query,
       });
 
       const list = response.data;
@@ -62,7 +61,7 @@ const TodaysReview = ({ keywordNo, query }) => {
     setHasNext(true);
 
     fetchBestReviews({ append: false, nextCursor: null, nextCursorLikeCount: null });
-  }, [keywordNo, query]);
+  }, [keywordNo]);
 
   const handleMore = () => {
     fetchBestReviews({

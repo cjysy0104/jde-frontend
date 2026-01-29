@@ -13,12 +13,27 @@ import {
 const FileSection = ({ files, onFilesChange }) => {
   const handleFileUpload = (e) => {
     const uploadedFiles = Array.from(e.target.files);
-    const newFiles = uploadedFiles.map(file => ({
+
+    const allowedTypes = ['image/jpeg', 'image/png'];
+
+    const filteredFiles = uploadedFiles.filter(file => {
+      if (!allowedTypes.includes(file.type)) {
+        alert('jpg, jpeg, png 이미지 파일만 업로드 가능합니다.');
+        return false;
+      }
+      return true;
+    });
+
+    const newFiles = filteredFiles.map(file => ({
       file,
       preview: URL.createObjectURL(file)
     }));
-    onFilesChange([...files, ...newFiles]);
+
+    onFilesChange([...files, ...newFiles].slice(0, 5));
+
+    e.target.value = '';
   };
+
 
   const handleRemoveFile = (index) => {
     const newFiles = files.filter((_, i) => i !== index);
@@ -38,7 +53,7 @@ const FileSection = ({ files, onFilesChange }) => {
         <UploadButton>
           <HiddenInput
             type="file"
-            accept="image/*"
+            accept=".jpg,.jpeg,.png,image/jpeg,image/png"
             multiple
             onChange={handleFileUpload}
           />

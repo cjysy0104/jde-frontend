@@ -75,3 +75,51 @@ export const UploadText = styled.span`
 export const HiddenInput = styled.input`
   display: none;
 `;
+
+export const OrderBadge = styled.div`
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 2px 7px;
+  border-radius: 10px;
+
+  background: ${({ $isMain }) =>
+    $isMain ? "rgba(249, 115, 22, 0.95)" : "rgba(0, 0, 0, 0.55)"};
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+`;
+
+export const ReorderControls = styled.div`
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  display: flex;
+  gap: 6px;
+`;
+
+export const MoveButton = styled.button`
+  width: 28px;
+  height: 24px;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+
+  background: rgba(255, 255, 255, 0.9);
+  color: #111827;
+  font-size: 14px;
+  font-weight: 800;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: rgba(255, 255, 255, 1);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+`;

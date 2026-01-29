@@ -2,14 +2,13 @@ import apiClient from "./apiClient.js";
 
 export const reviewApi = {
   // 베스트 리뷰 조회 - 필터
-  getBestReviewList: async ({ cursor, cursorLikeCount, keywordNo, query }) => {
+  getBestReviewList: async ({ cursor, cursorLikeCount, keywordNo}) => {
     try {
       return await apiClient.get(`/api/reviews/best`, {
         params: { 
           cursor, 
           cursorLikeCount,
           keywordNo, 
-          query,
         },
       });
     } catch (error) {
@@ -21,7 +20,6 @@ export const reviewApi = {
   // 리뷰전체조회
   getReviewList: async ({
     query,
-    keyword,
     minRating,
     maxRating,
     sort,
@@ -31,7 +29,6 @@ export const reviewApi = {
     return apiClient.get('/api/reviews', {
         params: {
           query,
-          keyword,
           minRating,
           maxRating,
           sort,

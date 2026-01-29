@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled from "styled-components";
 
 export const Container = styled.div`
   max-width: 1200px;
@@ -11,49 +11,93 @@ export const Container = styled.div`
 export const SearchSection = styled.div`
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 12px;
   margin-bottom: 30px;
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
+  background-color: #fff;
+  padding: 18px 20px;
+  border-radius: 10px;
+  border: 1px solid #eee;
 `;
 
 export const SearchBar = styled.div`
   flex: 1;
-  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 `;
 
 export const SearchInput = styled.input`
-  width: 100%;
-  padding: 12px 40px 12px 15px;
+  flex: 1;
+  height: 42px;
+  padding: 0 14px;
   border: 1px solid #ddd;
-  border-radius: 25px;
+  border-radius: 999px;
   font-size: 14px;
   outline: none;
-  
+  background: #fff;
+
   &:focus {
     border-color: #ff6b35;
   }
 `;
 
-export const SearchIcon = styled.span`
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #999;
+export const SearchIconButton = styled.button`
+  height: 42px;
+  min-width: 42px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #666;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+`;
+
+export const FilterButton = styled.button`
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
 `;
 
 export const SortDropdown = styled.div`
   select {
-    padding: 10px 15px;
+    height: 42px;
+    padding: 0 14px;
     border: 1px solid #ddd;
-    border-radius: 6px;
+    border-radius: 10px;
     font-size: 13px;
     cursor: pointer;
     outline: none;
-    background-color: white;
-    
+    background-color: #fff;
+
     &:focus {
       border-color: #ff6b35;
     }
@@ -81,29 +125,30 @@ export const FloatingButton = styled.button`
   align-items: center;
   justify-content: center;
   transition: transform 0.2s, box-shadow 0.2s;
-  
+
   &:hover {
-    transform: scale(1.1);
+    transform: scale(1.08);
     box-shadow: 0 6px 16px rgba(255, 107, 53, 0.5);
   }
-  
+
   &:active {
-    transform: scale(0.95);
+    transform: scale(0.97);
   }
 `;
 
 export const PlusIcon = styled.span`
   font-size: 32px;
-  color: white;
+  color: #fff;
   font-weight: 300;
   line-height: 1;
 `;
 
 export const CaptainHeader = styled.div`
   margin-bottom: 30px;
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
+  background-color: #fff;
+  padding: 18px 20px;
+  border-radius: 10px;
+  border: 1px solid #eee;
   display: flex;
   align-items: baseline;
   gap: 8px;
@@ -111,13 +156,13 @@ export const CaptainHeader = styled.div`
 
 export const CaptainHeaderTitle = styled.h2`
   margin: 0;
-  font-size: 18px;      /* SearchSection과 비슷한 덩치 */
+  font-size: 18px;
   font-weight: 700;
   color: #222;
 `;
 
 export const CaptainNickname = styled.span`
-  color: #ff6b35;       /* 포인트 컬러 */
+  color: #ff6b35;
   font-weight: 800;
 `;
 

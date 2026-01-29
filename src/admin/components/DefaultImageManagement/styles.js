@@ -113,7 +113,7 @@ export const FileInput = styled.input`
 `;
 
 export const GridViewport = styled.div`
-  max-height: 520px;
+  max-height: 550px;
   overflow-y: ${(props) => (props.$scroll ? 'auto' : 'hidden')};
   padding-right: ${(props) => (props.$scroll ? '6px' : '0')};
 `;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useContext } from 'react';
 import Comment from './Comment';
 import {
   CommentSection,
@@ -13,8 +13,13 @@ import {
   PageButton
 } from './CommentList.styled';
 import { commentApi } from '../../../utils/commentApi';
+import { AuthContext } from '../context/AuthContext';
 
 const CommentList = ({ reviewNo }) => {
+  const { auth } = useContext(AuthContext);
+
+  const isLoggedIn = !!auth?.isAuthenticated;
+
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -33,8 +38,9 @@ const CommentList = ({ reviewNo }) => {
         currentPage,
       });
 
+
+      console.log(response)
       const data = response.data;
-      console.log(response);
 
       setComments(data?.comments ?? []);
       setPageInfo(data?.pageInfo ?? null);
@@ -47,47 +53,75 @@ const CommentList = ({ reviewNo }) => {
     }
   }, [reviewNo, currentPage]);
 
-  // reviewNo 바뀌면 1페이지로 초기화
   useEffect(() => {
     setCurrentPage(1);
   }, [reviewNo]);
 
-  // 목록 조회
   useEffect(() => {
     fetchComments();
   }, [fetchComments]);
 
-  const handleLikeComment = (commentNo) => {
+  const handleLikeComment = async (commentNo) => {
+    if (!isLoggedIn) {
+      alert("로그인 후 이용 가능합니다.");
+      return;
+    }
+
+    // 현재 댓글 찾기
+    const target = comments.find(c => c.commentNo === commentNo);
+    if (!target) return;
+
+    const wasLiked = target.isLiked === 'Y';
+
+    // 1) optimistic update (UI 먼저 반영)
     setComments(prev =>
-      prev.map(comment =>
-        comment.commentNo === commentNo
+      prev.map(c =>
+        c.commentNo === commentNo
           ? {
-              ...comment,
-              isLiked: comment.isLiked === 'Y' ? 'N' : 'Y',
-              likeCount:
-                comment.isLiked === 'Y'
-                  ? comment.likeCount - 1
-                  : comment.likeCount + 1
+              ...c,
+              isLiked: wasLiked ? 'N' : 'Y',
+              likeCount: Math.max(0, (c.likeCount ?? 0) + (wasLiked ? -1 : 1)),
             }
-          : comment
+          : c
       )
     );
+
+    try {
+      // 2) 서버 호출 (상태에 따라 POST/DELETE)
+      if (wasLiked) {
+        await commentApi.deleteCommentLike({ commentNo });
+      } else {
+        await commentApi.createCommentLike({ commentNo });
+      }
+    } catch (e) {
+      console.error(e);
+
+      // 3) 실패 시 롤백 (원복)
+      setComments(prev =>
+        prev.map(c =>
+          c.commentNo === commentNo
+            ? {
+                ...c,
+                isLiked: wasLiked ? 'Y' : 'N',
+                likeCount: Math.max(0, (c.likeCount ?? 0) + (wasLiked ? 1 : -1)),
+              }
+            : c
+        )
+      );
+    }
   };
 
+
   const handleSubmitComment = async () => {
+    if (!isLoggedIn) return;
     if (!newComment.trim()) return;
 
     try {
-      // TODO: 댓글 등록 API가 있으면 여기서 호출
-      await commentApi.createComment({ reviewNo, content: newComment });
-
+      await commentApi.createComment({ reviewNo, content: newComment.trim() });
       setNewComment('');
 
-        if (currentPage !== 1) {
-            setCurrentPage(1); 
-        } else {
-            fetchComments();
-        }
+      if (currentPage !== 1) setCurrentPage(1);
+      else fetchComments();
     } catch (e) {
       console.error(e);
     }
@@ -96,32 +130,26 @@ const CommentList = ({ reviewNo }) => {
   const maxPage = pageInfo?.maxPage ?? 1;
   const totalCount = pageInfo?.listCount ?? comments.length;
 
-    const handleDeleteComment = async (commentNo) => {
+  const handleDeleteComment = async (commentNo) => {
     if (!window.confirm('댓글을 삭제할까요?')) return;
 
     try {
-        await commentApi.deleteCommentById({ commentNo });
-        setComments(prev => prev.filter(c => c.commentNo !== commentNo));
-
-        // totalCount도 pageInfo 기반이면 재조회가 더 안전하지만 일단 UI만 줄이려면:
-        setPageInfo(prev => prev ? { ...prev, listCount: Math.max(0, prev.listCount - 1) } : prev);
+      await commentApi.deleteCommentById({ commentNo });
+      setComments(prev => prev.filter(c => c.commentNo !== commentNo));
+      setPageInfo(prev => prev ? { ...prev, listCount: Math.max(0, prev.listCount - 1) } : prev);
     } catch (e) {
-        console.error(e);
+      console.error(e);
     }
-    };
+  };
 
-    const handleUpdateComment = async (commentNo, content) => {
+  const handleUpdateComment = async (commentNo, content) => {
     try {
-        await commentApi.updateComment({ commentNo, content });
-
-        setComments(prev =>
-        prev.map(c => (c.commentNo === commentNo ? { ...c, content } : c))
-        );
+      await commentApi.updateComment({ commentNo, content });
+      setComments(prev => prev.map(c => (c.commentNo === commentNo ? { ...c, content } : c)));
     } catch (e) {
-        console.error(e);
+      console.error(e);
     }
-    };
-
+  };
 
   return (
     <CommentSection>
@@ -167,21 +195,31 @@ const CommentList = ({ reviewNo }) => {
         </PageButton>
       </Pagination>
 
-      <CommentInputSection>
-        <CommentInputWrapper>
-          <CommentInput
-            placeholder="댓글을 작성 해주세요."
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-          />
-          <SubmitButton
-            onClick={handleSubmitComment}
-            disabled={!newComment.trim()}
-          >
-            등록
-          </SubmitButton>
-        </CommentInputWrapper>
-      </CommentInputSection>
+      {isLoggedIn ? (
+        <CommentInputSection>
+          <CommentInputWrapper>
+            <CommentInput
+              placeholder="댓글을 작성 해주세요."
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+            />
+            <SubmitButton
+              onClick={handleSubmitComment}
+              disabled={!newComment.trim()}
+            >
+              등록
+            </SubmitButton>
+          </CommentInputWrapper>
+        </CommentInputSection>
+      ) : (
+        <CommentInputSection>
+          <CommentInputWrapper>
+            <div style={{ padding: "12px 4px", color: "#666", fontSize: 14 }}>
+              로그인 후 댓글을 작성할 수 있어요.
+            </div>
+          </CommentInputWrapper>
+        </CommentInputSection>
+      )}
     </CommentSection>
   );
 };

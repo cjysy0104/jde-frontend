@@ -1,11 +1,15 @@
 import apiClient from "./apiClient.js";
 
 export const reviewApi = {
-  // 베스트 리뷰 조회
-  getBestReviewList: async ({ cursor, cursorLikeCount }) => {
+  // 베스트 리뷰 조회 - 필터
+  getBestReviewList: async ({ cursor, cursorLikeCount, keywordNo}) => {
     try {
       return await apiClient.get(`/api/reviews/best`, {
-        params: { cursor, cursorLikeCount },
+        params: { 
+          cursor, 
+          cursorLikeCount,
+          keywordNo, 
+        },
       });
     } catch (error) {
       console.error("getBestReviewList error:", error);
@@ -16,7 +20,6 @@ export const reviewApi = {
   // 리뷰전체조회
   getReviewList: async ({
     query,
-    keyword,
     minRating,
     maxRating,
     sort,
@@ -26,7 +29,6 @@ export const reviewApi = {
     return apiClient.get('/api/reviews', {
         params: {
           query,
-          keyword,
           minRating,
           maxRating,
           sort,
@@ -92,4 +94,51 @@ export const reviewApi = {
   unlikeReview: async (reviewNo) => {
     return apiClient.delete(`/api/reviewLikes/${reviewNo}`);
   },
+
+  // 키워드 리스트 조회
+  getKeywordList: async () => {
+    try {
+      return apiClient.get(`/api/reviews/keywords`);
+    } catch (error) {
+      console.error('getKeywordList error:', error);
+        throw error;
+    }
+  },
+
+  // 리뷰 등록
+  createReview: async (formData) => {
+    try {
+      return await apiClient.post(`/api/reviews`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        }
+      });
+    } catch (error) {
+      console.error("createReview error:", error);
+      throw error;
+    }
+  },
+
+  // 리뷰 삭제
+  deleteReview: async (reviewNo) => {
+    try {
+      return await apiClient.delete(`/api/reviews/${reviewNo}`);
+    } catch (error) {
+      console.error("deleteReview error:", error);
+      throw error;
+    }
+  },
+
+  updateReview: async (reviewNo, formData) => {
+    try {
+        return await apiClient.patch(`/api/reviews/${reviewNo}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        }
+      });
+    } catch (error) {
+      console.error("updateReview error:", error);
+      throw error;
+    }
+  }
 };

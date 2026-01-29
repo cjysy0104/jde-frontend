@@ -65,3 +65,17 @@ export const ReviewDetailContainer = styled.div`
   display: flex;
   flex-direction: column;
 `;
+
+export const ReviewEnrollContainer = styled.div`
+  min-height: 100vh;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+`;
+
+export const ReviewUpdateContainer = styled.div`
+  min-height: 100vh;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+`;

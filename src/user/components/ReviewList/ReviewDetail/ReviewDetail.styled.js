@@ -109,3 +109,73 @@ export const MapSection = styled.div`
   background: white;
   border-radius: 8px;
 `;
+
+export const ButtonGroup = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+  }
+`;
+
+const BaseButton = styled.button`
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+  }
+`;
+
+export const BackButton = styled(BaseButton)`
+  background-color: #6c757d;
+  color: white;
+
+  &:hover {
+    background-color: #5a6268;
+  }
+`;
+
+export const EditButton = styled(BaseButton)`
+  background-color: #FF6B35;
+  color: white;
+
+  &:hover {
+    background-color: #e85a28;
+  }
+`;
+
+export const DeleteButton = styled(BaseButton)`
+  background-color: #dc3545;
+  color: white;
+
+  &:hover {
+    background-color: #c82333;
+  }
+`;
+
+export const ReportButton = styled(BaseButton)`
+  background-color: #ffc107;
+  color: #333;
+
+  &:hover {
+    background-color: #e0a800;
+  }
+`;

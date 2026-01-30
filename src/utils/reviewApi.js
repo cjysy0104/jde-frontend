@@ -1,7 +1,7 @@
 import apiClient from "./apiClient.js";
 
 export const reviewApi = {
-  // 베스트 리뷰 조회 - 필터
+  // 베스트 리뷰 조회
   getBestReviewList: async ({ cursor, cursorLikeCount, keywordNo}) => {
     try {
       return await apiClient.get(`/api/reviews/best`, {
@@ -129,6 +129,7 @@ export const reviewApi = {
     }
   },
 
+  // 리뷰 수정
   updateReview: async (reviewNo, formData) => {
     try {
         return await apiClient.patch(`/api/reviews/${reviewNo}`, formData, {

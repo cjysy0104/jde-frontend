@@ -1,6 +1,8 @@
 import styled from 'styled-components';
 
 export const CommentSection = styled.div`
+  width:1200px;
+  margin: 20px auto 0;
   background-color: white;
   padding: 20px;
   border-radius: 8px;

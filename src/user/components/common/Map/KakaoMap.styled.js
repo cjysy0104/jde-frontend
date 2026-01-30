@@ -9,3 +9,4 @@ export const MapWrapper = styled.div`
   border-radius: 12px;
   overflow: hidden;
 `;
+

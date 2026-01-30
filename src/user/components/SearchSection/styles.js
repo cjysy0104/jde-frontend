@@ -45,7 +45,7 @@ export const SearchBox = styled.div`
 `;
 
 export const SearchInput = styled.input`
-  width: 100%;
+  width: 600px;
   padding: 16px 60px 16px 24px;
   border: 2px solid #e5e7eb;
   border-radius: 50px;

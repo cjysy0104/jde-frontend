@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState, useCallback } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { myActivityApi } from "../../../../utils/api";
 import { styles } from "./myListStyles";
+import CommentEditor from "../../Comment/CommentEditor";
+import { commentApi } from "../../../../utils/commentApi"
 
 export default function MyListPage() {
   const navigate = useNavigate();
@@ -17,6 +19,10 @@ export default function MyListPage() {
 
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [hasNextPage, setHasNextPage] = useState(true);
+
+  const [editingCommentNo, setEditingCommentNo] = useState(null);
+  const [editingValue, setEditingValue] = useState("");
+
 
   const isRequestInFlightRef = useRef(false);
   const requestSequenceRef = useRef(0);
@@ -85,6 +91,9 @@ export default function MyListPage() {
     setCurrentPageIndex(0);
     setHasNextPage(true);
 
+    setEditingCommentNo(null);
+    setEditingValue("");
+
     fetchPageByIndex(0);
   }, [listType, fetchPageByIndex]);
 
@@ -104,7 +113,7 @@ export default function MyListPage() {
     if (!window.confirm("댓글을 삭제할까요?")) return;
 
     try {
-      await myActivityApi.deleteComment(commentNumber);
+      await commentApi.deleteCommentById({ commentNo: commentNumber });
       await fetchPageByIndex(currentPageIndex);
       alert("삭제 완료");
     } catch (error) {
@@ -112,8 +121,45 @@ export default function MyListPage() {
     }
   };
 
-  const goToEditReviewPage = (reviewNumber) => navigate(`/reviews/${reviewNumber}/edit`);
-  const goToEditCommentPage = (commentNumber) => navigate(`/comments/${commentNumber}/edit`);
+  const startEditComment = (commentItem) => {
+  const commentNumber = commentItem.commentNo ?? commentItem.commentId ?? commentItem.id;
+  if (!commentNumber) return alert("댓글 번호가 없습니다.");
+
+  setEditingCommentNo(commentNumber);
+  setEditingValue(commentItem.content ?? "");
+};
+
+const cancelEditComment = () => {
+  setEditingCommentNo(null);
+  setEditingValue("");
+};
+
+const saveEditComment = async () => {
+  const v = editingValue.trim();
+  if (!v) return alert("내용을 입력해 주세요.");
+
+  try {
+
+    await commentApi.updateComment({ commentNo: editingCommentNo, content: v });
+
+    await fetchPageByIndex(currentPageIndex);
+    alert("수정 완료");
+    cancelEditComment();
+  } catch (e) {
+    alert("수정 실패 (권한/로그인/API 확인)");
+  }
+};
+
+
+  const goToEditReviewPage = (reviewNumber) => {
+  if (!reviewNumber) return alert("리뷰 번호가 없습니다.");
+  navigate(`/reviews/update/${reviewNumber}`);
+  };
+  const goToEditCommentPage = (reviewNumber, commentNumber) => {
+  if (!commentNumber) return alert("댓글 번호가 없습니다.");
+  if (!reviewNumber) return alert("리뷰 번호가 없습니다.");
+  navigate(`/reviews/${reviewNumber}`, { state: { editCommentNo: commentNumber }});
+  };
 
   const visiblePageCount = 5;
   const pageStartIndex = Math.max(0, currentPageIndex - 2);
@@ -223,14 +269,24 @@ export default function MyListPage() {
                     <span style={styles.commentMetaText}>작성일 {createdDate}</span>
                   </div>
 
-                  <div style={styles.commentContent}>{commentItem.content}</div>
+                  {editingCommentNo === commentNumber ? (
+                    <CommentEditor
+                      value={editingValue}
+                      onChange={setEditingValue}
+                      onSave={saveEditComment}
+                      onCancel={cancelEditComment}
+                      maxLength={500}
+                    />
+                  ) : (
+                    <div style={styles.commentContent}>{commentItem.content}</div>
+                  )}
                 </div>
 
                 <div style={styles.commentActionCol}>
                   <a href={`/reviews/${reviewNumber ?? ""}`} style={styles.btnOutline}>
                     리뷰로
                   </a>
-                  <button onClick={() => goToEditCommentPage(commentNumber)} style={styles.btnDark}>
+                  <button onClick={() => startEditComment(commentItem)} style={styles.btnDark} disabled={isLoading}>
                     수정
                   </button>
                   <button onClick={() => handleDeleteComment(commentNumber)} style={styles.btnDanger}>

@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { Heart } from 'lucide-react';
 import ReportModal from "../report/ReportModal";
 import { reportApi } from "../../../utils/reportApi";
+import CommentEditor from "./CommentEditor";
 import {
   CommentItem,
   Avatar,
@@ -99,19 +100,13 @@ const Comment = ({ comment, onLike, onDelete, onUpdate }) => {
         {!isEditing ? (
           <CommentText>{comment.content}</CommentText>
         ) : (
-          <>
-            <EditTextarea
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              maxLength={500}
-            />
-            <EditActions>
-              <SaveButton onClick={saveEdit} disabled={!editValue.trim()}>
-                저장
-              </SaveButton>
-              <CancelButton onClick={cancelEdit}>취소</CancelButton>
-            </EditActions>
-          </>
+          <CommentEditor
+            value={editValue}
+            onChange={setEditValue}
+            onSave={saveEdit}
+            onCancel={cancelEdit}
+            maxLength={500}
+          />
         )}
 
         <CommentActions>

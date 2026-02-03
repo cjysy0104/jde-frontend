@@ -8,7 +8,7 @@ import {
 } from "react-icons/fa";
 import { bookmarkApi } from "../../../../utils/api";
 import { useBookmarkToggle } from "../../../../utils/toggles/BookmarkToggle";
-import { styles } from "./MyBookmarksStyles";
+import { styles } from "./myBookmarksStyles";
 import Modal from "../../../components/modal/Modal";
 
 export default function MyBookmarksPage() {

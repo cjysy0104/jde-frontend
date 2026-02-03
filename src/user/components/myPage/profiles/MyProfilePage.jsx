@@ -32,7 +32,7 @@ import {
   Thumb,
   ThumbImg,
   ThumbMeta,
-} from "./MyprofileStyles";
+} from "./myprofileStyles";
 
 export default function MyProfilePage() {
   const navigate = useNavigate();

@@ -1,0 +1,66 @@
+name: Deploy React App
+
+on: #언제 실행될 것 인가
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest #실행환경 - 우분투 최신환경
+
+    steps: #어떤 작업을 할 것인가 run: 작업내용을 직접 씀. uses: 이미 만들어진 스크립트 사용
+      - uses: actions/checkout@v4 #깃허브에서 제공하는 공식 action
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with: 
+          node-version: "22"
+          cache: "npm"
+      
+      - name: Install Dependencies
+        run: npm ci
+      
+      - name: React Project Build
+        run: npm run build
+
+      - name: Prepare Target Directory
+        uses: appleboy/ssh-action@master
+        with: #아래 값들은 보여지면 안되므로 깃허브 세팅 -> 시크릿 액션즈에 저장해두고 사용
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            sudo rm -rf /home/ubuntu/deploy/front/dist
+            mkdir -p /home/ubuntu/deploy/front/dist
+      
+      - name: Deploy React Project To EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "dist/"
+          target: "/home/ubuntu/deploy/front"
+          overwrite: true
+
+      - name: Fix permissions
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            sudo chown -R ubuntu:ubuntu /home/ubuntu/deploy/front
+            sudo chmod -R 755 /home/ubuntu/deploy/front
+      
+      - name: Restart Container
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /home/ubuntu/deploy
+            docker compose restart web

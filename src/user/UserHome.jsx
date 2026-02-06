@@ -26,7 +26,7 @@ const UserHome = () => {
         setQuery={setQuery}
         onSubmit={goSearchPage}
       />
-      <TodaysReview keywordNo={keywordNo} query={query} />
+      <TodaysReview keywordNo={keywordNo} />
     </>
   );
 };

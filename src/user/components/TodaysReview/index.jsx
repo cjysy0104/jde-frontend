@@ -8,7 +8,6 @@ import {
   ReviewGrid,
   MoreButton,
 } from "./styles";
-import { useNavigate } from "react-router";
 
 const TodaysReview = ({ keywordNo}) => {
   const SIZE = 3;
@@ -20,8 +19,13 @@ const TodaysReview = ({ keywordNo}) => {
   const [loading, setLoading] = useState(false);
   const [hasNext, setHasNext] = useState(true);
 
-  const fetchBestReviews = async ({ append = false, nextCursor = null, nextCursorLikeCount = null } = {}) => {
-    if (loading || !hasNext) return;
+  const fetchBestReviews = async ({ 
+    append = false, 
+    nextCursor = null, 
+    nextCursorLikeCount = null,
+    ignoreHasNext = false
+  } = {}) => {
+    if (loading || (!ignoreHasNext && !hasNext)) return;
 
     try {
       setLoading(true);
@@ -33,15 +37,19 @@ const TodaysReview = ({ keywordNo}) => {
       });
 
       const list = response.data;
-      console.log(response.data);
 
       const next = list.length > SIZE;
       setHasNext(next);
 
       const viewList = next ? list.slice(0, SIZE) : list;
 
+      console.log("viewList:");
+      console.log(viewList);
+      
       setReviews((prev) => (append ? [...prev, ...viewList] : viewList));
-
+      console.log("reviews");
+      console.log(reviews);
+      
       if (viewList.length > 0) {
         const last = viewList[viewList.length - 1];
         setCursor(last.reviewNo);
@@ -60,7 +68,7 @@ const TodaysReview = ({ keywordNo}) => {
     setCursorLikeCount(null);
     setHasNext(true);
 
-    fetchBestReviews({ append: false, nextCursor: null, nextCursorLikeCount: null });
+    fetchBestReviews({ append: false, nextCursor: null, nextCursorLikeCount: null, ignoreHasNext: true});
   }, [keywordNo]);
 
   const handleMore = () => {

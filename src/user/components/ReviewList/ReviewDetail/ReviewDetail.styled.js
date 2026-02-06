@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled, { keyframes, css } from "styled-components";
 
 export const Container = styled.div`
   width: 100%;
@@ -11,7 +11,7 @@ export const ContentWrapper = styled.div`
   display: flex;
   gap: 40px;
   background: white;
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
   }
@@ -27,7 +27,7 @@ export const LeftSection = styled.div`
 export const RightSection = styled.div`
   flex: 1;
   max-width: 400px;
-  
+
   @media (max-width: 768px) {
     max-width: 100%;
   }
@@ -55,7 +55,7 @@ export const InfoSection = styled.div`
   display: flex;
   gap: 40px;
   margin-top: 20px;
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     gap: 16px;
@@ -129,7 +129,7 @@ const BaseButton = styled.button`
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -154,7 +154,7 @@ export const BackButton = styled(BaseButton)`
 `;
 
 export const EditButton = styled(BaseButton)`
-  background-color: #FF6B35;
+  background-color: #ff6b35;
   color: white;
 
   &:hover {
@@ -177,5 +177,56 @@ export const ReportButton = styled(BaseButton)`
 
   &:hover {
     background-color: #e0a800;
+  }
+`;
+
+/* Skeleton UI (Shimmer) */
+
+const shimmer = keyframes`
+  0% { background-position: -500px 0; }
+  100% { background-position: 500px 0; }
+`;
+
+const skeletonBg = css`
+  background: linear-gradient(90deg, #eee 25%, #f5f5f5 37%, #eee 63%);
+  background-size: 1000px 100%;
+  animation: ${shimmer} 1.2s ease-in-out infinite;
+`;
+
+export const SkeletonBox = styled.div`
+  ${skeletonBg};
+  width: 100%;
+  height: ${({ $h }) => $h || "16px"};
+  border-radius: 10px;
+`;
+
+export const SkeletonLine = styled.div`
+  ${skeletonBg};
+  height: ${({ $h }) => $h || "16px"};
+  width: ${({ $w }) => $w || "100%"};
+  border-radius: 10px;
+`;
+
+export const SkeletonTextBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+export const SkeletonStar = styled.div`
+  ${skeletonBg};
+  width: 22px;
+  height: 26px;
+  border-radius: 6px;
+`;
+
+export const SkeletonButton = styled.div`
+  ${skeletonBg};
+  width: 120px;
+  height: 40px;
+  border-radius: 8px;
+
+  @media (max-width: 480px) {
+    width: 100%;
   }
 `;

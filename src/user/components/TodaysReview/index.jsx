@@ -43,12 +43,7 @@ const TodaysReview = ({ keywordNo}) => {
 
       const viewList = next ? list.slice(0, SIZE) : list;
 
-      console.log("viewList:");
-      console.log(viewList);
-      
       setReviews((prev) => (append ? [...prev, ...viewList] : viewList));
-      console.log("reviews");
-      console.log(reviews);
       
       if (viewList.length > 0) {
         const last = viewList[viewList.length - 1];

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useLayoutEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import * as S from "./ReviewDetail.styled";
 import ImageSlider from "../../common/Image/ImageSlider";
@@ -77,6 +77,12 @@ const ReviewDetail = ({ reviewNo }) => {
     auth?.isAuthenticated &&
     review &&
     auth.memberNo === review.writer.memberNo;
+  
+  // 상세 화면 들어올 때 항상 맨 위
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [reviewNo]);
+
 
   useEffect(() => {
     let cancelled = false;

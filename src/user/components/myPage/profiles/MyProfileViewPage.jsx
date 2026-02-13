@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { authStorage, memberApi } from "../../../../utils/api"; // ✅ api.js에서 import
+import { authStorage, memberApi } from "../../../../utils/api"; 
 
 import {
   Page,
@@ -21,8 +21,6 @@ import {
   Value,
   WithdrawButton,
   ButtonRow,
-
-  // 아래 스타일들은 MyProfileViewStyles에 추가되어 있어야 함
   ModalOverlay,
   ModalBox,
   ModalTitle,

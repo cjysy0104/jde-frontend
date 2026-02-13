@@ -28,7 +28,6 @@ const ReviewUpdateForm = ({reviewNo}) => {
     lat:'',
     lng:''
   });
-  const [legacyFiles, setLegacyFiles] = useState([]);
 
   // Review 갖고오기
   useEffect(() => {

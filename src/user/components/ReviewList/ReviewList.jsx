@@ -1,4 +1,11 @@
-import React, { useEffect, useRef, useState, useCallback, useContext } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useContext,
+  useLayoutEffect,
+} from "react";
 import ReviewCard from "./ReviewCard";
 import ReviewFilterModal from "./ReviewFilterModal";
 import {
@@ -46,6 +53,13 @@ const ReviewList = ({
   const { auth } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  const isCaptainMode = mode === "CAPTAIN";
+
+  // 캐시 키(모드/캡틴별로 분리)
+  const cacheKey = `reviewList:${mode}:${captainNo ?? "ALL"}`;
+  const STATE_KEY = `${cacheKey}:state`;
+  const SCROLL_KEY = `${cacheKey}:scroll`;
+
   const [reviews, setReviews] = useState([]);
   const [hasNext, setHasNext] = useState(true);
 
@@ -62,29 +76,125 @@ const ReviewList = ({
     sort: "latest",
   });
 
-  useEffect(() => {
-    const q = (query ?? "").trim();
-    setFilters((prev) => ({ ...prev, query: q }));
-    setSearchText(q);
-  }, [query]);
-
-  useEffect(() => {
-    setReviews([]);
-    setHasNext(true);
-    setCursor(null);
-    setCursorRating(null);
-    setCursorLikedCount(null);
-  }, [mode, captainNo, filters]);
-
   const [loading, setLoading] = useState(false);
   const elementRef = useRef(null);
-  const isCaptainMode = mode === "CAPTAIN";
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const openFilter = () => setIsFilterOpen(true);
   const closeFilter = () => setIsFilterOpen(false);
 
+  // 리스트 초기화 (필터/정렬/검색 바뀔 때 호출)
+  const resetPagination = useCallback(() => {
+    setReviews([]);
+    setHasNext(true);
+    setCursor(null);
+    setCursorRating(null);
+    setCursorLikedCount(null);
+  }, []);
+
+  // 캐시 복원 (뒤로가기 POP 시 여기로 들어옴)
+  const restoredRef = useRef(false);
+  const pendingScrollYRef = useRef(null);
+  const skipQuerySyncOnceRef = useRef(false);
+
+  useEffect(() => {
+    restoredRef.current = false;
+    pendingScrollYRef.current = null;
+    skipQuerySyncOnceRef.current = false;
+
+    const rawState = sessionStorage.getItem(STATE_KEY);
+    if (!rawState) return;
+
+    try {
+      const saved = JSON.parse(rawState);
+
+      setReviews(saved.reviews ?? []);
+      setHasNext(saved.hasNext ?? true);
+      setCursor(saved.cursor ?? null);
+      setCursorRating(saved.cursorRating ?? null);
+      setCursorLikedCount(saved.cursorLikedCount ?? null);
+
+      setFilters(saved.filters ?? filters);
+      setSearchText(saved.searchText ?? "");
+
+      const savedY = Number(sessionStorage.getItem(SCROLL_KEY) ?? 0);
+      pendingScrollYRef.current = Number.isFinite(savedY) ? savedY : 0;
+
+      restoredRef.current = true;
+      skipQuerySyncOnceRef.current = true; // 복원 직후엔 query prop 동기화로 덮어쓰지 않게 1회 스킵
+    } catch (e) {
+      console.error("리뷰리스트 캐시 복원 실패:", e);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [STATE_KEY, SCROLL_KEY]);
+
+  // 복원된 경우: 렌더 후 스크롤 위치 복원 (두 번 RAF로 레이아웃 안정화)
+  useLayoutEffect(() => {
+    if (!restoredRef.current) return;
+    if (pendingScrollYRef.current == null) return;
+
+    const y = pendingScrollYRef.current;
+    pendingScrollYRef.current = null;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: y, left: 0, behavior: "auto" });
+      });
+    });
+  }, [reviews.length]);
+
+  // 캐시 저장 (리스트 페이지 떠날 때 실행됨)
+
+  const stateRef = useRef({});
+  useEffect(() => {
+    stateRef.current = {
+      reviews,
+      hasNext,
+      cursor,
+      cursorRating,
+      cursorLikedCount,
+      filters,
+      searchText,
+    };
+  }, [reviews, hasNext, cursor, cursorRating, cursorLikedCount, filters, searchText]);
+
+useLayoutEffect(() => {
+  return () => {
+    try {
+      sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
+      sessionStorage.setItem(STATE_KEY, JSON.stringify(stateRef.current));
+    } catch (e) {
+      console.error("리뷰리스트 캐시 저장 실패:", e);
+    }
+  };
+}, [STATE_KEY, SCROLL_KEY]);
+
+  // 외부 query prop 동기화 (단, 캐시 복원 직후 1회는 스킵)
+  useEffect(() => {
+    if (skipQuerySyncOnceRef.current) {
+      skipQuerySyncOnceRef.current = false;
+      return;
+    }
+
+    const q = (query ?? "").trim();
+    setSearchText(q);
+
+    // query가 실제로 바뀌는 경우에만 초기화 + 반영
+    setFilters((prev) => {
+      const prevQ = (prev.query ?? "").trim();
+      if (prevQ === q) return prev;
+      resetPagination();
+      return { ...prev, query: q };
+    });
+  }, [query, resetPagination]);
+
+  // 모드/캡틴 바뀌면 새 리스트로 초기화
+  useEffect(() => {
+    resetPagination();
+  }, [mode, captainNo, resetPagination]);
+
   const onConfirmFilter = ({ sort, minRating, maxRating }) => {
+    resetPagination();
     setFilters((prev) => ({
       ...prev,
       sort: sort ?? prev.sort,
@@ -94,6 +204,22 @@ const ReviewList = ({
     setIsFilterOpen(false);
   };
 
+  const applySearch = () => {
+    resetPagination();
+    setFilters((prev) => ({ ...prev, query: searchText.trim() }));
+  };
+
+  const onSearchKeyDown = (e) => {
+    if (e.key === "Enter") applySearch();
+  };
+
+  const onSortChange = (e) => {
+    resetPagination();
+    const nextSort = LABEL_TO_SORT[e.target.value] ?? "latest";
+    setFilters((prev) => ({ ...prev, sort: nextSort }));
+  };
+
+  // 데이터 패칭
   const fetchNextReviews = useCallback(async () => {
     if (loading || !hasNext) return;
     if (isCaptainMode && !captainNo) return;
@@ -169,10 +295,21 @@ const ReviewList = ({
     filters,
   ]);
 
-  const onIntersection = (entries) => {
-    const first = entries[0];
-    if (first.isIntersecting && hasNext && !loading) fetchNextReviews();
-  };
+  // 리스트가 비었으면(초기/리셋) 첫 페이지는 무조건 한 번 가져오기
+  useEffect(() => {
+    if (reviews.length === 0 && hasNext && !loading) {
+      fetchNextReviews();
+    }
+  }, [reviews.length, hasNext, loading, fetchNextReviews]);
+
+  // IntersectionObserver로 다음 페이지 로딩
+  const onIntersection = useCallback(
+    (entries) => {
+      const first = entries[0];
+      if (first.isIntersecting && hasNext && !loading) fetchNextReviews();
+    },
+    [hasNext, loading, fetchNextReviews]
+  );
 
   useEffect(() => {
     const observer = new IntersectionObserver(onIntersection);
@@ -182,7 +319,7 @@ const ReviewList = ({
       if (elementRef.current) observer.unobserve(elementRef.current);
       observer.disconnect();
     };
-  }, [hasNext, loading, fetchNextReviews]);
+  }, [onIntersection]);
 
   const handleBookmark = useBookmarkToggle({
     items: reviews,
@@ -209,19 +346,6 @@ const ReviewList = ({
       return;
     }
     navigate(`/reviews/enroll`);
-  };
-
-  const applySearch = () => {
-    setFilters((prev) => ({ ...prev, query: searchText.trim() }));
-  };
-
-  const onSearchKeyDown = (e) => {
-    if (e.key === "Enter") applySearch();
-  };
-
-  const onSortChange = (e) => {
-    const nextSort = LABEL_TO_SORT[e.target.value] ?? "latest";
-    setFilters((prev) => ({ ...prev, sort: nextSort }));
   };
 
   return (
@@ -252,7 +376,10 @@ const ReviewList = ({
           </SearchBar>
 
           <SortDropdown>
-            <select value={SORT_TO_LABEL[filters.sort] ?? "최신순"} onChange={onSortChange}>
+            <select
+              value={SORT_TO_LABEL[filters.sort] ?? "최신순"}
+              onChange={onSortChange}
+            >
               <option>최신순</option>
               <option>과거순</option>
               <option>별점순</option>
